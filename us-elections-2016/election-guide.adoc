@@ -1,0 +1,126 @@
+= US Election Result Guide
+
+== Datamodel
+
+image::{img}/datamodel.png[float=right]
+
+TODO: datamodel
+
+== Exploratory Queries
+
+=== NY
+
+[source,cypher]
+----
+MATCH (n:Election {name:"President"})<-[:RUNS_IN]-(c:Candidate)<-[:FOR]-
+      (v:Vote)<-[:REPORTS]-(a:Area)-[:IS_IN]->(s:State {state:"NY"})
+RETURN *
+
+----
+
+== Election Results
+
+=== Results Query
+
+[source,cypher]
+----
+MATCH (n:Election {name:"President"})<-[:RUNS_IN]-(c:Candidate)<-[:FOR]-
+      (v:Vote)<-[:REPORTS]-(a:Area)-[:IS_IN]->(s:State)
+RETURN c.name as candidate, s.state as state, sum(v.votes) as votes
+ORDER BY state, candidate;
+----
+
+We can compute the total votes per state upfront and use that to compute percentages.
+
+[source,cypher]
+----
+MATCH (n:Election {name:"President"})<-[:RUNS_IN]-(c:Candidate)<-[:FOR]-
+      (v:Vote)<-[:REPORTS]-(a:Area)-[:IS_IN]->(s:State)
+WITH c, s, sum(v.votes) as votes
+WITH s, sum(votes) as total, collect({candidate:c,votes:votes}) as data
+UNWIND data as vote
+RETURN s.state as state, total, vote.candidate.name, vote.votes as votes, round(1000.0*vote.votes/total)/10.0 as percent
+ORDER BY percent desc, state;
+----
+
+=== Set results as lable
+
+[source,cypher]
+----
+// mark each state with its winning party as a label
+match (s:P:State)<--(i:Vote)--(:Issue)--(p:Person:Country) where p.name ="Clinton Hillary"
+match (s)<--(i2:Vote)--(:Issue)--(p2:Person:Country) where p2.name = "Trump Donald"
+with s, toInt(i.percent*s.reporting/100.0) as effDemPercent, toInt(i2.percent*s.reporting/100.0) as effRepPercent
+call apoc.create.addLabels(s, case when effDemPercent > effRepPercent then ["Democrat"] else ["Republican"] end) yield node
+return s;
+----
+
+=== Visual results
+
+[source,cypher]
+----
+MATCH (s:P:State)-[b:BORDERS]-(s2) return *
+----
+
+== Use Cases
+
+=== Results at county level
+
+[source,cypher]
+----
+match (s:State {state:"CA"})<-[:IN_STATE]-(a:Area)<--(v:Vote)--(i:Issue)
+where a.name = "San Francisco"
+// and s.race='P'
+return s.race, i.name,v.votes*s.reporting;
+----
+
+=== Results at state level
+
+[source,cypher]
+----
+match (s:State {state:"CA"})<--(v:Vote)--(i:Issue)
+return s.race, i.name,(v.votes)*s.reporting as votes, v.votes, s.college, v.percent
+order by votes desc;
+----
+
+
+=== Results at Congressional district level
+
+TODO: add districts
+
+== Turnout
+
+First, we need to determine the “Voting-Eligible Population” for each state. This is the number of residents over the age of 18, adjusted for non-eligible
+
+[source,cypher]
+----
+// source: http://www.electproject.org/2016g
+LOAD CSV WITH HEADERS FROM "file:///populations.csv" AS row
+MATCH (s:State {name: row.State})
+SET s.voting_eligible_pop = row.`Voting-Eligible Population (VEP)`;
+----
+
+===
+
+== SQL Comparison Queries
+
+=== List all U.S. House races and candidates:
+
+.SQL
+----
+SELECT DISTINCT RaceCountyTable.SeatNumber, RaceCountyTable.OfficeName, RaceCountyTable.SeatName, CandidateTable.FirstName, CandidateTable.LastName FROM RaceCountyTable, ResultsTable, CandidateTable WHERE RaceCountyTable.OfficeID = 'H' AND
+RaceCountyTable.RaceCountyID = ResultsTable.RaceCountyID AND ResultsTable.CandidateID = CandidateTable.CandidateID
+ORDER BY RaceCountyTable.SeatNumber
+----
+
+.Cypher
+[source,cypher]
+----
+TODO: cypher
+----
+
+
+
+
+
+
