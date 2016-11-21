@@ -1,5 +1,5 @@
 echo "Usage: sh render.sh [publish]"
-GUIDES=..
+GUIDES=../neo4j-guides
 
 function render {
 $GUIDES/run.sh election-guide.adoc index.html +1 "$@"
@@ -17,5 +17,5 @@ else
   URL=localhost:8001/sandbox/us-elections-2016
   render http://$URL
   echo "Starting Websever at $URL Ctrl-c to stop"
-  python $GUIDES/http.py
+  python $GUIDES/http-server.py
 fi
