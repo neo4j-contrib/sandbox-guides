@@ -5,7 +5,7 @@ create index on :State(state);
 
 // go over all states
 call apoc.periodic.iterate('
-UNWIND ["AL","AK","AZ","AR","CA","CO","CT","DE","DC" , "FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"] as state RETURN state', '
+UNWIND ["AL","AK","AZ","AR","CA","CO","CT","DE","DC","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"] as state RETURN state', '
 
 with "http://origin-east-elections.politico.com/mapdata/2016/elections-ftp-download/"+{state}+".txt" as url
 load csv from url as row fieldterminator ";"
@@ -75,6 +75,11 @@ AS college
 UNWIND keys(college) as state
 MATCH (s:State {state:state})
 SET s.votes = college[state];
+
+// Set NH winner for president
+MATCH (n:Election {name:"President"})<-[:RUNS_IN]-(c:Candidate {npid: "1746"})<-[:FOR]-
+      (v:Vote)<-[:REPORTS]-(s:State {state: "NH"})
+SET v.winner = true
 
 
 // add eligible voter / population for each state
