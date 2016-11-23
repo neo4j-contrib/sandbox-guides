@@ -1,26 +1,48 @@
 = US Election Result Guide
 
-== Datamodel
+== Exploring 2016 US Election Data In Neo4j
 
-image::{img}/datamodel.png[float=right]
+image::{img}/datamodel_sm.png[float=right]
 
-TODO: datamodel
+This guide show how we can model and query US Election data in Neo4j. See [this blog post] for information about importing the data into Neo4j.
+
+
+The following slides will cover:
+
+* Exploratory Queries
+* Election results
+* Visualization
+* Use Cases
+* SQL To Cypher Queries
+
 
 == Exploratory Queries
 
-=== NY
+=== The Meta Graph
+
+We can inspect the meta model of our graph:
+
+[source,cypher]
+----
+CALL apoc.meta.graph()
+----
+
+=== New York - Presidential Election
+
+Let's view some data for the Presidential election from New York voters:
 
 [source,cypher]
 ----
 MATCH (n:Election {name:"President"})<-[:RUNS_IN]-(c:Candidate)<-[:FOR]-
       (v:Vote)<-[:REPORTS]-(a:Area)-[:IS_IN]->(s:State {state:"NY"})
 RETURN *
-
 ----
 
 == Election Results
 
 === Results Query
+
+To compute results, we use the same query structure we used per state before, just aggregate over the votes:
 
 [source,cypher]
 ----
@@ -28,10 +50,12 @@ MATCH (n:Election {name:"President"})<-[:RUNS_IN]-(c:Candidate)<-[:FOR]-
       (v:Vote)<-[:REPORTS]-(a:Area)-[:IS_IN]->(s:State)
 RETURN c.name as candidate, s.state as state, sum(v.votes) as votes
 ORDER BY state, candidate;
+
 ----
 
 We can compute the total votes per state upfront and use that to compute percentages.
 
+.Note that the data is current as of 11/11/16 so not all votes are available in the dataset
 [source,cypher]
 ----
 MATCH (n:Election {name:"President"})<-[:RUNS_IN]-(c:Candidate)<-[:FOR]-
@@ -39,72 +63,106 @@ MATCH (n:Election {name:"President"})<-[:RUNS_IN]-(c:Candidate)<-[:FOR]-
 WITH c, s, sum(v.votes) as votes
 WITH s, sum(votes) as total, collect({candidate:c,votes:votes}) as data
 UNWIND data as vote
-RETURN s.state as state, total, vote.candidate.name, vote.votes as votes, round(1000.0*vote.votes/total)/10.0 as percent
-ORDER BY percent desc, state;
+RETURN s.state as state, total, vote.candidate.name as name, vote.votes as votes, round(1000.0*vote.votes/total)/10.0 as percent, round(s.reporting) as reporting
+ORDER BY total desc, percent desc;
 ----
 
-=== Set results as lable
-
-[source,cypher]
-----
-// mark each state with its winning party as a label
-match (s:P:State)<--(i:Vote)--(:Issue)--(p:Person:Country) where p.name ="Clinton Hillary"
-match (s)<--(i2:Vote)--(:Issue)--(p2:Person:Country) where p2.name = "Trump Donald"
-with s, toInt(i.percent*s.reporting/100.0) as effDemPercent, toInt(i2.percent*s.reporting/100.0) as effRepPercent
-call apoc.create.addLabels(s, case when effDemPercent > effRepPercent then ["Democrat"] else ["Republican"] end) yield node
-return s;
-----
-
-=== Visual results
+=== Compute electoral college votes
 
 [source,cypher]
 ----
-MATCH (s:P:State)-[b:BORDERS]-(s2) return *
+MATCH (n:Election {name:"President"})<-[:RUNS_IN]-(c:Candidate)<-[:FOR]-
+      (v:Vote {winner:true})<-[:REPORTS]-(s:State)
+RETURN c.name, c.party, sum(s.votes) as votes
+ORDER BY votes DESC;
+----
+
+=== Popular vote by state
+
+[source,cypher]
+----
+// popular vote by state
+MATCH (n:Election {name:"President"})<-[:RUNS_IN]-(c:Candidate)
+<-[:FOR]-(v:Vote {popularWinner:true})<-[:REPORTS]-(s:State)
+RETURN s.state, c.name, c.party, v.votes as votes
+ORDER BY s.state, votes DESC;
+
+----
+
+== Visualization
+
+=== Set results as label
+
+We can update the graph model and set winner's party label or visualization:
+
+[source,cypher]
+----
+MATCH (n:Election {name:"President"})<-[:RUNS_IN]-(c:Candidate)<-[:FOR]-
+      (v:Vote {winner:true})<-[:REPORTS]-(s:State)
+call apoc.create.addLabels(s, [c.party]) yield node
+RETURN s;
+----
+
+Now we have a :Dem and :GOP label on each state and can color them in blue and red to see result by state visualized:
+
+[source,cypher]
+----
+MATCH (s:State)-[b:BORDERS]-(s2) return *
 ----
 
 == Use Cases
 
-=== Results at county level
+=== Where did incumbents win / lose?
 
 [source,cypher]
 ----
-match (s:State {state:"CA"})<-[:IN_STATE]-(a:Area)<--(v:Vote)--(i:Issue)
-where a.name = "San Francisco"
-// and s.race='P'
-return s.race, i.name,v.votes*s.reporting;
+match (s:State {state: "CA"})-[:REPORTS]->(v:Vote)-[:FOR]->
+(incumbent:Candidate {incumbent:'1'})-[:RUNS_IN]->(e:Election)
+match (s)-[:REPORTS]->(v2:Vote)-[:FOR]->
+(c2:Candidate {incumbent:'0'})-[:RUNS_IN]->(e)
+where v2.votes > v.votes
+return s.name, e.name, incumbent.name, v.votes, collect(distinct {candidate:c2.name,votes:v2.votes,margin:v2.votes-v.votes}) as winners;
+
 ----
 
-=== Results at state level
+=== Turnout
 
-[source,cypher]
-----
-match (s:State {state:"CA"})<--(v:Vote)--(i:Issue)
-return s.race, i.name,(v.votes)*s.reporting as votes, v.votes, s.college, v.percent
-order by votes desc;
-----
-
-
-=== Results at Congressional district level
-
-TODO: add districts
-
-== Turnout
-
-First, we need to determine the “Voting-Eligible Population” for each state. This is the number of residents over the age of 18, adjusted for non-eligible
+First, we need to determine the “Voting-Eligible Population” for each state. This is the number of residents over the age of 18, adjusted for non-eligible voters (such as non-citizens, prisoners, etc).
 
 [source,cypher]
 ----
 // source: http://www.electproject.org/2016g
-LOAD CSV WITH HEADERS FROM "file:///populations.csv" AS row
-MATCH (s:State {name: row.State})
-SET s.voting_eligible_pop = row.`Voting-Eligible Population (VEP)`;
+LOAD CSV WITH HEADERS FROM "https://dl.dropboxusercontent.com/u/67572426/data/populations.csv" AS row
+MATCH (s:State {state: row.`State Abv`})
+SET s.voters = toInt(replace(row.`Voting-Eligible Population (VEP)`,',','')),
+        s.population = toInt(replace(row.`Voting-Age Population (VAP)`,',',''));
 ----
 
-===
+Then we can inspect turnout in each state:
+
+.Note that the data is current as of 11/11/16 and does not include votes reported after that date
+[source,cypher]
+----
+MATCH (s:State)-[:REPORTS]->(v:Vote)-[:FOR]->
+(c:Candidate)-[:RUNS_IN]->(e:Election {name:"President"})
+with s.state as state, s.voters as voters, sum(v.votes) as votes
+return state, voters, votes, round(100.0*votes/voters) as turnout
+order by votes desc;
+----
 
 == SQL Comparison Queries
 
-=== List all U.S. House races and candidates:
+http://wabi.tv/wp-content/uploads/2014/10/AP-Election-Online-APEO-FTP-Services_2012.pdf[This document] describes how to model and query election results data using a relational database model and SQL. It is interesting to compare how to query the data using SQL and Cypher. In the next few slides we'll see how to query the data using SQL and how we can answer the same question using Cypher for the following questions:
+
+* List all U.S. House races and candidates
+* List all the races in the state of California
+* List all the candidates in the state of California
+* List all races in which Steve Bullock is running
+* List all candidates running in races in San Mateo county
+* List results for all races in the state of California
+
+
+== SQL to Cypher: List all U.S. House races and candidates:
 
 .SQL
 ----
@@ -116,11 +174,103 @@ ORDER BY RaceCountyTable.SeatNumber
 .Cypher
 [source,cypher]
 ----
-TODO: cypher
+// List all U.S. House races and candidates
+MATCH (e:Election)<-[:RUNS_IN]-(c:Candidate)<-[:FOR]-(:Vote)<-[:REPORTS]-(s:State)
+WHERE e. name = "U.S. House"
+RETURN s.state AS state, c.seat_no AS district, c.name AS candidate
+ORDER BY state, district;
+----
+
+== SQL to Cypher: List all the races in the state of California
+
+.SQL
+----
+SELECT DISTINCT RaceCountyTable.SeatNumber, RaceCountyTable.OfficeName, RaceCountyTable.SeatName
+FROM RaceCountyTable, ResultsTable, CandidateTable WHERE RaceCountyTable.StatePostal = 'CA' AND
+RaceCountyTable.RaceCountyID = ResultsTable.RaceCountyID AND ResultsTable.CandidateID = CandidateTable.ID
+ORDER BY RaceCountyTable.SeatNumber
+----
+
+.Cypher
+[source,cypher]
+----
+// List all the races in the state of California
+MATCH (e:Election)<-[:RUNS_IN]-(c:Candidate)<-[:FOR]-(:Vote)<-[:REPORTS]-(s:State)
+WHERE s.state = "CA"
+RETURN DISTINCT e.name,s.state AS state, c.seat_no AS district;
+----
+
+== SQL to Cypher: List all the candidates running in the state of California
+
+.SQL
+----
+SELECT DISTINCT RaceCountyTable.SeatNumber, RaceCountyTable.OfficeName, RaceCountyTable.SeatName, CandidateTable.FirstName, CandidateTable.LastName FROM RaceCountyTable, ResultsTable, CandidateTable WHERE RaceCountyTable.StatePostal = 'CA' AND
+RaceCountyTable.RaceCountyID = ResultsTable.RaceCountyID AND ResultsTable.CandidateID = CandidateTable.CandidateID
+ORDER BY RaceCountyTable.SeatNumber
+----
+
+.Cypher
+[source,cypher]
+----
+// List all the candidates running in the state of California
+MATCH (e:Election)<-[:RUNS_IN]-(c:Candidate)<-[:FOR]-(v:Vote)<-[:REPORTS]-(s:State)
+WHERE s.state = "CA"
+RETURN DISTINCT c.name AS candidate, e.name AS office
 ----
 
 
+== SQL To Cypher: List all the races in which Steve Bullock is running
 
+.SQL
+----
+SELECT DISTINCT RaceCountyTable.OfficeName, RaceCountyTable.SeatName FROM RaceCountyTable, ResultsTable, CandidateTable WHERE RaceCountyTable.RaceCountyID = ResultsTable.RaceCountyID AND ResultsTable.CandidateID = CandidateTable.CandidateID AND CandidateTable.LastName = 'Bullock'
+----
+
+.Cypher
+[source,cypher]
+----
+// List all races in which Greg Gianforte is running
+MATCH (e:Election)<-[:RUNS_IN]-(c:Candidate)<-[:FOR]-(v:Vote)<-[:REPORTS]-(s:State)
+WHERE c.name CONTAINS "Steve Bullock"
+RETURN DISTINCT c.name AS candidate, e.name AS office, s.state AS state
+----
+
+
+== SQL To Cypher: List all candidates running in races in San Mateo county
+
+.SQL
+----
+SELECT CandidateTable.FirstName, CandidateTable.LastName FROM RaceCountyTable, ResultsTable, CandidateTable WHERE RaceCountyTable.CountyName = ‘San Mateo’ AND RaceCountyTable.RaceCountyID = ResultsTable.RaceCountyID AND ResultsTable.CandidateID = CandidateTable.CandidateID AND CandidateTable.FirstName IS NOT NULL
+----
+
+.Cypher
+[source,cypher]
+----
+// List all the candidates running in races in San Mateo county
+MATCH (e:Election)<-[:RUNS_IN]-(c:Candidate)<-[:FOR]-(v:Vote)<-[:REPORTS]-(s:Area)
+WHERE s.name = "San Mateo" AND c.name IS NOT NULL
+RETURN DISTINCT c.name AS candidate, e.name AS office
+----
+
+
+== SQL To Cypher: List results for all races in the state of California
+
+.SQL
+----
+SELECT DISTINCT RaceCountyTable.SeatNumber, RaceCountyTable.OfficeName, RaceCountyTable.SeatName, CandidateTable.FirstName, CandidateTable.LastName, RaceCountyTable.CountyName, ResultsTable.VoteCount
+FROM RaceCountyTable, ResultsTable, CandidateTable WHERE RaceCountyTable.StatePostal = 'CA' AND
+RaceCountyTable.RaceCountyID = ResultsTable.RaceCountyID AND ResultsTable.CandidateID = CandidateTable.CandidateID
+ORDER BY RaceCountyTable.SeatNumber, RaceCountyTable.OfficeName, ResultsTable.VoteCount DESC
+----
+
+.Cypher
+[source,cypher]
+----
+// List results for all races in the state of California
+MATCH (e:Election)<-[:RUNS_IN]-(c:Candidate)<-[:FOR]-(v:Vote)<-[:REPORTS]-(s:State)
+WHERE v.winner AND s.state = "CA"
+RETURN DISTINCT c.name AS candidate, e.name AS office, sum(v.votes) AS votes ORDER BY votes DESC
+----
 
 
 
