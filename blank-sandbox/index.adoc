@@ -1,0 +1,5 @@
+= Blank Sandbox
+
+== Importing Data
+
+This Sandbox is a completely vanilla instance of Neo4j.  We provide no additional data.  You may wish to https://neo4j.com/developer/guide-importing-data-and-etl/[import your own data].
