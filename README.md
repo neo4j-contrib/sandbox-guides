@@ -3,6 +3,7 @@
 ## Available Use Cases
 
 * us-elections-2016
+* blank-sandbox
 
 ## Render / deploy guides for a use case
 
