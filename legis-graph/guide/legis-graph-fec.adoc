@@ -1,0 +1,148 @@
+= Legis-graph + FEC filings
+
+== The Data Model
+
+=== FEC + US Congress
+
+image::{img}/lgfec-dm.png[]
+
+We've now extended the US Congress dataset to include data on campaign contributions from the FEC. We can now answer interesting questions by querying across both datasets.
+
+== Examine a single contribution
+
+image::{img}/lgfec-dm.png[]
+
+Let's look at a few contributions and the connections we have in the data.
+
+[source,cypher]
+----
+// FEC - examine single contribution
+MATCH (l:Legislator)-[:FUNDS]-(f:FECCommittee)<-[:MADE_TO]-(c:Contribution)<-[:MADE_CONTRIBUTION]-(cont:Contributor) WITH l, f, c, cont SKIP 4 LIMIT 2
+MATCH (cont)-[:LIVES_IN]->(city:City)
+MATCH (cont)-[:WORKS_FOR]->(e:Employer)
+MATCH (cont)-[:HAS_OCCUPATION]->(o:Occupation)
+RETURN *
+----
+
+== FEC Contributions by political party
+
+image::{img}/lgfec-dm.png[]
+
+For all of the contributions that are funding a specific legislator, what is the dollar amount of the total contributions by political party?
+
+[source,cypher]
+----
+// FEC - Contributions by party
+MATCH (cont:Contribution)-[:MADE_TO]->(com:FECCommittee)-[:FUNDS]->(cand:Legislator)
+RETURN sum(cont.amount) AS total, cand.party ORDER BY total DESC
+----
+
+== FEC Contributions for a certain occupation by party
+
+image::{img}/lgfec-dm.png[]
+
+What are the political parties of the candidates whose reelection campaigns are receiving donations from professional bingo players?
+
+[source,cypher]
+----
+// FEC - Contributions for a certain occupation by party
+MATCH (o:Occupation) WHERE o.name CONTAINS "BINGO"
+MATCH (o)-[:HAS_OCCUPATION]-(con:Contributor)-[:MADE_CONTRIBUTION]->(cont:Contribution)-[:MADE_TO]->(com:FECCommittee)-[:FUNDS]->(cand:Legislator)
+RETURN sum(cont.amount) AS total, cand.party ORDER BY total DESC
+----
+
+
+== What companies' employees made most contributions?
+
+What are the employers with employees making the most contributinons?
+
+image::{img}/lgfec-dm.png[]
+
+[source,cypher]
+----
+// FEC - What companies' employees made most contributions
+MATCH (e:Employer)<-[:WORKS_FOR]-(:Contributor)-[:MADE_CONTRIBUTION]-(cont:Contribution)
+WITH sum(cont.amount) AS total, e
+RETURN e.name, total ORDER BY total DESC LIMIT 100
+----
+
+== Renaissance technologies
+
+image::{img}/lgfec-dm.png[]
+
+Employees of link::http://www.institutionalinvestor.com/article/3592315/asset-management-hedge-funds-and-alternatives/renaissance-technologies-robert-mercer-maintains-trump-support.html[Renaaissance Technologies] appear to be significant contributors. Let's dig into the contrbutions of Renaissance Technologies employees.
+
+=== Examine a few contributions from RENAISSANCE TECHNOLOGIES employees
+
+[source,cypher]
+----
+// FEC - Renaissance Technologies contributions
+MATCH (e:Employer)<-[:WORKS_FOR]-(cont:Contributor)-[:MADE_CONTRIBUTION]->(c:Contribution)-[:MADE_TO]->(f:FECCommittee)-[:FUNDS]->(l:Legislator), (o:Occupation)-[:HAS_OCCUPATION]-(cont)
+WHERE e.name CONTAINS "RENAISSANCE TECHNOLOGIES"
+RETURN * LIMIT 30
+----
+
+=== RENAISSANCE TECHNOLOGIES contributions by political party
+
+[source,cypher]
+----
+// FEC - Renaissance Technologies contributions by party
+MATCH (e:Employer)<-[:WORKS_FOR]-(cont:Contributor)-[:MADE_CONTRIBUTION]->(c:Contribution)-[:MADE_TO]->(f:FECCommittee)-[:FUNDS]->(l:Legislator), (o:Occupation)-[:HAS_OCCUPATION]-(cont)
+WHERE e.name CONTAINS "RENAISSANCE TECHNOLOGIES"
+MATCH (l)-[:IS_MEMBER_OF]->(p:Party)
+RETURN sum(c.amount) AS total, p.name ORDER BY total DESC
+----
+
+=== RENAISSANCE TECHNOLOGIES contributions by Congressional Committee
+
+[source,cypher]
+----
+// FEC - Renaissance Technologies contributions by committee
+MATCH (e:Employer)<-[:WORKS_FOR]-(cont:Contributor)-[:MADE_CONTRIBUTION]->(c:Contribution)-[:MADE_TO]->(f:FECCommittee)-[:FUNDS]->(l:Legislator), (o:Occupation)-[:HAS_OCCUPATION]-(cont)
+WHERE e.name CONTAINS "RENAISSANCE TECHNOLOGIES"
+MATCH (l)<-[:SERVES_ON]->(committee:Committee)
+RETURN sum(c.amount) AS total, committee.name ORDER BY total DESC LIMIT 25
+----
+
+== Contributions for NY legislators
+
+image::{img}/lgfec-dm.png[]
+
+What is the total dollar amount that each NY legislator has received (in this dataset)?
+
+[source,cypher]
+----
+// legis-graph-FEC - Contributions for NY legislators
+MATCH (s:State {code:"NY"})<-[:REPRESENTS]-(l:Legislator)
+MATCH (l)<-[:FUNDS]-(:FECCommittee)-[:MADE_TO]-(c:Contribution)
+RETURN l.firstName + " " + l.lastName AS legislator,
+   sum(c.amount) AS total ORDER BY total DESC;
+----
+
+== Contributions for NY legislators by employer
+
+image::{img}/lgfec-dm.png[]
+
+
+
+[source,cypher]
+----
+// legis-graph-FEC - Contributions for NY legislators by Employer
+MATCH (s:State {code:"NY"})<-[:REPRESENTS]-(l:Legislator)
+MATCH (l)<-[:FUNDS]-(:FECCommittee)-[:MADE_TO]-(c:Contribution)
+MATCH (c)<-[:MADE_CONTRIBUTION]-(cont:Contributor)-[:WORKS_FOR]-(e:Employer)
+RETURN sum(c.amount) AS total, e.name ORDER BY total DESC
+----
+
+== Contributions for NY legislators by occupation
+
+image::{img}/lgfec-dm.png[]
+
+[source,cypher]
+----
+// legis-graph-FEC - Contributions for NY legislators by Occupation
+MATCH (s:State {code:"NY"})<-[:REPRESENTS]-(l:Legislator)
+MATCH (l)<-[:FUNDS]-(:FECCommittee)-[:MADE_TO]-(c:Contribution)
+MATCH (c)<-[:MADE_CONTRIBUTION]-(cont:Contributor)-[:HAS_OCCUPATION]->(o:Occupation)
+RETURN sum(c.amount) AS total, o.name ORDER BY total DESC
+----

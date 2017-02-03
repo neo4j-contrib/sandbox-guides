@@ -1,0 +1,244 @@
+= FEC Import Exercise - Answers
+:csv-url: file:///
+
+== FEC Import - Data Model
+
+image::{img}/fec-dm.png[]
+
+We extend the US Congress dataset by adding campaign contributions to the datamodel. We'll leverage the `Legislator` nodes that already exist and try to connect `Legislator` nodes to the FEC Committees that are funding their re-election campaigns(not that FEC Committees are not the same as Congressional Committees!)
+
+// == Link candidates to FEC Committees
+
+// image::{img}/fec-dm.png[]
+
+// Now that we h
+
+// [source,cypher,subs=attributes]
+// ----
+// USING PERIODIC COMMIT
+// // Read from the CSV file that links candidates to committees
+// ... AS row FIELDTERMIANTOR '|'
+// MATCH (c:FECCommittee) WHERE ... // Look up the FECCommittee for this row`
+// MATCH (l:Legislator)  WHERE ... // How can we find the Legislator for this row?
+// MERGE ... // Create a relationship connecting the Legislator and the FECCommittee indicating this FECCommittee is funding the Legislator's reelection campaign
+// ...
+// ----
+
+
+// == Individual contributions
+
+// image::{img}/fec-dm.png[]
+
+// We have data about contributions made by individuals to FEC Committees. How should we model these contributions?
+
+// Let's add these contributions to our graph:
+
+// === The Individual Contributions File
+
+// [source,cypher,subs=attributes]
+// ----
+// LOAD CSV WITH HEADERS FROM "{csv-url}itcont_sm.txt" AS row FIELDTERMINATOR "|"
+// WITH row limit 10
+// RETURN row
+// ----
+
+// === Import Individual Contributions
+
+// Next we need to create the nodes and relationships for each contribution:
+
+// [source,cypher,subs=attributes]
+// ----
+// USING PERIODIC COMMIT
+// LOAD CSV WITH HEADERS FROM "{csv-url}itcont_sm.txt" AS row FIELDTERMINATOR "|"
+// ...
+// ----
+
+
+// == Adding FEC data
+
+// These queries won't actually work because the data has already been loaded, but this shows how you can load CSV data into Neo4j.
+
+
+== Add FEC Committees
+
+image::{img}/fec-dm.png[]
+
+Note that each row in the `cm.txt` file is defining an FEC Committee. These are entities like PACs, Super PACs, and direct candidate election committees. We'll want to create a node with the label `FECCommittee` for each committee.
+
+.cm.txt
+----
+CMTE_ID|CMTE_NM|TRES_NM|CMTE_ST1|CMTE_ST2|CMTE_CITY|CMTE_ST|CMTE_ZIP|CMTE_DSGN|CMTE_TP|CMTE_PTY_AFFILIATION|CMTE_FILING_FREQ|ORG_TP|CONNECTED_ORG_NM|CAND_ID
+C00000059|HALLMARK CARDS PAC|DEAN RODENBOUGH|2501 MCGEE|MD#288|KANSAS CITY|MO|64108|U|Q|UNK|M|C||
+C00000422|AMERICAN MEDICAL ASSOCIATION POLITICAL ACTION COMMITTEE|WALKER, KEVIN|25 MASSACHUSETTS AVE, NW|SUITE 600|WASHINGTON|DC|20001|B|Q||M|M|AMERICAN MEDICAL ASSOCIATION|
+C00000489|D R I V E POLITICAL FUND CHAPTER 886|TOM RITTER|3528 W RENO||OKLAHOMA CITY|OK|73107|U|N||Q|L|TEAMSTERS LOCAL UNION 886|
+C00000547|KANSAS MEDICAL SOCIETY POLITICAL ACTION COMMITTEE|C. RICHARD BONEBRAKE, M.D.|623 SW 10TH AVE||TOPEKA|KS|66612|U|Q|UNK|Q|T||
+C00000638|INDIANA STATE MEDICAL ASSOCIATION POLITICAL ACTION COMMITTEE|VIDYA KORA, M.D.|322 CANAL WALK, CANAL LEVEL||INDIANAPOLIS|IN|46202|U|Q||Q|M||
+C00000729|AMERICAN DENTAL ASSOCIATION POLITICAL ACTION COMMITTEE|HARRISON, THOMAS C. DR|1111 14TH STREET, NW|SUITE 1100|WASHINGTON|DC|20005|B|Q|UNK|M|M|AMERICAN DENTAL ASSOCIATION|
+...
+----
+
+Note that the fields here are delimited by pipe characters (`|`) not commas (`,`). So we'll need to specify `FIELDTERMINATOR "|"` in our `LOAD CSV` statement. For more information about each of these fields see the data dictionary for the link:http://www.fec.gov/finance/disclosure/metadata/DataDictionaryCommitteeMaster.shtml[FEC Committee Master file].
+
+We'll use the node label `FECCommittee` to represent the FEC Committees. By examaming the file we see that `CMTE_ID` is a field that uniquely identifies each `FECCommittee`. We want to enforce some data integrity constraints to ensure we do not create duplicate `FECCommittee` nodes. We do this by creating a uniqueness constraint:
+
+[source,cypher]
+----
+CREATE CONSTRAINT ON (c:FECCommittee) ASSERT c.committee_id IS UNIQUE;
+----
+
+Next we create one `FECCommittee` node for each row in the CSV file, setting the relevant properties that interest us:
+
+.Create `FECCommittee` nodes
+[source,cypher,subs=attributes]
+----
+LOAD CSV WITH HEADERS FROM "{csv-url}cm.txt" AS row FIELDTERMINATOR "|"
+CREATE (c:FECCommittee {committee_id: row.CMTE_ID})
+SET c.name = row.CMTE_NAME,
+    c.designation = row.CMTE_DSGN,
+    c.committee_type = row.CMTE_TP,
+    c.committee_party = row.CMTE_PTY_AFFILIATION,
+    c.category = row.ORG_TP
+----
+
+== Link FEC Committee to Legislators
+
+image::{img}/fec-dm.png[]
+
+The file `ccl.txt` contains links from the the FEC Committee to the candidate that it is explicitly funding. More information on the contents of this file are available in the link:http://www.fec.gov/finance/disclosure/metadata/DataDictionaryCandCmteLinkage.shtml[FEC CCL data dictionary.] The FEC Committee is identified by the field `CMTE_ID`, which we've stored on our `FECCommittee` nodes as `committee_id`. The FEC uses an "FEC ID" to refer to candidates. Because each candidate can have more than one FEC ID, we've stored these as an array of strings on each `Legislator` node.
+
+.ccl.txt
+----
+CAND_ID|CAND_ELECTION_YR|FEC_ELECTION_YR|CMTE_ID|CMTE_TP|CMTE_DSGN|LINKAGE_ID
+H0AK00097|2014|2016|C00525261|H|P|201860
+H0AL02087|2016|2016|C00462143|H|P|201861
+H0AL02087|2016|2016|C00493783|H|J|201862
+H0AL05049|2008|2016|C00239038|H|P|201863
+H0AL05163|2016|2016|C00464149|H|P|201864
+----
+
+As we iterate through the `ccl.txt` file we need to look up the `FECCommittee` node we've just created and then check if we have a `Legislator` node that matches the `CAND_ID` field in row. We'll do this by comparing the `CAND_ID` value to the `fecIDs` on the `Legislator` node. If we find a match, then we create a `FUNDS` relationship connecting the `FECCommittee` node and the `Legislator` node:
+
+
+[source,cypher,subs=attributes]
+----
+// Link candidates to committees
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM "{csv-url}ccl.txt" AS row FIELDTERMINATOR "|"
+MATCH (c:FECCommittee) WHERE c.committee_id = row.CMTE_ID
+MATCH (l:Legislator) WHERE l.fecIDs CONTAINS row.CAND_ID
+CREATE (c)-[:FUNDS]->(l);
+----
+
+== Individual contributions to committees
+
+image::{img}/fec-dm.png[]
+
+The file `itcont_sm.txt` contains 10,000 individual contributions to FECCommittees. The data dictionary for this file is available link:http://www.fec.gov/finance/disclosure/metadata/DataDictionaryContributionsbyIndividuals.shtml[here].
+
+.itcont_sm.txt
+----
+CMTE_ID|AMNDT_IND|RPT_TP|TRANSACTION_PGI|IMAGE_NUM|TRANSACTION_TP|ENTITY_TP|NAME|CITY|STATE|ZIP_CODE|EMPLOYER|OCCUPATION|TRANSACTION_DT|TRANSACTION_AMT|OTHER_ID|TRAN_ID|FILE_NUM|MEMO_CD|MEMO_TEXT|SUB_ID
+C00004606|N|M4|P|15951124869|15|IND|ARNOLD, ROBERT|MCPHERSON|KS|67460|SELF|OPTOMETRIST|03102015|1000||SA11AI.20747|1002259|||4041320151241796098
+C00004606|N|M4|P|15951124869|15|IND|BICKLE, DON|HAYS|KS|67601|RETIRED|RETIRED|03302015|1000||SA11AI.20772|1002259|||4041320151241796099
+C00004606|N|M4|P|15951124869|15|IND|ROSSMAN, RICHARD|OLATHE|KS|66051|CRAWFORD SALES COMPANY|BUSINESSMAN|03302015|250||SA11AI.20759|1002259|||4041320151241796100
+C00452383|N|M4|P|15951124897|15|IND|LLEWELLYN, CHARLES|FREDERICK|MD|21704|||03112015|500||SA11AI.25088|1002261|||4041320151241796102
+C00452383|N|M4|P|15951124897|15|IND|TYNES, TIMOTHY MR.|VERO BEACH|FL|329600595|||03022015|250||SA11AI.25074|1002261|||4041320151241796103
+C00452383|N|M4|P|15951124898|15|IND|WIESTER, GEORGIA MRS.|BUELLTON|CA|934279421|NONE|HOMEMAKER|03022015|200||SA11AI.25072|1002261|||4041320151241796104
+C00411116|N|M4|P|15970337992|15|IND|SADHWANI, ANAND|HAWTHORNE|CA|902506844|SPACEX|ANALYST - PROPULSION - LEAD|03302015|3000||AAEA0ACE31DD54D0F989|1002269|||4041320151241796127
+----
+
+=== Create contributions
+
+Iterate through the `itcont_sm.txt` file and create a `Contribution` node for each contribution. Connect this `Contribution` node to the relevant `FECCommittee`:
+
+[source,cypher,subs=attributes]
+----
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM "{csv-url}itcont_sm.txt" AS row FIELDTERMINATOR "|"
+CREATE (con:Contribution)
+    SET con.sub_id = row.SUB_ID,
+        con.amount = toFloat(row.TRANSACTION_AMT),
+        con.date = row.TRANSACTION_DT
+WITH row,con
+MATCH (c:FECCommittee) WHERE c.committee_id = row.CMTE_ID
+CREATE (con)-[:MADE_TO]->(c)
+----
+
+== The Contributor
+
+As we look through this file we see a few issues. First of all we see that we don't have a unique identifier for an individual contributor, we have only a name. We don't want to create duplicates, but we also don't want to make the assumption that every "Mike Jones" in the data is the same person. One compromise we can make is to create a synthetic field that is a combination of name and zip code to uniquely identify an individual:
+
+[source,cypher]
+----
+CREATE CONSTRAINT ON (c:Contributor) ASSERT c.namezip IS UNIQUE;
+----
+
+[source,cypher,subs=attributes]
+----
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM "{csv-url}itcont_sm.txt" AS row FIELDTERMINATOR "|"
+WITH row WHERE row.NAME IS NOT NULL AND row.ZIP_CODE IS NOT NULL // only include rows where we have a contributor name and zip code
+MERGE (c:Contributor {namezip: row.NAME + row.ZIP_CODE})
+ON CREATE SET c.name = row.NAME,
+              c.zip_code = row.ZIP_CODE
+----
+
+Now that we've created our contributor nodes, we need to connect them to the `Contribution` nodes. To do this we'll iterate through the `itcont_sm.txt` file again, looking up the `Contribution` and `Contributor` nodes, then creating a relationships connecting them. We want this lookup to be fast to we want to make sure an index is used for this lookup. We can use the `:schema` command to view the indexes we have online.
+
+We see that we have an index on `:Contributor(namezip)` (which we created when adding the uniqueness constraint) but not on the `Contribution` label. We can add an index, in this case on the `sub_id` property of `Contribution`:
+
+[source,cypher]
+----
+CREATE CONSTRAINT ON (c:Contribution) ASSERT c.sub_id IS UNIQUE;
+----
+
+Now we can connect `Contribution` and `Contributor`:
+
+[source,cypher,subs=attributes]
+----
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM "{csv-url}itcont_sm.txt" AS row FIELDTERMINATOR "|"
+MATCH (con:Contributor) WHERE con.namezip = row.NAME + row.ZIP_CODE
+MATCH (c:Contribution) WHERE c.sub_id = row.SUB_ID
+CREATE (con)-[:MADE_CONTRIBUTION]->(c)
+----
+
+== The Contributor - Employer, Occupation, and State
+
+We also want to connect `Contributor` to the State they live in (remember state nodes were already created in the US Congress data), their Employer and Occupation. For Employer and Occupation we only have a single string value, so we'll treat these as unique (we'll see how we can improve on the data quality issues here in a later section).
+
+[source,cypher]
+----
+CREATE CONSTRAINT ON (o:Occupation) ASSERT o.name IS UNIQUE;
+----
+
+[source,cypher]
+----
+CREATE CONSTRAINT ON (e:Employer) ASSERT e.name IS UNIQUE;
+----
+
+Now we'll create the Occupation and Employer nodes, using the `MERGE` keyword to avoid creating duplicates.
+
+[source,cypher,subs=attributes]
+----
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM "{csv-url}itcont_sm.txt" AS row FIELDTERMINATOR "|"
+WITH row WHERE row.OCCUPATION IS NOT NULL AND row.EMPLOYER IS NOT NULL // filter on rows that have an Employer and Occupation value
+MERGE (o:Occupation {name: row.OCCUPATION})
+MERGE (e:Employer {name: row.EMPLOYER})
+----
+
+And connect the `Contributor`:
+
+[source,cypher,subs=attributes]
+----
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM "{csv-url}itcont_sm.txt" AS row FIELDTERMINATOR "|"
+MATCH (con:Contributor) WHERE con.namezip = row.NAME + row.ZIP_CODE
+MATCH (s:State) WHERE s.code = row.STATE
+MATCH (e:Employer) WHERE e.name = row.EMPLOYER
+MATCH (o:Occupation) WHERE o.name = row.OCCUPATION
+MERGE (con)-[:LIVES_IN]->(s)
+MERGE (con)-[:WORKS_FOR]->(e)
+MERGE (con)-[:HAS_OCCUPATION]->(o)
+----

@@ -1,0 +1,79 @@
+= Legis-graph - Exploring US Congress as a Graph
+
+== The Data Model
+
+image::https://raw.githubusercontent.com/legis-graph/legis-graph/master/img/datamodel.png[float=right]
+
+The data for this example comes from Govtrack.us
+
+//This is the basic data model:
+//
+//* a `+(:Intermediary)-[:INTERMEDIARY_OF]->(:Entity)+`
+//* an `+(:Officer)-[:OFFICER_OF]->(:Entity)+`
+//* an `+(:Officer)-[:SHAREHOLDER_OF]->(:Entity)+`
+//* an `+(:Officer)-[:REGISTERED_ADDRESS]->(:Address)+`
+//* an `+()-[:SIMILAR_NAME_AND_ADDRESS]->()+`
+
+
+== Who represents NY?
+
+[source,cypher]
+----
+// Who represents NY?
+MATCH (s:State)<-[:REPRESENTS]-(l:Legislator)
+WHERE s.code = "NY"
+RETURN s,l
+----
+
+== Who represents NY? - Party and legislative body
+
+[source,cypher]
+----
+// Who represents NY? - Party and legislative body
+MATCH (s:State)<-[:REPRESENTS]-(l:Legislator)
+WHERE s.code = "NY"
+MATCH (p:Party)<-[:IS_MEMBER_OF]-(l)-[:ELECTED_TO]->(b:Body)
+RETURN s,l,p,b
+----
+
+== Charles Schumer's Committees
+
+[source,cypher]
+----
+// Charles Schumer's committees
+MATCH (l:Legislator) WHERE l.firstName = "Charles" AND l.lastName = "Schumer"
+MATCH (l)-[:SERVES_ON]->(c:Committee)
+RETURN l, c
+----
+
+
+== Examine a single bill for Charles Schumer
+[source,cypher]
+----
+// Examine a single bill for Charles Schumer
+MATCH (l:Legislator) WHERE l.firstName = "Charles" AND l.lastName = "Schumer"
+MATCH (l)-[:SERVES_ON]->(c:Committee)<-[:REFERRED_TO]-(b:Bill)
+MATCH (b)-[:DEALS_WITH]->(subj:Subject)
+RETURN * LIMIT 5
+----
+
+== Over what topics does Charles Schumer have influence?
+[source,cypher]
+----
+// Over what topics does Charles Schumer have inluence?
+MATCH (l:Legislator) WHERE l.firstName = "Charles" AND l.lastName = "Schumer"
+MATCH (l)-[:SERVES_ON]->(c:Committee)<-[:REFERRED_TO]-(b:Bill)
+MATCH (b)-[:DEALS_WITH]->(subj:Subject)
+RETURN subj, collect(DISTINCT c.name) AS committees, count(*) AS num ORDER BY num DESC LIMIT 25
+----
+
+== What are topics of bills sponsored by Charles Schumer?
+[source,cypher]
+----
+// What are the topics of Bills sponsored by Charles Schumer
+MATCH (l:Legislator) WHERE l.firstName = "Charles" AND l.lastName = "Schumer"
+MATCH (l)<-[:SPONSORED_BY]-(b:Bill)
+MATCH (b)-[:DEALS_WITH]->(subj:Subject)
+RETURN subj, count(*) AS num ORDER BY num DESC LIMIT 25
+----
+
