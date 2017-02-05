@@ -17,12 +17,12 @@ $GUIDES/run.sh fec-import-exerise-answers.adoc fecimportanswers.html +1 "$@"
 
 if [ "$1" == "publish" ]; then
   URL=guides.neo4j.com/sandbox/legis-graph
-  render http://$URL -a csv-url=https://raw.githubusercontent.com/neo4j-contrib/sandbox-guides/master/legis-graph/data/ -a env-training
+  render http://$URL -a csv-url=http://guides.neo4j.com/legis-graph/data/ -a env-training
   if hash aws 2>/dev/null; then
-	  aws s3 cp --acl public-read --recursive --exclude "*" --include "*.html" --include "*.png" --include "*.jpg" --include "*.gif" s3://${URL}/
+	  aws s3 cp --acl public-read --recursive --exclude "*" --include "*.html" --include "*.png" --include "*.jpg" --include "*.gif" --include "*.csv" s3://${URL}/
 	  aws s3 cp --acl public-read index.html s3://${URL}
   else
-  	s3cmd put --recursive -P *.html img s3://${URL}/
+  	s3cmd put --recursive -P *.html img data s3://${URL}/
   	s3cmd put -P index.html s3://${URL}
   fi
   echo "Publication Done"
