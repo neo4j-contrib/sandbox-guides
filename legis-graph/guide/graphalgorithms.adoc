@@ -11,43 +11,42 @@ image::{img}/lg_datamodel.png[float=right]
 * Global graph algorithms with APOC
 
 
-== US Congress As A Graph
-
-image::{img}/lg_datamodel.png[float=right]
-
-=== Datamodel
-
-=== Import
-
-You can import this dataset into Neo4j using http://www.lyonwj.com/LazyWebCypher/?file=https://raw.githubusercontent.com/legis-graph/legis-graph/master/quickstart/114/legis_graph_import_114.cypher[this cypher script] or for a more in-depth data import walkthrough with
-
-* pass:a[<a play-topic='http://guides.neo4j.com/legisgraphimport.html'>this in-depth browser guide</a>]
-
+//== US Congress As A Graph
+//
+//image::{img}/lg_datamodel.png[float=right]
+//
+//=== Datamodel
+//
+//=== Import
+//
+//You can import this dataset into Neo4j using http://www.lyonwj.com/LazyWebCypher/?file=https://raw.githubusercontent.com/legis-graph/legis-graph/master/quickstart/114/legis_graph_import_114.cypher[this cypher script] or for a more in-depth data import walkthrough with
+//
+//* pass:a[<a play-topic='http://guides.neo4j.com/legisgraphimport.html'>this in-depth browser guide</a>]
+//
 // TODO: some exploratory queries
-
-=== Exploratory Queries
-
-.The meta model
-[source,cypher,subs=attributes]
-----
-CALL apoc.meta.graph()
-----
-
-.California legislators
-[source,cypher,subs=attributes]
-----
-MATCH (l:Legislator)-[:REPRESENTS]->(s:State {code: "CA"})
-MATCH (p:Party)<--(l)-->(c:Body)
-RETURN *
-----
-
+//
+//=== Exploratory Queries
+//
+//.The meta model
+//[source,cypher,subs=attributes]
+//----
+//CALL apoc.meta.graph()
+//----
+//
+//.California legislators
+//[source,cypher,subs=attributes]
+//----
+//MATCH (l:Legislator)-[:REPRESENTS]->(s:State {code: "CA"})
+//MATCH (p:Party)<--(l)-->(c:Body)
+//RETURN *
+//----
+//
 
 == Bill Cosponsorships
 
-// TODO: query show bill cosponorship
+Let's start by using bill cosponsorships for our analysis. A cosponorship occurs any time two legislators sponsor the same bill.
 
-// TODO: image for inferred relationshi
-
+.Cosponsors for a single Bill
 [source,cypher,subs=attributes]
 ----
 MATCH (b:Bill) WITH b LIMIT 1
@@ -55,11 +54,14 @@ MATCH (l:Legislator)<-[:SPONSORED_BY]-(b)
 RETURN *
 ----
 
+Bill cosponsorship is a specific example of the concept of *inferred relationships* or *triadic closures*. In this case we are inferring a relationship between two legislators who sponsor the same bill. 
+
 image::{img}/bill_cosponsors.png[]
 
 
 === Persisting Inferred Relationships
 
+.Persist all COSPONSORED relationships
 [source,cypher,subs=attributes]
 ----
 // Persist inferred COSPONSORED relationships
@@ -81,7 +83,7 @@ Degree centrality is the number of relationships connected to a specific node. I
 [source,cypher]
 ----
 MATCH (l:Legislator)
-RETURN l, size ((l)<-[:COSPONSORED]-()) AS degree ORDER BY degree DESC LIMIT 25
+RETURN l.firstName + " " + l.lastName AS legislator, size ((l)<-[:COSPONSORED]-()) AS degree ORDER BY degree DESC LIMIT 25
 ----
 
 === Weighted Degree Centrality
@@ -89,7 +91,7 @@ RETURN l, size ((l)<-[:COSPONSORED]-()) AS degree ORDER BY degree DESC LIMIT 25
 [source,cypher]
 ----
 MATCH (l:Legislator)-[r:COSPONSORED]-()
-RETURN l AS legislator, sum(r.weight) AS weightedDegree ORDER BY weightedDegree DESC LIMIT 25
+RETURN l.firstName + " " + l.lastName AS legislator, sum(r.weight) AS weightedDegree ORDER BY weightedDegree DESC LIMIT 25
 ----
 
 == Apoc Procedures
@@ -121,7 +123,7 @@ MATCH (l:Legislator)
 WITH collect(l) AS legislators
 CALL apoc.algo.betweenness(['COSPONSORED'], legislators, 'OUTGOING') YIELD node, score
 SET node.betweenness = score
-RETURN node AS legislator, score ORDER BY score DESC LIMIT 25
+RETURN node.firstName + " " + node.lastName AS legislator, score ORDER BY score DESC LIMIT 25
 ----
 
 
@@ -139,7 +141,7 @@ image::http://www.lyonwj.com/public/img/closeness-centrality.png[]
 MATCH (l:Legislator)
 WITH collect(l) AS legislators
 CALL apoc.algo.closeness(['COSPONSORED'], legislators, 'OUTGOING') YIELD node, score
-RETURN node AS legislator, score ORDER BY score DESC LIMIT 25
+RETURN node.firstName + " " + node.lastName AS legislator, score ORDER BY score DESC LIMIT 25
 ----
 
 
@@ -153,7 +155,7 @@ image::http://www.lyonwj.com/public/img/page-rank.png[]
 ----
 MATCH (l:Legislator) WITH collect(l) AS ls
 CALL apoc.algo.pageRank(ls) YIELD node, score
-RETURN node, score ORDER BY score DESC LIMIT 10
+RETURN node.firstName + " " + node.lastName AS legislator, score ORDER BY score DESC LIMIT 10
 ----
 
 == PageRank - Inferred Relationships
@@ -162,14 +164,15 @@ RETURN node, score ORDER BY score DESC LIMIT 10
 
 === Inferred Relationships and Political Influence
 
-The main sponsor of a bill can be said to have demonstrated political influence over cosponsors:
+The main sponsor of a bill can be said to have demonstrated political influence over cosponsors. We can find these inferred `INFLUENCED` relationships in the graph with this query:
 
+.Find inferred INFLUENCED relationships
 [source,cypher]
 ----
 MATCH (b:Bill)-[r:SPONSORED_BY]->(sponsor:Legislator)
-WHERE r.cosponsor = "0"
+WHERE r.cosponsor = False
 MATCH (b)-[s:SPONSORED_BY]->(cosponsor:Legislator)
-WHERE s.cosponsor = "1"
+WHERE s.cosponsor = True
 RETURN id(sponsor) AS source, id(cosponsor) AS target, count(*) AS weight ORDER BY weight DESC LIMIT 25
 ----
 
@@ -184,14 +187,15 @@ We can run PageRank using inferred relationships without actually persisting the
 //----
 //MATCH ()-[r:COSPONSORED]-()
 //DELETE r
-//----
+//----.
 
+.Run PageRank on inferred INFLUENCED relationships (that are not persisted in the graph)
 [source,cypher]
 ----
 CALL apoc.algo.pageRankWithCypher({iterations:20, write:true, node_cypher: 'MATCH (l:Legislator) RETURN id(l) AS id', rel_cypher:'MATCH (b:Bill)-[r:SPONSORED_BY]->(sponsor:Legislator)
-WHERE r.cosponsor = "0"
+WHERE r.cosponsor = False
 MATCH (b)-[s:SPONSORED_BY]->(cosponsor:Legislator)
-WHERE s.cosponsor = "1"
+WHERE s.cosponsor = True
 RETURN id(sponsor) AS source, id(cosponsor) AS target, count(*) AS weight ORDER BY weight DESC'})
 ----
 
@@ -206,55 +210,55 @@ RETURN l, COUNT(*) AS num ORDER BY l.pagerank DESC LIMIT 10
 ----
 
 
-== Community Detection
-
-image::http://www.lyonwj.com/public/img/community-1.png[]
-
-.Community detection algorithms seek to minimize **modularity**, the ratio of the number of relationships across clusters to thhe number of relationships within cluster.
-
-== Community Detection In Congress
-
-First we'll need to filter on only members of the Senate or House, since we won't see bill sponsorhips across bodies.
-
-[source,cypher]
-----
-MATCH (l:Legislator) WHERE l.type = "House"
-SET l:Rep
-----
-
-We can run the label propogation community detection algorithm using APOC:
-
-[source,cypher]
-----
-CALL apoc.algo.community(40,['Rep'],'partition','COSPONSORED','OUTGOING','weight',10000)
-----
-
-Now let's see what clusters we've found:
-
-[source,cypher]
-----
-MATCH (l:Rep) WHERE exists(l.partition)
-RETURN l.partition, COUNT(*) AS num
-ORDER BY num DESC
-----
-
-How do these clusters break across party lines?
-
-[source,cypher]
-----
+//== Community Detection
+//
+//image::http://www.lyonwj.com/public/img/community-1.png[]
+//
+//.Community detection algorithms seek to minimize **modularity**, the ratio of the number of relationships across clusters to thhe number of relationships within cluster.
+//
+//== Community Detection In Congress
+//
+//First we'll need to filter on only members of the Senate or House, since we won't see bill sponsorhips across bodies.
+//
+//[source,cypher]
+//----
+//MATCH (l:Legislator) WHERE l.type = "House"
+//SET l:Rep
+//----
+//
+//We can run the label propogation community detection algorithm using APOC:
+//
+//[source,cypher]
+//----
+//CALL apoc.algo.community(40,['Rep'],'partition','COSPONSORED','OUTGOING','weight',10000)
+//----
+//
+//Now let's see what clusters we've found:
+//
+//[source,cypher]
+//----
+//MATCH (l:Rep) WHERE exists(l.partition)
+//RETURN l.partition, COUNT(*) AS num
+//ORDER BY num DESC
+//----
+//
+//How do these clusters break across party lines?
+//
+//[source,cypher]
+//----
 MATCH (l:Rep)
-RETURN l.partition, l.party, COUNT(*) AS num
-----
-
-== Visualization
-
-image::{img}/community_viz.png[]
-
-* Node size determined by betweenness centrality `:Legislator(betweenness)`
-* Color determined by cluster `:Legislator(partitiion)`
-* Relationship thickness determined by cospnosor weight
-
-
+//RETURN l.partition, l.party, COUNT(*) AS num
+//----
+//
+//== Visualization
+//
+//image::{img}/community_viz.png[]
+//
+//* Node size determined by betweenness centrality `:Legislator(betweenness)`
+//* Color determined by cluster `:Legislator(partitiion)`
+//* Relationship thickness determined by cospnosor weight
+//
+//
 //== Visualization
 //
 //image::http://www.lyonwj.com/public/img/graph-of-thrones.png[]

@@ -4,18 +4,22 @@
 
 image::https://raw.githubusercontent.com/legis-graph/legis-graph/master/img/datamodel.png[float=right]
 
-The data for this example comes from Govtrack.us
+* The data for this example comes from https://www.govtrack.us/developers/data[Govtrack.us].
+* We have modeled US Congress (Bills, Legislators, Committees and their interactions) as a graph (see the data model diagram to the right)
 
-//This is the basic data model:
-//
-//* a `+(:Intermediary)-[:INTERMEDIARY_OF]->(:Entity)+`
-//* an `+(:Officer)-[:OFFICER_OF]->(:Entity)+`
-//* an `+(:Officer)-[:SHAREHOLDER_OF]->(:Entity)+`
-//* an `+(:Officer)-[:REGISTERED_ADDRESS]->(:Address)+`
-//* an `+()-[:SIMILAR_NAME_AND_ADDRESS]->()+`
+Throughout these interactive Neo4j Browser guides, when you see a Cypher embedded in the document you can click it to populate the query editor:
 
+.What is the meta model for this data set?
+[source,cypher]
+----
+CALL db.schema();
+----
 
-== Who represents NY?
+== Querying The Graph
+
+Now let's look at some interesting queries.
+
+=== Who represents NY?
 
 [source,cypher]
 ----
@@ -25,7 +29,7 @@ WHERE s.code = "NY"
 RETURN s,l
 ----
 
-== Who represents NY? - Party and legislative body
+=== Who represents NY? - Party and legislative body
 
 [source,cypher]
 ----
@@ -36,7 +40,9 @@ MATCH (p:Party)<-[:IS_MEMBER_OF]-(l)-[:ELECTED_TO]->(b:Body)
 RETURN s,l,p,b
 ----
 
-== Charles Schumer's Committees
+== Specific Legislator
+
+=== Charles Schumer's Committees
 
 [source,cypher]
 ----
@@ -47,7 +53,7 @@ RETURN l, c
 ----
 
 
-== Examine a single bill for Charles Schumer
+=== Examine a single bill for Charles Schumer
 [source,cypher]
 ----
 // Examine a single bill for Charles Schumer
@@ -57,7 +63,9 @@ MATCH (b)-[:DEALS_WITH]->(subj:Subject)
 RETURN * LIMIT 5
 ----
 
-== Over what topics does Charles Schumer have influence?
+== More Complex Traversals
+
+=== Over what topics does Charles Schumer have influence?
 [source,cypher]
 ----
 // Over what topics does Charles Schumer have inluence?
@@ -67,7 +75,7 @@ MATCH (b)-[:DEALS_WITH]->(subj:Subject)
 RETURN subj, collect(DISTINCT c.name) AS committees, count(*) AS num ORDER BY num DESC LIMIT 25
 ----
 
-== What are topics of bills sponsored by Charles Schumer?
+=== What are topics of bills sponsored by Charles Schumer?
 [source,cypher]
 ----
 // What are the topics of Bills sponsored by Charles Schumer
@@ -77,3 +85,4 @@ MATCH (b)-[:DEALS_WITH]->(subj:Subject)
 RETURN subj, count(*) AS num ORDER BY num DESC LIMIT 25
 ----
 
+In the next Neo4j Browser Guide we'll take a step back and learn how to construct graph patterns and query out graph using Cypher.
