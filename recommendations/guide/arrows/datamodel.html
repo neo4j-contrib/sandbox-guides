@@ -1,0 +1,30 @@
+<ul class="graph-diagram-markup" data-internal-scale="1" data-external-scale="1">
+  <li class="node" data-node-id="0" data-x="-198.0950813293457" data-y="-102.9208812713623">
+    <span class="caption">Movie</span><dl class="properties"><dt>title</dt><dd>"Kung Fu Panda 3",</dd><dt>year</dt><dd>2016,</dd><dt>runtime</dt><dd>95,</dd><dt>countries</dt><dd>["USA", "China"],</dd><dt>languages</dt><dd>["English", "Mandarin"]</dd><dt>released</dt><dd>2016-01-29,</dd><dt>plot</dt><dd>"Continuing his legendary adventures of awesomeness..."</dd></dl></li>
+  <li class="node" data-node-id="1" data-x="-713.8359146118164" data-y="335.88714599609375">
+    <span class="caption">Actor</span><dl class="properties"><dt>name</dt><dd>"Jack Black"</dd></dl></li>
+  <li class="node" data-node-id="2" data-x="48.04805946350098" data-y="-558.9976997375488">
+    <span class="caption">Genre</span><dl class="properties"><dt>name</dt><dd>"Action"</dd></dl></li>
+  <li class="node" data-node-id="3" data-x="501.05010986328125" data-y="-333.05368423461914">
+    <span class="caption">Movie</span><dl class="properties"><dt>title</dt><dd>"Mission Impossible - Rogue Nation",</dd><dt>year</dt><dd>2015,</dd><dt>runtime</dt><dd>131,</dd><dt>countries</dt><dd>["USA", "China"],</dd><dt>languages</dt><dd>["English", "Swedish", "German"],</dd><dt>released</dt><dd>"2016-07-31"</dd></dl></li>
+  <li class="node" data-node-id="4" data-x="305.0734558105469" data-y="442.66339015960693">
+    <span class="caption">User</span><dl class="properties"><dt>name</dt><dd>"Angela Garcia"</dd></dl></li>
+  <li class="node" data-node-id="5" data-x="820.6665649414062" data-y="-837.4698677062988">
+    <span class="caption">Director</span><dl class="properties"><dt>name</dt><dd>"Christopher McQuarrie"</dd></dl></li>
+  <li class="relationship" data-from="1" data-to="0">
+    <span class="type">ACTED_IN</span>
+  </li>
+  <li class="relationship" data-from="0" data-to="2">
+    <span class="type">IN_GENRE</span>
+  </li>
+  <li class="relationship" data-from="3" data-to="2">
+    <span class="type">IN_GENRE</span>
+  </li>
+  <li class="relationship" data-from="4" data-to="3">
+    <span class="type">RATED</span><dl class="properties"><dt>rating</dt><dd>4.5,</dd><dt>timestamp</dt><dd>1443384269</dd></dl></li>
+  <li class="relationship" data-from="4" data-to="0">
+    <span class="type">RATED</span><dl class="properties"><dt>rating</dt><dd>4,</dd><dt>timestamp</dt><dd>1465793192</dd></dl></li>
+  <li class="relationship" data-from="5" data-to="3">
+    <span class="type">DIRECTED</span>
+  </li>
+</ul>
