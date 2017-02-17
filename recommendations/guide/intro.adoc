@@ -1,33 +1,195 @@
 = Recommendations
 :user_name: 'Misty Williams'
 :movie_name: 'Matrix'
+:experimental:
+:icon: font
 
 
-== The Open Movie Graph
+== Personalized Recommendations With Neo4j
 
-image::{img}/openmoviegraph.png[]
+++++
+<div class="col-lg-3 ng-scope">
+++++
+
+=== Neo4j
+
+
++++
+</div>
++++
+
+++++
+<div class="col-lg-6 ng-scope">
+++++
+=== Other Resources
+
++++
+</div>
++++
+
+++++
+<div class="col-lg-3 ng-scope">
+++++
+=== The Data
+
+
+[subs=attributes]
+++++
+<img src="{img}/openmoviegraph.png" class="img-responsive">
+++++
+
+.Data Sources
+****
+* http://www.omdbapi.com/[Open Movie Database]
+* https://grouplens.org/datasets/movielens/[MovieLens]
+****
+
+
+++++
+</div>
+++++
 
 == Recommendations with neo4j
 
-image::{img}/datamodel.png[]
 
-[source,cypher]
-----
-CALL db.schema();
-----
+++++
+<div class="col-lg-6 ng-scope">
+++++
+=== Silo 1
+
+[subs=attributes]
+++++
+<img src="{img}/silo1.png" class="img-responsive">
+++++
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-6 ng-scope">
+++++
+
+=== Silo 2
+
+[subs=attributes]
+.Caption here?
+++++
+<img src="{img}/silo2.png" class="img-responsive">
+++++
+
+++++
+</div>
+++++
+
+== The Labeled Property Graph Datamodel
+
+++++
+<div class="col-lg-3 ng-scope">
+++++
+=== Elements
+
+* Nodes
+- Entities
+- Labels
+- Properties
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-9 ng-scope">
+++++
+
+.Caption for the image, explain the data model
+[subs=attributes]
+++++
+<img src="{img}/lpg.png" class="img-responsive">
+++++
+
+++++
+</div>
+++++
+
+== The Open Movie Graph Data Model
+
+
+
+++++
+<div class="col-lg-3 ng-scope">
+++++
+
+=== Data Silos
+
+Explain the two different silos represented here
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-9 ng-scope">
+++++
+
+.Caption for the image??
+[subs=attributes]
+++++
+<img src="{img}/datamodel.png" class="img-responsive">
+++++
+
+++++
+</div>
+++++
 
 == Intro To Cypher
 
-Cypher is the query language for graphs.
+In order to work with our labeled property graph we need a query language for graphs. 
 
-=== MATCH
 
+++++
+<div class="col-lg-3 ng-scope">
+++++
 === Graph Patterns
 
-=== WHERE predicates
+Cypher is the query language for graphs and is centered around *graph patterns*. Graph patterns are expressed in Cypher using ASCII-art like syntax. Nodes
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-9 ng-scope">
+++++
+
+=== Dissecting A Cypher Statement
+Let's look a complex Cypher query (don't worry we'll build up our understanding of Cypher as we progress.
+
+[width=100]
+|===
+| find      | `MATCH (m:Movie)<-[:RATED]-(u:User)`         | Explain match
+| filter    | `WHERE m.title CONTAINS "Matrix"`            | Explain filter
+| aggregate | `WITH m.title AS movie, COUNT(*) AS reviews` | Explain COUNT
+| return    | `RETURN movie, reviews`                      | Explain return
+| order     | `ORDER BY reviews DESC;`                     | Explain order by
+|===
 
 
-That's just a basic introduction to Cypher, we can do a log more co
+.Number of reviews for each Matrix movies
+[source,cypher]
+----
+MATCH (m:Movie)<-[:RATED]-(u:User)
+WHERE m.title CONTAINS "Matrix"
+WITH m.title AS movie, COUNT(*) AS reviews
+RETURN movie, reviews
+ORDER BY reviews DESC;
+----
+
+Click on the block to put the query in the topmost window on the query editor. Hit the triangular icon:play-circle[] button or press kbd:[Ctrl+Enter] to run it and see the resulting visualization.
+
+++++
+</div>
+++++
 
 == Recommendations
 
