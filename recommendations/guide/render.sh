@@ -18,7 +18,7 @@ if [ "$1" == "publish" ]; then
 	echo "Publication Done"
 else
 	URL=localhost:8001/sandbox/recommendations
-	render http://$URL -a csv-url=file:/// -a env-training
+	render http://$URL -a csv-url=file:/// -a img=//localhost:8001/img -a env-training
 	echo "Starting webserver at $URL Ctrl-C to stop"
 	python $GUIDES/http-server.py
 fi
