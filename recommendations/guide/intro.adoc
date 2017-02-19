@@ -5,7 +5,7 @@
 :icon: font
 
 
-== Personalized Recommendations With Neo4j
+== Personalized Product Recommendations With Neo4j
 
 ++++
 <div class="col-lg-3 ng-scope">
@@ -202,19 +202,62 @@ There are two basic approaches to recommendations:
 
 In reality most recommender systems in production are a blend of these two approaches
 
-== Similar Movies
+++++
+<div class="col-lg-6 ng-scope">
+++++
+
+
+=== Content Based Filtering
+
+[subs=attributes]
+++++
+<img src="{img}/content1.png" class="img-responsive">
+++++
+
+
+Looking at the content of products to find products similar to those the user has liked previously.
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-6 ng-scope">
+++++
+
+=== Collaborative Filtering
+
+[subs=attributes]
+++++
+<img src="{img}/cf1.png" class="img-responsive">
+++++
+
+
+++++
+</div>
+++++
+
+
+== Content Based Filtering
+
+The goal of content based filtering is to find similar items, using attributes of the item. Using our movie data, one way we could define similarlity is movies that have overlapping genres.
+
+[subs=attributes]
+++++
+<img src="{img}/genres.png" class="img-responsive">
+++++
+
+=== Similarity Based On Common Genres
 
 [source,cypher]
 ----
-// Find movies similar to Matrix movies
-MATCH (m:Movie) WHERE m.title CONTAINS "Matrix"
+// Find similar movies by common genres
+MATCH (m:Movie) WHERE m.title = "Kung Fu Panda 3"
 MATCH (m)-[:IN_GENRE]->(g:Genre)<-[:IN_GENRE]-(rec:Movie)
-RETURN rec, count(*) AS num ORDER BY num DESC LIMIT 10;
+RETURN rec.title AS recommendation, COUNT(*) AS num ORDER BY num DESC LIMIT 10;
 ----
 
-== Content recommendation by overlapping genres
-
-image::{img}/genres.png[]
+=== Content recommendation by overlapping genres
 
 [source,cypher]
 ----
@@ -222,25 +265,98 @@ image::{img}/genres.png[]
 MATCH (u:User {name: "Misty Williams"})
 MATCH (u)-[r:RATED]->(m:Movie)
 MATCH (m)-[:IN_GENRE]->(g:Genre)<-[:IN_GENRE]-(rec:Movie)
-RETURN rec.title, COUNT(*) AS score ORDER BY score DESC LIMIT 10;
+RETURN rec.title AS recommendation, COUNT(*) AS score ORDER BY score DESC LIMIT 10;
+----
+
+
+=== Only Consider Genres Liked By user
+
+[source,cypher,subs=attributes]
+----
+MATCH (u:User {name: "Misty Williams"})-[r:RATED]->(m:Movie)
+WITH u, avg(r.rating) AS mean
+
+MATCH (u)-[r:RATED]->(m:Movie)-[:IN_GENRE]->(g:Genre)
+WHERE r.rating > mean
+
+WITH u, g, COUNT(*) AS score
+
+MATCH (g)<-[:IN_GENRE]-(rec:Movie)
+WHERE NOT EXISTS((u)-[:RATED]->(rec))
+
+RETURN rec.title AS recommendation, COLLECT(DISTINCT g.name) AS genres, SUM(score) AS sscore 
+ORDER BY sscore DESC LIMIT 10
+----
+
+=== Weighted Content Algorithm
+
+[source,cypher,subs=attributes]
+----
+// Find similar movies by common genres
+MATCH (m:Movie) WHERE m.title = "Wizard of Oz, The"
+MATCH (m)-[:IN_GENRE]->(g:Genre)<-[:IN_GENRE]-(rec:Movie)
+
+WITH m, rec, COUNT(*) AS gs
+
+OPTIONAL MATCH (m)<-[:ACTED_IN]-(a:Actor)-[:ACTED_IN]->(rec)
+WITH m, rec, gs, COUNT(a) AS as
+
+OPTIONAL MATCH (m)<-[:DIRECTED]-(d:Director)-[:DIRECTED]->(rec)
+WITH m, rec, gs, as, COUNT(d) AS ds
+
+RETURN rec.title AS recommendation, (5*gs)+(3*as)+(4*ds) AS score ORDER BY score DESC LIMIT 100
 ----
 
 == Content based similarity metrics
 
 TODO: threshold of overlapping genres?
 
+
+++++
+<div class="col-lg-3 ng-scope">
+++++
+
 === Jaccard index
 
-image::{img}/jaccard.png[]
+[subs=attributes]
+++++
+<img src="{img}/jaccard.png" class="img-responsive">
+++++
+
+Some blurd about Jaccard index.
+
+++++
+</div>
+++++
+
+
+++++
+<div class="col-lg-9 ng-scope">
+++++
 
 [source,cypher]
 ----
-// TODO: Jaccard for genre similarity
+MATCH (m:Movie {title: "Matrix, The"})-[:IN_GENRE]->(g:Genre)<-[:IN_GENRE]-(other:Movie)
+WITH m, other, COUNT(g) AS intersection, COLLECT(g.name) AS i
+MATCH (m)-[:IN_GENRE]->(mg:Genre)
+WITH m,other, intersection,i, COLLECT(mg) AS s1
+MATCH (other)-[:IN_GENRE]->(og:Genre)
+WITH m,other,intersection,i, s1, COLLECT(og) AS s2
 
+WITH m,other,intersection,s1,s2
+
+WITH m,other,intersection,s1+filter(x IN s2 WHERE NOT x IN s1) AS union, s1, s2
+
+RETURN s1, s2, m, other, ((1.0*intersection)/SIZE(union)) AS jaccard ORDER BY jaccard DESC LIMIT 100
+//RETURN * ORDER BY intersection DESC LIMIT 10
 ----
 
-== Movie ratings
+++++
+</div>
+++++
+== Collaborative Filtering - Movie ratings
 
+// TODO: graphic that shows ratings (arrows with data points)
 
 === Show all ratings by Misty Williams
 
@@ -275,40 +391,39 @@ WHERE r.rating > average
 RETURN *;
 ----
 
+// TODO: we else liked movies that Misty rated highly
+
 == Finding similar users
 
 * Jaccard Similarity
 * Pearson correlation
 * Cosine distance
 
-== Jaccard Similarity
 
-image::{img}/jaccard.png[]
+== Collaborative Filtering - Similarity Metrics
 
-[source,cypher]
-----
-TODO: jaccard
-----
+++++
+<div class="col-lg-3 ng-scope">
+++++
+=== Cosine Distance
 
-== Pearson similarity
+[subs=attributes]
+++++
+<img src="{img}/cosine.png" class="img-responsive">
+++++
 
-image::{img}/pearson.png[]
+Blurb about cosine distance. Something about number of dimensions? Scale?
 
-[source,cypher]
-----
-MATCH (u1:User), (u2:User) WHERE u1 <> u2
-MATCH (u1)-[r:Reviewed]->(rest) WITH 1.0*sum(r.stars)/count(r) AS u1_mean, u1, u2
-MATCH (u2)-[r:Reviewed]->(rest) WITH 1.0*sum(r.stars)/count(r) AS u2_mean, u1_mean, u1, u2
-MATCH (u1)-[r1:Reviewed]->(rest)<-[r2:Reviewed]-(u2) WITH sum((r1.stars-u1_mean)*(r2.stars-u2_mean)) AS num, sqrt(sum((r1.stars-u1_mean)^2) * sum((r2.stars-u2_mean)^2)) AS denom, u1, u2
-WHERE denom <>0 CREATE (u1)<-[:Similarity{coef: (num/denom)}]-(u2) 
-//WHERE denom <> 0 RETURN (num)/(denom) as pearson, u1, u2
-----
+++++
+</div>
+++++
 
-== Cosine similarity
 
-image::{img}/cosine.png[]
+++++
+<div class="col-lg-9 ng-scope">
+++++
 
-[source,cypher]
+[source,cypher,subs=attributes]
 ----
 // Most similar users using Cosine similarity
 MATCH (p1:User {name: "{user_name}"})-[x:RATED]->(m:Movie)<-[y:RATED]-(p2:User)
@@ -319,14 +434,110 @@ p1, p2
 RETURN p1, p2, xyDotProduct / (xLength * yLength) AS sim ORDER BY sim DESC;
 ----
 
-== kNN
+++++
+</div>
+++++
+
+== Collaborative Filtering - Similarity Metrics
+
+=== Pearson similarity
+
+++++
+<div class="col-lg-3 ng-scope">
+++++
+
+[subs=attributes]
+++++
+<img src="{img}/pearson.png" class="img-responsive">
+++++
+
+Blurd about Pearson similarity. Benefit is that it can accomodate stochastic means across users. Scale (-1 to +1?) 
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-9 ng-scope">
+++++
+
+
+.Code caption goes here?
+[source,cypher]
+----
+MATCH (u1:User {name:"Misty Williams"})-[r:RATED]->(m:Movie)
+WITH u1, avg(r.rating) AS u1_mean
+
+MATCH (u1)-[r1:RATED]->(m:Movie)<-[r2:RATED]-(u2) 
+WITH u1, u1_mean, u2, COLLECT({r1: r1, r2: r2}) AS ratings WHERE size(ratings) > 10
+
+MATCH (u2)-[r:RATED]->(m:Movie)
+WITH u1, u1_mean, u2, avg(r.rating) AS u2_mean, ratings
+
+UNWIND ratings AS r
+
+WITH sum( (r.r1.rating-u1_mean) * (r.r2.rating-u2_mean) ) AS nom,
+     sqrt( sum( (r.r1.rating - u1_mean)^2) * sum( (r.r2.rating - u2_mean) ^2)) AS denom, 
+     u1, u2 WHERE denom <> 0
+
+RETURN u1.name, u2.name, nom/denom AS pearson 
+ORDER BY pearson DESC LIMIT 100
+----
+
+++++
+</div>
+++++
+
+== Collaborative Filtering - kNN Recommendations
+
+
+++++
+<div class="col-lg-3 ng-scope">
+++++
+
+=== kNN
 
 * Neigborhood based recommendation
 
+++++
+</div>
+++++
+
+
+++++
+<div class="col-lg-9 ng-scope">
+++++
+
+.Code comment block goes here?
 [source,cypher,subs=attributes]
 ----
+MATCH (u1:User {name:"Cynthia Freeman"})-[r:RATED]->(m:Movie)
+WITH u1, avg(r.rating) AS u1_mean
 
+MATCH (u1)-[r1:RATED]->(m:Movie)<-[r2:RATED]-(u2) 
+WITH u1, u1_mean, u2, COLLECT({r1: r1, r2: r2}) AS ratings WHERE size(ratings) > 10
+
+MATCH (u2)-[r:RATED]->(m:Movie)
+WITH u1, u1_mean, u2, avg(r.rating) AS u2_mean, ratings
+
+UNWIND ratings AS r
+
+WITH sum( (r.r1.rating-u1_mean) * (r.r2.rating-u2_mean) ) AS nom,
+     sqrt( sum( (r.r1.rating - u1_mean)^2) * sum( (r.r2.rating - u2_mean) ^2)) AS denom, 
+     u1, u2 WHERE denom <> 0
+
+WITH u1, u2, nom/denom AS pearson 
+ORDER BY pearson DESC LIMIT 10
+
+MATCH (u2)-[r:RATED]->(m:Movie) WHERE NOT EXISTS( (u1)-[:RATED]->(m) )
+
+RETURN m.title, SUM( pearson * r.rating) AS score
+ORDER BY score DESC LIMIT 25
 ----
+
+++++
+</div>
+++++
 
 == Group Recommender System
 
@@ -338,3 +549,7 @@ Is it possible to make recommendations to a group of users? In the context of th
 * Borda Count
 * Least misery
 * Most Pleasure
+
+== Further Resources
+
+A BUNCH OF CALL TO ACTION STUFF HERE!!
