@@ -426,12 +426,13 @@ Blurb about cosine distance. Something about number of dimensions? Scale?
 [source,cypher,subs=attributes]
 ----
 // Most similar users using Cosine similarity
-MATCH (p1:User {name: "{user_name}"})-[x:RATED]->(m:Movie)<-[y:RATED]-(p2:User)
+MATCH (p1:User {name: {user_name}})-[x:RATED]->(m:Movie)<-[y:RATED]-(p2:User)
 WITH SUM(x.rating * y.rating) AS xyDotProduct,
 SQRT(REDUCE(xDot = 0.0, a IN COLLECT(x.rating) | xDot + a^2)) AS xLength,
 SQRT(REDUCE(yDot = 0.0, b IN COLLECT(y.rating) | yDot + b^2)) AS yLength,
 p1, p2
-RETURN p1, p2, xyDotProduct / (xLength * yLength) AS sim ORDER BY sim DESC;
+RETURN p1.name, p2.name, xyDotProduct / (xLength * yLength) AS sim 
+ORDER BY sim DESC LIMIT 100;
 ----
 
 ++++
