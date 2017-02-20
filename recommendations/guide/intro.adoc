@@ -8,11 +8,18 @@
 == Personalized Product Recommendations With Neo4j
 
 ++++
-<div class="col-lg-3 ng-scope">
+<div class="col-lg-8 ng-scope">
 ++++
 
-=== Neo4j
+++++
+<div class="col-lg-6 ng-scope">
+++++
 
+=== Recommendations
+
+What they are and why they matter.
+
+> Product recommendation uses the existing knowledge about product ratings to advise customers on what to purchase next.
 
 +++
 </div>
@@ -21,14 +28,29 @@
 ++++
 <div class="col-lg-6 ng-scope">
 ++++
-=== Other Resources
+=== Graph Based Recommendations
+
+Some of the main benefits of using graphs to generate recommendations include:
+
+1. Performance. Index-free adjacency allows for calculating recommendations in real time.
+1. Data model. The labeled propety graph model allows for easily combining data sets from multiple sources, allowing enterprises to unlock value from previously separated data silos.
 
 +++
 </div>
 +++
 
+[subs=attributes]
 ++++
-<div class="col-lg-3 ng-scope">
+<img src="{img}/cf1.png" class="img-responsive">
+++++
+
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-4 ng-scope">
 ++++
 === The Data
 
@@ -38,6 +60,8 @@
 <img src="{img}/openmoviegraph.png" class="img-responsive">
 ++++
 
+This Neo4j Browser Guide will walk you through some approaches for generating personalized product recommendations using graphs. As an we'll use two public datasets of movies, and movie reviews, but these concepts can be applied to many different types of products or content.
+
 .Data Sources
 ****
 * http://www.omdbapi.com/[Open Movie Database]
@@ -45,72 +69,73 @@
 ****
 
 
-++++
-</div>
-++++
-
-== Recommendations with neo4j
-
-
-++++
-<div class="col-lg-6 ng-scope">
-++++
-=== Silo 1
-
-[subs=attributes]
-++++
-<img src="{img}/silo1.png" class="img-responsive">
-++++
+*Let's get started! Click the arrow above to move to the next pane in this guide.*
 
 ++++
 </div>
 ++++
 
-++++
-<div class="col-lg-6 ng-scope">
-++++
-
-=== Silo 2
-
-[subs=attributes]
-.Caption here?
-++++
-<img src="{img}/silo2.png" class="img-responsive">
-++++
-
-++++
-</div>
-++++
-
-== The Labeled Property Graph Datamodel
-
-++++
-<div class="col-lg-3 ng-scope">
-++++
-=== Elements
-
-* Nodes
-- Entities
-- Labels
-- Properties
-
-++++
-</div>
-++++
-
-++++
-<div class="col-lg-9 ng-scope">
-++++
-
-.Caption for the image, explain the data model
-[subs=attributes]
-++++
-<img src="{img}/lpg.png" class="img-responsive">
-++++
-
-++++
-</div>
-++++
+//== Recommendations with neo4j
+//
+//++++
+//<div class="col-lg-6 ng-scope">
+//++++
+//=== Silo 1
+//
+//[subs=attributes]
+//++++
+//<img src="{img}/silo1.png" class="img-responsive" height="90%">
+//++++
+//
+//++++
+//</div>
+//++++
+//
+//++++
+//<div class="col-lg-6 ng-scope">
+//++++
+//
+//=== Silo 2
+//
+//[subs=attributes]
+//.Caption here?
+//++++
+//<img src="{img}/silo2.png" class="img-responsive">
+//++++
+//
+//++++
+//</div>
+//++++
+//
+//== The Labeled Property Graph Datamodel
+//
+//++++
+//<div class="col-lg-3 ng-scope">
+//++++
+//=== Elements
+//
+//* Nodes
+//- Entities
+//- Labels
+//- Properties
+//
+//++++
+//</div>
+//++++
+//
+//++++
+//<div class="col-lg-9 ng-scope">
+//++++
+//
+//.Caption for the image, explain the data model
+//[subs=attributes]
+//++++
+//<img src="{img}/lpg.png" class="img-responsive">
+//++++
+//
+//++++
+//</div>
+//++++
 
 == The Open Movie Graph Data Model
 
@@ -191,16 +216,9 @@ Click on the block to put the query in the topmost window on the query editor. H
 </div>
 ++++
 
-== Recommendations
+== Personalized Recommendations
 
-Now let's start generating some recommendations.
-
-There are two basic approaches to recommendations:
-
-* `Content based` - recommend items that are similar to those that a user previously liked.
-* `Collaborative filtering` - use the preferences of other users in the network to find items to recommend.
-
-In reality most recommender systems in production are a blend of these two approaches
+Now let's start generating some recommendations. There are two basic approaches to recommendation algorithms.
 
 ++++
 <div class="col-lg-6 ng-scope">
@@ -209,13 +227,19 @@ In reality most recommender systems in production are a blend of these two appro
 
 === Content Based Filtering
 
+Recommend items that are similar to those that a user previously liked.
+
 [subs=attributes]
 ++++
 <img src="{img}/content1.png" class="img-responsive">
 ++++
 
-
-Looking at the content of products to find products similar to those the user has liked previously.
+."Products similar to the product you're looking at now"
+[source,cypher,subs=attributes]
+----
+MATCH p=(m:Movie {title: "Net, The"})-[:ACTED_IN|:IN_GENRE|:DIRECTED*2]-()
+RETURN p LIMIT 25
+----
 
 ++++
 </div>
@@ -227,11 +251,21 @@ Looking at the content of products to find products similar to those the user ha
 
 === Collaborative Filtering
 
+Use the preferences of other users in the network to find items to recommend.
+
 [subs=attributes]
 ++++
 <img src="{img}/cf1.png" class="img-responsive">
 ++++
 
+
+."Users who bought this, also bought this other thing."
+[source,cypher,subs=attributes]
+----
+MATCH (m:Movie {title: "Crimson Tide"})<-[:RATED]-(u:User)-[:RATED]->(rec:Movie)
+RETURN rec.title AS recommendation, COUNT(*) AS usersWhoAlsoWatched
+ORDER BY usersWhoAlsoWatched DESC LIMIT 25
+----
 
 ++++
 </div>
@@ -240,56 +274,51 @@ Looking at the content of products to find products similar to those the user ha
 
 == Content Based Filtering
 
-The goal of content based filtering is to find similar items, using attributes of the item. Using our movie data, one way we could define similarlity is movies that have overlapping genres.
+The goal of content based filtering is to find similar items, using attributes (or traits) of the item. Using our movie data, one way we could define similarlity is movies that have common  genres.
 
 [subs=attributes]
 ++++
 <img src="{img}/genres.png" class="img-responsive">
 ++++
 
+
 === Similarity Based On Common Genres
 
+.Find movies most similar to Inception based on shared genres
 [source,cypher]
 ----
 // Find similar movies by common genres
-MATCH (m:Movie) WHERE m.title = "Kung Fu Panda 3"
-MATCH (m)-[:IN_GENRE]->(g:Genre)<-[:IN_GENRE]-(rec:Movie)
-RETURN rec.title AS recommendation, COUNT(*) AS num ORDER BY num DESC LIMIT 10;
+MATCH (m:Movie)-[:IN_GENRE]->(g:Genre)<-[:IN_GENRE]-(rec:Movie)
+WHERE m.title = "Inception"
+WITH rec, COLLECT(g.name) AS genres, COUNT(*) AS commonGenres
+RETURN rec.title, genres, commonGenres
+ORDER BY commonGenres DESC LIMIT 10;
 ----
 
-=== Content recommendation by overlapping genres
+=== Personalized Recommendations Based on Genres
 
+If we know what movies a user has watched we can use this information to recommend movies similar to those they've watched:
+
+.Recommend movies similar to those the user has already watched
 [source,cypher]
 ----
 // Content recommendation by overlapping genres
-MATCH (u:User {name: "Misty Williams"})
-MATCH (u)-[r:RATED]->(m:Movie)
-MATCH (m)-[:IN_GENRE]->(g:Genre)<-[:IN_GENRE]-(rec:Movie)
-RETURN rec.title AS recommendation, COUNT(*) AS score ORDER BY score DESC LIMIT 10;
-----
-
-
-=== Only Consider Genres Liked By user
-
-[source,cypher,subs=attributes]
-----
-MATCH (u:User {name: "Misty Williams"})-[r:RATED]->(m:Movie)
-WITH u, avg(r.rating) AS mean
-
-MATCH (u)-[r:RATED]->(m:Movie)-[:IN_GENRE]->(g:Genre)
-WHERE r.rating > mean
-
-WITH u, g, COUNT(*) AS score
-
-MATCH (g)<-[:IN_GENRE]-(rec:Movie)
-WHERE NOT EXISTS((u)-[:RATED]->(rec))
-
-RETURN rec.title AS recommendation, COLLECT(DISTINCT g.name) AS genres, SUM(score) AS sscore 
-ORDER BY sscore DESC LIMIT 10
+MATCH (u:User {name: "Angelica Rodriguez"})-[r:RATED]->(m:Movie),
+  (m)-[:IN_GENRE]->(g:Genre)<-[:IN_GENRE]-(rec:Movie)
+WHERE NOT EXISTS( (m)-[:RATED]->(rec) )
+WITH rec, [g.name, COUNT(*)] AS scores
+RETURN rec.title AS recommendation, rec.year AS year, 
+COLLECT(scores) AS scoreComponents, 
+REDUCE (s=0,x in COLLECT(scores) | s+x[1]) AS score 
+ORDER BY score DESC LIMIT 10
 ----
 
 === Weighted Content Algorithm
 
+Of course there are many more traits in addition to just genre that we can consider to compute similarity, such  
+actors and directors. Let's use a weighted sum to score the recommendations based on the number of actors, genres, and directors they have in common to boost the score:
+
+.Compute a weighted sum based on the number and types of overlapping traits
 [source,cypher,subs=attributes]
 ----
 // Find similar movies by common genres
@@ -309,8 +338,7 @@ RETURN rec.title AS recommendation, (5*gs)+(3*as)+(4*ds) AS score ORDER BY score
 
 == Content based similarity metrics
 
-TODO: threshold of overlapping genres?
-
+So far we've used the number of common traits as a way to score the relevance of our recommendations. Let's now consider a more robust way to quantify similarity, using a similarity metric. Similarity metrics are an important component used in generating personalized recommendations that allow us to quantify how similar two items (or as we'll see later, how similar two users preferences are).
 
 ++++
 <div class="col-lg-3 ng-scope">
@@ -323,7 +351,9 @@ TODO: threshold of overlapping genres?
 <img src="{img}/jaccard.png" class="img-responsive">
 ++++
 
-Some blurd about Jaccard index.
+The Jaccard index is a number between 0 and 1 that indicates how similar two sets are. The Jaccard index of two identical sets is 1. If two sets do not have a common element, then the Jaccard index is 0. The Jaccard is calculated by dividing the size of the intersection of two sets by the union of the two sets.
+
+We can calculate the Jaccard index for sets of movie genres to determine how similar two movies are. 
 
 ++++
 </div>
@@ -334,29 +364,73 @@ Some blurd about Jaccard index.
 <div class="col-lg-9 ng-scope">
 ++++
 
+.What movies are most similar to The Matrix based on Jaccard Similarity of genres?
 [source,cypher]
 ----
-MATCH (m:Movie {title: "Matrix, The"})-[:IN_GENRE]->(g:Genre)<-[:IN_GENRE]-(other:Movie)
+MATCH (m:Movie {title: "Inception"})-[:IN_GENRE]->(g:Genre)<-[:IN_GENRE]-(other:Movie)
 WITH m, other, COUNT(g) AS intersection, COLLECT(g.name) AS i
 MATCH (m)-[:IN_GENRE]->(mg:Genre)
-WITH m,other, intersection,i, COLLECT(mg) AS s1
+WITH m,other, intersection,i, COLLECT(mg.name) AS s1
 MATCH (other)-[:IN_GENRE]->(og:Genre)
-WITH m,other,intersection,i, s1, COLLECT(og) AS s2
+WITH m,other,intersection,i, s1, COLLECT(og.name) AS s2
 
 WITH m,other,intersection,s1,s2
 
 WITH m,other,intersection,s1+filter(x IN s2 WHERE NOT x IN s1) AS union, s1, s2
 
-RETURN s1, s2, m, other, ((1.0*intersection)/SIZE(union)) AS jaccard ORDER BY jaccard DESC LIMIT 100
-//RETURN * ORDER BY intersection DESC LIMIT 10
+RETURN m.title, other.title, s1,s2,((1.0*intersection)/SIZE(union)) AS jaccard ORDER BY jaccard DESC LIMIT 100
+----
+
+We can apply this same apparoach to all "traits" of the movie (genre, actors, directors):
+
+[source,cypher,subs=attributes]
+----
+MATCH (m:Movie {title: "Inception"})-[:IN_GENRE|:ACTED_IN|:DIRECTED]-(t)<-[:IN_GENRE|:ACTED_IN|:DIRECTED]-(other:Movie)
+WITH m, other, COUNT(t) AS intersection, COLLECT(t.name) AS i
+MATCH (m)-[:IN_GENRE|:ACTED_IN|:DIRECTED]-(mt)
+WITH m,other, intersection,i, COLLECT(mt.name) AS s1
+MATCH (other)-[:IN_GENRE|:ACTED_IN|:DIRECTED]-(ot)
+WITH m,other,intersection,i, s1, COLLECT(ot.name) AS s2
+
+WITH m,other,intersection,s1,s2
+
+WITH m,other,intersection,s1+filter(x IN s2 WHERE NOT x IN s1) AS union, s1, s2
+
+RETURN m.title, other.title, s1,s2,((1.0*intersection)/SIZE(union)) AS jaccard ORDER BY jaccard DESC LIMIT 100
 ----
 
 ++++
 </div>
 ++++
+
 == Collaborative Filtering - Movie ratings
 
-// TODO: graphic that shows ratings (arrows with data points)
+++++
+<div class="col-lg-6 ng-scope">
+++++
+
+[subs=attributes]
+++++
+<img src="{img}/datamodel.png" class="img-responsive">
+++++
+
+TODO: graphic that shows ratings (arrows with data points)
+
+Collaborative filtering is going to make use of rating data.
+
+Steps:
+
+1. Find simlar users in the network
+1. Since similar users have similar preferences, what are the movies those similar users like?
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-6 ng-scope">
+++++
+
 
 === Show all ratings by Misty Williams
 
@@ -393,12 +467,51 @@ RETURN *;
 
 // TODO: we else liked movies that Misty rated highly
 
-== Finding similar users
 
-* Jaccard Similarity
-* Pearson correlation
-* Cosine distance
+++++
+</div>
+++++
 
+== Collaborative Filtering - The Wisdom of Crowds
+
+Collaborative filtering
+
+=== Simple Collaborative Filtering
+
+
+[source,cypher,subs=attributes]
+----
+MATCH (u:User {name: "Cynthia Freeman"})-[:RATED]->(:Movie)<-[:RATED]-(o:User)
+MATCH (o)-[:RATED]->(rec:Movie)
+WHERE NOT EXISTS( (u)-[:RATED]->(rec) )
+RETURN rec.title, rec.year, rec.plot
+LIMIT 25
+----
+
+Of course this is just a simple appraoch, there are many problems with this query. Such as not normalizing based on popularity, or taking ratings into consideration. In the next section we will see how we can improve this approach using the **kNN method**. 
+
+=== Only Consider Genres Liked By The User
+
+Many recommender systems are a blend of collaborative filtering and content based approaches:
+
+.For a particular user, what genres have a higher than average rating? Use this to score similar movies
+[source,cypher,subs=attributes]
+----
+MATCH (u:User {name: "Andrew Freeman"})-[r:RATED]->(m:Movie)
+WITH u, avg(r.rating) AS mean
+
+MATCH (u)-[r:RATED]->(m:Movie)-[:IN_GENRE]->(g:Genre)
+WHERE r.rating > mean
+
+WITH u, g, COUNT(*) AS score
+
+MATCH (g)<-[:IN_GENRE]-(rec:Movie)
+WHERE NOT EXISTS((u)-[:RATED]->(rec))
+
+RETURN rec.title AS recommendation, rec.year AS year, COLLECT(DISTINCT g.name) AS genres, SUM(score) AS sscore
+ORDER BY sscore DESC LIMIT 10
+----
+ 
 
 == Collaborative Filtering - Similarity Metrics
 
@@ -426,11 +539,11 @@ Blurb about cosine distance. Something about number of dimensions? Scale?
 [source,cypher,subs=attributes]
 ----
 // Most similar users using Cosine similarity
-MATCH (p1:User {name: {user_name}})-[x:RATED]->(m:Movie)<-[y:RATED]-(p2:User)
-WITH SUM(x.rating * y.rating) AS xyDotProduct,
+MATCH (p1:User {name: "Cynthia Freeman"})-[x:RATED]->(m:Movie)<-[y:RATED]-(p2:User)
+WITH COUNT(m) AS numbermovies, SUM(x.rating * y.rating) AS xyDotProduct,
 SQRT(REDUCE(xDot = 0.0, a IN COLLECT(x.rating) | xDot + a^2)) AS xLength,
 SQRT(REDUCE(yDot = 0.0, b IN COLLECT(y.rating) | yDot + b^2)) AS yLength,
-p1, p2
+p1, p2 WHERE numbermovies > 10
 RETURN p1.name, p2.name, xyDotProduct / (xLength * yLength) AS sim 
 ORDER BY sim DESC LIMIT 100;
 ----
@@ -466,7 +579,7 @@ Blurd about Pearson similarity. Benefit is that it can accomodate stochastic mea
 .Code caption goes here?
 [source,cypher]
 ----
-MATCH (u1:User {name:"Misty Williams"})-[r:RATED]->(m:Movie)
+MATCH (u1:User {name:"Cynthia Freeman"})-[r:RATED]->(m:Movie)
 WITH u1, avg(r.rating) AS u1_mean
 
 MATCH (u1)-[r1:RATED]->(m:Movie)<-[r2:RATED]-(u2) 
@@ -489,7 +602,7 @@ ORDER BY pearson DESC LIMIT 100
 </div>
 ++++
 
-== Collaborative Filtering - kNN Recommendations
+== Collaborative Filtering - Neighborhood Based Recommendations
 
 
 ++++
@@ -542,6 +655,9 @@ ORDER BY score DESC LIMIT 25
 
 == Group Recommender System
 
+++++
+<div class="col-lg-6 ng-scope">
+++++
 Is it possible to make recommendations to a group of users? In the context of this example, can we recommend a restaurant that takes into account information about the individual users likes and dislikes? There are many strategies for aggregating a group of users preferences. This is an example of the application of "Social Choice Theory". For example:
 
 * Plurality voting
@@ -551,6 +667,62 @@ Is it possible to make recommendations to a group of users? In the context of th
 * Least misery
 * Most Pleasure
 
-== Further Resources
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-6 ng-scope">
+++++
+
+.Some code caption
+[source,cypher,subs=attributes]
+----
+// WIP
+MATCH (u1:User {name: "Misty Williams"}),
+      (u2:User {name: "Cynthia Freeman"})
+      
+WITH [u1,u2] AS users
+
+UNWIND users AS u
+MATCH (u)-[r:RATED]->(:Movie)-[:IN_GENRE]->(g:Genre)
+WITH u, g, avg(r.rating) AS a
+
+MATCH (rec:Movie)-[:IN_GENRE]->(g)
+WHERE NOT EXISTS( (u)-[:RATED]->(rec))
+WITH rec.title AS movie, collect(g.name) AS gs, collect(a) AS as, avg(a) AS score 
+RETURN movie, gs, as, score+SIZE(gs) AS score
+ORDER BY score DESC LIMIT 50
+----
+
+++++
+</div>
+++++
+== Further Work
+
+++++
+<div class="col-lg-6 ng-scope">
+++++
+
+=== Resources
 
 A BUNCH OF CALL TO ACTION STUFF HERE!!
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-6 ng-scope">
+++++
+=== Exercises
+
+Extend these queries:
+
+* **Temporal component** Preferences change over time, use the rating timestamp to consider how more recent ratings might be used to find more relevant recommendations.
+* **Keyword extraction** Enhance the traits available using the plot description. How would you model extracted keywords for movies?
+* **Image recognition using posters** There are several libraries and APIs that offer image recognition / tagging. Since we have movie poster images for each movie, how could we use these to enhance our recomendations?
+
+++++
+</div>
+++++
