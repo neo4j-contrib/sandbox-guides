@@ -224,11 +224,18 @@ In order to work with our labeled property graph we need a query language for gr
 Cypher is the query language for graphs and is centered around *graph patterns*. Graph patterns are expressed in Cypher using ASCII-art like syntax.
 
 *Nodes*
+Nodes are defined within parentheses `()`. Optionally, we can specify node label(s): `(:Movie)`
 
 *Relationships*
+Relationships are defined within square brackets `[]`. Optionally we can specify type and direction:
+
+`+(:Movie)<-[:RATED]-(:User)+`
 
 *Aliases*
 
+Graph elements can be bound to aliases, that can be referred to later in the query:
+
+`+(m:Movie)<-[:RATED]-(:User)+`
 
 === Predicates
 
@@ -334,13 +341,16 @@ ORDER BY usersWhoAlsoWatched DESC LIMIT 25
 
 == Content Based Filtering
 
+++++
+<div class="col-lg-6 ng-scope">
+++++
+
 The goal of content based filtering is to find similar items, using attributes (or traits) of the item. Using our movie data, one way we could define similarlity is movies that have common  genres.
 
 [subs=attributes]
 ++++
 <img src="{img}/genres.png" class="img-responsive">
 ++++
-
 
 === Similarity Based On Common Genres
 
@@ -354,6 +364,16 @@ WITH rec, COLLECT(g.name) AS genres, COUNT(*) AS commonGenres
 RETURN rec.title, genres, commonGenres
 ORDER BY commonGenres DESC LIMIT 10;
 ----
+
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-6 ng-scope">
+++++
+
 
 === Personalized Recommendations Based on Genres
 
@@ -396,6 +416,9 @@ WITH m, rec, gs, as, COUNT(d) AS ds
 RETURN rec.title AS recommendation, (5*gs)+(3*as)+(4*ds) AS score ORDER BY score DESC LIMIT 100
 ----
 
+++++
+</div>
+++++
 == Content based similarity metrics
 
 So far we've used the number of common traits as a way to score the relevance of our recommendations. Let's now consider a more robust way to quantify similarity, using a similarity metric. Similarity metrics are an important component used in generating personalized recommendations that allow us to quantify how similar two items (or as we'll see later, how similar two users preferences are).
