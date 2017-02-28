@@ -673,7 +673,7 @@ Pearson similarity, or Pearson correlation is another similarity metric we can u
 ++++
 
 
-.Code caption goes here?
+.Find users most similar to Cynthia Freeman, according to Pearson similarity
 [source,cypher]
 ----
 MATCH (u1:User {name:"Cynthia Freeman"})-[r:RATED]->(m:Movie)
