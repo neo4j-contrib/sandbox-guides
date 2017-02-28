@@ -650,18 +650,19 @@ ORDER BY sim DESC LIMIT 100;
 
 === Pearson similarity
 
-Pearson similarity, or Pearson correlation is another similarity metric we can use. This is particularly well suited for product recommendations because it takes into account the fact that different users will have different *mean ratings*: on average some users will tend to give higher ratings than others. Since Pearson similarity considers differences about the mean, this metric will account for these discrepancies.
-
 ++++
 <div class="col-lg-3 ng-scope">
 ++++
+
+Pearson similarity, or Pearson correlation is another similarity metric we can use. This is particularly well suited for product recommendations because it takes into account the fact that different users will have different *mean ratings*: on average some users will tend to give higher ratings than others. Since Pearson similarity considers differences about the mean, this metric will account for these discrepancies.
+
+
 
 [subs=attributes]
 ++++
 <img src="{img}/pearson.png" class="img-responsive">
 ++++
 
-Blurd about Pearson similarity. Benefit is that it can accomodate stochastic means across users. Scale (-1 to +1?) 
 
 ++++
 </div>
