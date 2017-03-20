@@ -2,7 +2,7 @@
 
 == Legis-graph: US Congress Modeled As A Graph
 
-image::{img}/lg_datamodel.png[float=right]
+image:://raw.githubusercontent.com/legis-graph/legis-graph/master/img/datamodel.png[float=right]
 
 //. pass:a[<a play-topic='{GUIDES}/legisgraphimport.html'>IMPORT: Explore US Congress</a>]
 . pass:a[<a play-topic='{GUIDES}/legisgraph.html'>EXPLORE: US Congress</a>]
