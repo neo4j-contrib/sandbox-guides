@@ -1,89 +1,86 @@
 = Extending The Data Model - LittleSis 
 
-== Extending The Network - LittleSis People and organizations
+
+
+== Extending The Network - LittleSis.org People and organizations
 
 One of the benefits of the graph data model is the ability to combine datasets and query across them. Next we will look at how we can extend the graph by adding new entities from the LittleSis data set. The model will not change as we will only bring people and organizations.
 
-
-== LittleSis.org
-
-Data can be explored online at https://littlesis.org/lists[littlesis.org] 
+LittleSis is "a free database of who-knows-who at the heights of business and government". The dataset can be explored online at https://littlesis.org/lists[littlesis.org] 
 
 image:{img}/littlesis.png[]
 
 == The Data
 
-We are going to use a small portion of the data. You can find them as CSV files at https://github.com/johnymontana/neo4j-datasets/tree/master/trumpworld/data[https://github.com/johnymontana/neo4j-datasets/tree/master/trumpworld/data]
+The littlesis graph is much bigger than the Trump world one, like a hundred times. It contains over 250k persons and organizations compared to the 2.2k in the Trump world. Because of that we will only use a small portion of the LittleSis dataset.
+
+You can find them as CSV files here https://github.com/johnymontana/neo4j-datasets/tree/master/trumpworld/data/littlesis-extract[https://github.com/johnymontana/neo4j-datasets/tree/master/trumpworld/data/littlesis-extract]
 
 
 == Extending The Datamodel
 
-Load connections between people and organizations
+Let's start by setting up an index on entities from the LittleSis dataset 
 
 [source,cypher]
 ----
-WITH "https://raw.githubusercontent.com/johnymontana/neo4j-datasets/master/trumpworld/data/littlesis-trump-pers.csv" AS url 
-LOAD CSV WITH HEADERS FROM url AS row 
-WITH row WHERE row.relatedEntytyType = 'Org' 
-MATCH (p:Person { name : row.name })  
-MERGE (o:Organization { name : row.relatedEntityName })  
-ON CREATE SET o.source = 'LittleSis'
-WITH p, o, row  
-CALL apoc.create.relationship(p,upper(row.reltype), {source:'LittleSis',reldesc : row.reldesc},o) YIELD rel 
-RETURN COUNT(rel)
+CREATE INDEX ON :LittleSisEntity(littleSisId)
 ----
 
-Now between people 
+Load LittleSis ids for people in the Trump World graph. 
+ 
+[source,cypher]
+----
+LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/johnymontana/neo4j-datasets/master/trumpworld/data/littlesis-extract/people.csv" AS row
+MATCH (p:Person { name : row.name})
+SET p:LittleSisEntity, p.littleSisId = row.entity_id
+----
+
+And then we do the same with organizations:
+ 
+[source,cypher]
+----
+LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/johnymontana/neo4j-datasets/master/trumpworld/data/littlesis-extract/orgs.csv" AS row
+MATCH (o:Organization { name : row.name})
+SET o:LittleSisEntity, o.littleSisId = row.entity_id
+----
+
+The next two queries will load into the graph people and organizations from LittleSis that are connected to entities in the Trump World graph but not yet present in it. This will extend the graph significantly so you may want to skip this part if you want to only add relationships from LittleSis between pre-existing people and organizations.
 
 [source,cypher]
 ----
-WITH "https://raw.githubusercontent.com/johnymontana/neo4j-datasets/master/trumpworld/data/littlesis-trump-pers.csv" AS url 
-LOAD CSV WITH HEADERS FROM url AS row 
-WITH row WHERE row.relatedEntytyType = 'Person' 
-MATCH (p:Person { name : row.name })  
-MERGE (o:Person { name : row.relatedEntityName })  
-ON CREATE SET o.source = 'LittleSis'
-WITH p, o, row  
-CALL apoc.create.relationship(p,upper(row.reltype), {source:'LittleSis',reldesc : row.reldesc},o) YIELD rel 
-RETURN COUNT(rel)
+LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/johnymontana/neo4j-datasets/master/trumpworld/data/littlesis-extract/related-people.csv" AS row
+MERGE (p:Person { name : row.name })  
+ON CREATE SET p:LittleSisEntity, p.littleSisId = row.id
 ----
 
-Organizations and people
+And again, we'll do the same with organizations
 
 [source,cypher]
 ----
-WITH "https://raw.githubusercontent.com/johnymontana/neo4j-datasets/master/trumpworld/data/littlesis-trump-org.csv" AS url 
-LOAD CSV WITH HEADERS FROM url AS row 
-WITH row WHERE row.relatedEntytyType = 'Person' 
-MATCH (p:Organization { name : row.name })  
-MERGE (o:Person { name : row.relatedEntityName })  
-ON CREATE SET o.source = 'LittleSis'
-WITH p, o, row  
-CALL apoc.create.relationship(p,upper(row.reltype), {source:'LittleSis',reldesc : row.reldesc},o) YIELD rel 
-RETURN COUNT(rel)
+LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/johnymontana/neo4j-datasets/master/trumpworld/data/littlesis-extract/related-orgs.csv" AS row
+WITH row WHERE row.name IS NOT NULL
+MERGE (o:Organization { name : row.name })  
+ON CREATE SET o:LittleSisEntity, o.littleSisId = row.id
 ----
 
-
-And finally Organizations 
+Finally, we'll add the relationships between the LittleSis entities we've just loaded.
 
 [source,cypher]
 ----
-WITH "https://raw.githubusercontent.com/johnymontana/neo4j-datasets/master/trumpworld/data/littlesis-trump-org.csv" AS url 
-LOAD CSV WITH HEADERS FROM url AS row 
-WITH row WHERE row.relatedEntytyType = 'Org' 
-MATCH (p:Organization { name : row.name })  
-MERGE (o:Organization { name : row.relatedEntityName })  
-ON CREATE SET o.source = 'LittleSis'
-WITH p, o, row  
-CALL apoc.create.relationship(p,upper(row.reltype), {source:'LittleSis',reldesc : row.reldesc},o) YIELD rel 
-RETURN COUNT(rel)
+LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/johnymontana/neo4j-datasets/master/trumpworld/data/littlesis-extract/rels.csv" AS row
+MATCH (from:LittleSisEntity {littleSisId : row.entity_id})
+MATCH (to:LittleSisEntity {littleSisId : row.relatedEntityId})
+CALL apoc.create.relationship(from, toUpper(row.reltype), { relDetail: row.reldesc, source:'LittleSis'} ,to) YIELD rel
+RETURN count(rel) AS relsCreated
 ----
+
+
+== Querying the LittleSis graph
 
 Let's have a quick look at the LittleSis graph:
 
 [source,cypher]
 ----
-MATCH (a)-[r {source: 'LittleSis' }]-(b)
-RETURN * 
-LIMIT 500
+MATCH (x:LittleSisEntity)-[r {source:"LittleSis"}]-(y:LittleSisEntity)
+RETURN * LIMIT 500
 ----
