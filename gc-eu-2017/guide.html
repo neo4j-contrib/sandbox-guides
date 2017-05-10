@@ -1,0 +1,266 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>The GraphConnect Europe 2016 Schedule Graph</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>A Google Sheet as the main data source</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Yey! It&#8217;s that time of the year again! We are full-steam getting ready for the Bi-Yearly Festival of Graphs also known as <a href="https://graphconnect.com/">GraphConnect</a>. There&#8217;s another great conference lined up for us. The entire <a href="http://www.neo4j.com">Neo4j</a> crew will be there in full force - and of course we had to create another Schedule graph - just for fun.</p>
+</div>
+<div class="paragraph">
+<p>I had to of course start from the schedule on the <a href="http://graphconnect.com/#agenda">GraphConnect website</a>, and convert that into a <a href="https://docs.google.com/spreadsheets/d/1Hu4l5cfnn6efsAvjNq0DmUyW1K5EiyDd7jpo3Ei3Mps/edit?usp=sharing">google sheet with all the data</a>. Once I had that, I could add the data pretty easily with this model:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="https://www.dropbox.com/s/6dobbvcfagho31m/banner.png?dl=1" alt="banner">
+</div>
+</div>
+<div class="paragraph">
+<p>Very simple - but it&#8217;s so much nicer when you can make it interactive and load it into Neo4j.</p>
+</div>
+<div class="paragraph">
+<p>For this guide we already imported the data for you, if you want to see the import steps, you can find them in <a href="http://portal.graphgist.org/graph_gists/ea62e6d1-4201-412a-a90a-f839611a2bd1">this GraphGist</a></p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Overview</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Let&#8217;s take a look at what we have now:</p>
+</div>
+<div class="paragraph">
+<p>The speakers, their sessions and tags.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (p:Person)-[:SPEAKS_IN]-&gt;(s:Session)-[:TAGGED_AS]-&gt;(t)
+RETURN p,s,t<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Some counts by labels of the nodes.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (n)
+RETURN labels(n), count(*)
+ORDER BY count(*) DESC<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Track Deep Dive</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Ok - so that looks like a big fat hairball. Not very useful. So let&#8217;s try to zoom in a bit, and run a simple query over our graph: let&#8217;s find a couple of sessions in Track 1:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (t:Time)&lt;--(s:Session)-[:IN_TRACK]-&gt;(tr:Track {name:"Neo4j Deep-Dive"})
+return t,s,tr<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Connections</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Let&#8217;s do another query: How are <a href="http://jimwebber.org/">Dr. Jim Webber</a>, (of Neo fame) and Axel Morgner the founder of <a href="http://structr.org" class="bare">http://structr.org</a> connected ?</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match path = allshortestpaths( (p1:Person)-[*]-(p2:Person) )
+where p1.name contains "Morgner"
+and p2.name contains "Webber"
+return path<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s now look at a link between a person, like Emil Eifrem and an Organisation, like <a href="https://theguardian.com">The Guardian</a>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (c:Company {name:"The Guardian"}), (p:Person {name:"Jim Webber"}),
+path = allshortestpaths( (c)-[*]-(p) )
+return path<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Most Prolific Speaker(s) and Sessions with Multiple Speakers</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Let&#8217;s look at the sessions that have more than one speaker:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (s:Session)-[r:SPEAKS_IN]-(p:Person)
+with s, collect(p) as person, count(p) as count
+where count &gt; 1
+return s,person<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And find the most prolific Speakers:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (s:Session)-[r:SPEAKS_IN]-(p:Person)
+with p, collect(s) as sessions, count(s) as count
+where count &gt; 1
+return p,sessions<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Which shows us that Jesús Barrasa is THE ONE.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Recommendation</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We can look at the tags and their frequency.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t:Tag)&lt;-[:TAGGED_AS]-()
+RETURN t.name, count(*)
+ORDER BY count(*) DESC LIMIT 10<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And use them to create a little recommendation, let&#8217;s say we like the "Cypher Performance Improvements" talk, which other talks are similar by tag.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (reco:Session)-[:TAGGED_AS]-&gt;(t:Tag)&lt;-[:TAGGED_AS]-(s:Session)
+WHERE s.title = "Cypher Performance Improvements"
+WITH reco,count(*) as count,s,collect(t) as tags
+ORDER BY count DESC LIMIT 5
+RETURN reco, s,tags<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>There are so many other things that we could look at, just use your Neo4j Browser to query the data and find out more.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Author References</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>I hope this gist was interesting for you, and that we will see each other soon.</p>
+</div>
+<div class="paragraph">
+<p>This gist was created by <a href="mailto:rik@neotechnology.com">Rik Van Bruggen</a></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="http://blog.bruggen.com">My Blog</a></p>
+</li>
+<li>
+<p><a href="http://blog.bruggen.com/p/podcast_13.html">the Graphistania Neo4j Graph Database Podcast</a></p>
+</li>
+<li>
+<p><a href="http://learningneo4j.net">My Book</a></p>
+</li>
+<li>
+<p><a href="http://twitter.com/rvanbruggen">On Twitter</a></p>
+</li>
+<li>
+<p><a href="http://be.linkedin.com/in/rikvanbruggen/">On LinkedIn</a></p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>
