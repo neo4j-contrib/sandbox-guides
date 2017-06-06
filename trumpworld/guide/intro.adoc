@@ -1,7 +1,5 @@
 = Trumpworld
-:org_org_url: 'https://docs.google.com/spreadsheets/u/1/d/1Z5Vo5pbvxKJ5XpfALZXvCzW26Cl4we3OaN73K9Ae5Ss/export?format=csv&gid=634968401'
-:person_org_url: 'https://docs.google.com/spreadsheets/u/1/d/1Z5Vo5pbvxKJ5XpfALZXvCzW26Cl4we3OaN73K9Ae5Ss/export?format=csv&gid=1368567920'
-:person_person_url: 'https://docs.google.com/spreadsheets/u/1/d/1Z5Vo5pbvxKJ5XpfALZXvCzW26Cl4we3OaN73K9Ae5Ss/export?format=csv&gid=905294723'
+:google_sheet_url: 'https://docs.google.com/spreadsheets/d/1Z5Vo5pbvxKJ5XpfALZXvCzW26Cl4we3OaN73K9Ae5Ss/export?format=csv&id=1Z5Vo5pbvxKJ5XpfALZXvCzW26Cl4we3OaN73K9Ae5Ss&gid=1996904412'
 
 == The Trumpworld Graph
 
@@ -28,23 +26,23 @@ Let's have a look at the data first, here as a sample:
 [source,cypher,subs=attributes]
 ----
 WITH 
-{org_org_url} AS url
+{google_sheet_url} AS url
 LOAD CSV WITH HEADERS FROM url AS row
-RETURN row.`Organization A`,row.`Organization B`,row.Connection, row.`Source(s)`
+RETURN row.`Entity A`,row.`Entity B`,row.Connection, row.`Source(s)`
 LIMIT 5
 ----
 
-== Most Connected Organizations
+== Most Connected People and Organizations
 
-The most frequently mentioned organizations found by this query:
+The most frequently mentioned organizations and people can be found with this query:
 
 [source,cypher,subs=attributes]
 ----
 WITH 
-{org_org_url} AS url
+{google_sheet_url} AS url
 LOAD CSV FROM url AS row
 WITH row
-UNWIND  row[0..1] AS org
+UNWIND  row[1..2] AS org
 RETURN org, count(*)
 ORDER BY count(*) DESC LIMIT 10
 ----
@@ -57,7 +55,7 @@ What kind of relationships exist in the data:
 [source,cypher,subs=attributes]
 ----
 WITH 
-{org_org_url} AS url
+{google_sheet_url} AS url
 LOAD CSV WITH HEADERS FROM url AS row
 RETURN row.Connection AS type, count(*)
 ORDER BY count(*) DESC
