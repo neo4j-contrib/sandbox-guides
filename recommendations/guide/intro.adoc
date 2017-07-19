@@ -48,8 +48,10 @@ Generating personalized recommendations is one of the most common use cases for 
 ++++
 <div class="col-lg-4 ng-scope">
 ++++
+
+[subs=attributes]
 ++++
-<img src="images/click-next.png" style="position:relative;right:-23px;top:-56px;" class="pull-right">
+<img src="{img}/click-next.png" style="position:relative;right:-23px;top:-56px;" class="pull-right">
 ++++
 
 

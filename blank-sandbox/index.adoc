@@ -1,5 +1,12 @@
 = Blank Sandbox
+:experimental:
+:icon: font
 
 == Importing Data
 
 This Sandbox is a completely vanilla instance of Neo4j.  We provide no additional data.  You may wish to https://neo4j.com/developer/guide-importing-data-and-etl/[import your own data].
+
+== Additional Resources
+
+* https://neo4j.com/developer/[Neo4j Developer Page]
+* https://neo4j.com/docs/cypher-refcard/current/[Cypher Refcard]

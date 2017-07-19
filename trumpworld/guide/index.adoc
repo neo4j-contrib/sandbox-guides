@@ -4,7 +4,10 @@
 
 == Exploring The Trumpworld Graph
 
-image:https://img.buzzfeed.com/buzzfeed-static/static/2017-01/13/13/asset/buzzfeed-prod-fastlane-01/sub-buzz-31493-1484333437-1.jpg?no-auto[float=right]
+++++
+<div class="col-sm-8">
+
+++++
 
 . pass:a[<a play-topic='{GUIDES}/intro.html'>Overview: Introducing The Trumpworld Graph and Neo4j</a>]
 //. pass:a[<a play-topic='{GUIDES}/import.html'>IMPORT: Loading The Trumpworld Graph</a>]
@@ -14,6 +17,16 @@ image:https://img.buzzfeed.com/buzzfeed-static/static/2017-01/13/13/asset/buzzfe
 . pass:a[<a play-topic='{GUIDES}/contracts.html'>Extending the data: US Government Contracts</a>]
 . pass:a[<a play-topic='{GUIDES}/littlesis.html'>Extending the data: Littlesis</a>]
 . pass:a[<a play-topic='{GUIDES}/exploratory.html'>EXERCISE: Exploratory</a>]
+
+++++
+</div>
+
+<div class="col-sm-4">
+
+<img src="https://img.buzzfeed.com/buzzfeed-static/static/2017-01/13/13/asset/buzzfeed-prod-fastlane-01/sub-buzz-31493-1484333437-1.jpg?no-auto" class="img-responsive">
+
+</div>
+++++
 
 == Further Resources
 

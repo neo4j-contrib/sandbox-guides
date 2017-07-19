@@ -2,6 +2,7 @@
 
 == Network Analysis With Neo4j Graph Algorithms
 
+[subs=attributes]
 image::{img}/lg_datamodel.png[float=right]
 
 * Centralities
@@ -246,7 +247,7 @@ RETURN l, COUNT(*) AS num ORDER BY l.pagerank DESC LIMIT 10
 //
 //[source,cypher]
 //----
-MATCH (l:Rep)
+//MATCH (l:Rep)
 //RETURN l.partition, l.party, COUNT(*) AS num
 //----
 //

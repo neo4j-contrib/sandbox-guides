@@ -47,7 +47,7 @@ ORDER BY len DESC LIMIT 4
 
 == Shortest Path
 
-We can use the shortestPath function in Cypher to find the shortest path between any two characters in the graph. Let’s find the shortest path from Catelyn Stark to Kahl Drogo:
+We can use the shortestPath function in Cypher to find the shortest path between any two characters in the graph. Let’s find the shortest path from Donald trump to Erik Prince:
 
 [source,cypher]
 ----
@@ -59,7 +59,7 @@ RETURN p
 
 === All shortest paths
 
-There might be other paths of the same length connecting Catelyn and Drogo. We can find these with the allShortestPaths Cypher function:
+There might be other paths of the same length connecting Trump and Prince. We can find these with the allShortestPaths Cypher function:
 
 [source,cypher]
 ----
