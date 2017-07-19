@@ -1,0 +1,789 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Graph of Thrones</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>The Graph of Thrones</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: left;">
+<div class="content">
+<img src="http://guides.neo4j.com/got/img/got_header.png" alt="got header">
+</div>
+</div>
+<div class="imageblock" style="float: right;">
+<div class="content">
+<img src="http://guides.neo4j.com/got/img/graphs-are-coming.jpg" alt="graphs are coming">
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Analyzing Text</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: right;">
+<div class="content">
+<img src="http://guides.neo4j.com/got/img/AStormOfSwords.jpg" alt="AStormOfSwords">
+</div>
+</div>
+<div class="paragraph">
+<p>Most of this demo is based on work done by Dr. Andrew Beveridge, based on his <a href="https://networkofthrones.wordpress.com/" target="_blank">Network of Thrones</a> research.</p>
+</div>
+<div class="paragraph">
+<p>Article:
+<a href="https://www.macalester.edu/~abeverid/index.html" target="_blank">Beveridge, Andrew, Shan, Jie. Network of Thrones. Math Horizons Magazine, Vol. 23, No. 4 (2016) pp. 18-22.</a></p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Graph of Character Interactions</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Build a graph where each character of the story is a node and the relationships represent character interactions.</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Link two characters each time their names (or nicknames) <strong>appear within 15 words of one another</strong>.</p>
+</div>
+<div class="paragraph">
+<p>Each link corresponds to an interaction between the two characters.
+Note that this interaction could be direct or indirect.
+Here are some of the types of interactions that our method picks up.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Two characters appearing together in the same location</p>
+</li>
+<li>
+<p>Two characters in conversation</p>
+</li>
+<li>
+<p>One character talking about another character</p>
+</li>
+<li>
+<p>One character listening to a third character talk about a second character</p>
+</li>
+<li>
+<p>A third character talking about two other characters</p>
+</li>
+</ul>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>How the data was extracted from the books is described in detail here: <a href="https://networkofthrones.wordpress.com/from-book-to-network/" class="bare">https://networkofthrones.wordpress.com/from-book-to-network/</a></p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="http://guides.neo4j.com/got/img/char_cooccurence.png" alt="char cooccurence">
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Character cooccurences data</h3>
+    <br/>
+    <div>
+      <table class="table tableblock frame-all grid-all" style="width: 100%;">
+<caption class="title">Table 1. Example data</caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Source</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Target</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Weight</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Aemon</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Grenn</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Aemon</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Samwell</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">31</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Aerys</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Jaime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">18</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Source: <a href="https://github.com/mathbeveridge/asoiaf/blob/master/data/asoiaf-book3-edges.csv">Interactions for book 3: "A Storm of Swords"</a>.</p>
+</div>
+<div class="paragraph">
+<p>The data for all 5 books is published here: <a href="https://github.com/mathbeveridge/asoiaf" class="bare">https://github.com/mathbeveridge/asoiaf</a></p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Import</h3>
+    <br/>
+    <div>
+      <div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CREATE CONSTRAINT ON (c:Character) ASSERT c.name IS UNIQUE;<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can import the co-occurences for all books first, which will also create all characters:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/mathbeveridge/asoiaf/master/data/asoiaf-all-edges.csv" AS row
+MERGE (src:Character {name: row.Source})
+MERGE (tgt:Character {name: row.Target})
+// global relationship
+MERGE (src)-[r:INTERACTS]-&gt;(tgt) ON CREATE SET r.weight = toInt(row.weight)<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then for each of the books we can create a dedicated relationship, suffixed with the number of the book.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/mathbeveridge/asoiaf/master/data/asoiaf-book1-edges.csv" AS row
+MATCH (src:Character {name: row.Source})
+MATCH (tgt:Character {name: row.Target})
+// relationship for the book
+MERGE (src)-[r:INTERACTS1]-&gt;(tgt) ON CREATE SET r.weight = toInt(row.weight), r.book=1<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/mathbeveridge/asoiaf/master/data/asoiaf-book2-edges.csv" AS row
+MATCH (src:Character {name: row.Source})
+MATCH (tgt:Character {name: row.Target})
+// relationship for the book
+MERGE (src)-[r:INTERACTS2]-&gt;(tgt) ON CREATE SET r.weight = toInt(row.weight), r.book=2<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/mathbeveridge/asoiaf/master/data/asoiaf-book3-edges.csv" AS row
+MATCH (src:Character {name: row.Source})
+MATCH (tgt:Character {name: row.Target})
+// relationship for the book
+MERGE (src)-[r:INTERACTS3]-&gt;(tgt) ON CREATE SET r.weight = toInt(row.weight), r.book=3<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/mathbeveridge/asoiaf/master/data/asoiaf-book45-edges.csv" AS row
+MATCH (src:Character {name: row.Source})
+MATCH (tgt:Character {name: row.Target})
+// relationship for the book
+MERGE (src)-[r:INTERACTS45]-&gt;(tgt) ON CREATE SET r.weight = toInt(row.weight), r.book=45<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>The data model</h3>
+    <br/>
+    <div>
+      <div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL apoc.meta.graph()<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>The Graph of Thrones</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Remember to switch auto-complete off.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH p=(:Character)-[:INTERACTS]-(:Character)
+RETURN p
+LIMIT 50<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Analyzing The Network</h3>
+    <br/>
+    <div>
+      
+
+
+   <h4>Number of characters</h4>
+   <div class="paragraph">
+<p>796 Characters with 2823 interactions across all books.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Character) RETURN count(c)<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Interactions per book</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH ()-[r]-&gt;()
+RETURN r.book as book, count(r) ORDER BY book<!--/code--></pre>
+</div>
+</div>
+
+
+
+   <h4>Summary statistics</h4>
+   <div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Character)-[:INTERACTS]-&gt;()
+WITH c, count(*) AS num
+RETURN min(num) AS min, max(num) AS max, avg(num) AS avg_characters, stdev(num) AS stdev<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Across all books:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Character)-[r]-&gt;()
+WITH r.book as book, c, count(*) AS num
+RETURN book, min(num) AS min, max(num) AS max, avg(num) AS avg_characters, stdev(num) AS stdev
+ORDER BY book<!--/code--></pre>
+</div>
+</div>
+
+
+
+   <h4>Diameter of the network</h4>
+   <div class="paragraph">
+<p>The diameter (or geodesic) of a network is defined as the longest shortest path in the network.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// Find maximum diameter of network
+// maximum shortest path between two nodes
+MATCH (a:Character), (b:Character) WHERE id(a) &gt; id(b)
+MATCH p=shortestPath((a)-[:INTERACTS*]-(b))
+WITH length(p) AS len, p
+ORDER BY len DESC LIMIT 4
+RETURN len, extract(x IN nodes(p) | x) AS path<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Shortest Path</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We can use the shortestPath function in Cypher to find the shortest path between any two characters in the graph.
+Let’s find the shortest path from Catelyn Stark to Kahl Drogo:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// Shortest path from Catelyn Stark to Khal Drogo
+MATCH (catelyn:Character {name:"Catelyn-Stark"}), (drogo:Character {name:"Drogo"})
+MATCH p=shortestPath((catelyn)-[:INTERACTS*]-(drogo))
+RETURN p<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For only book 3 the path is much longer.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// Shortest path from Catelyn Stark to Khal Drogo
+MATCH (catelyn:Character {name:"Catelyn-Stark"}), (drogo:Character {name:"Drogo"})
+MATCH p=shortestPath((catelyn)-[:INTERACTS3*]-(drogo))
+RETURN p<!--/code--></pre>
+</div>
+</div>
+
+
+
+   <h4>All shortest paths</h4>
+   <div class="paragraph">
+<p>There might be other paths of the same length connecting Catelyn and Drogo.
+We can find these with the allShortestPaths Cypher function:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// All shortest paths from Catelyn Stark to Khal Drogo
+MATCH (catelyn:Character {name:"Catelyn-Stark"}), (drogo:Character {name:"Drogo"})
+MATCH p=allShortestPaths((catelyn)-[:INTERACTS3*]-(drogo))
+RETURN p<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Pivotal Nodes</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>A node is said to be pivotal if it lies on all shortest paths between two other nodes in the network.
+We can find all pivotal nodes in the network.</p>
+</div>
+<div class="paragraph">
+<div class="title">Source: <a href="https://www.cs.cornell.edu/home/kleinber/networks-book/">Networks, Crowds, Markets</a></div>
+<p>This runs for a bit, as it has to compute across:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// Find all pivotal nodes in network
+MATCH (a:Character), (b:Character) WHERE id(a) &gt; id(b)
+MATCH p=allShortestPaths((a)-[:INTERACTS*]-(b)) WITH collect(p) AS paths, a, b
+UNWIND nodes(head(paths)) as c // first path
+WITH * WHERE NOT c IN [a,b] AND all(path IN tail(paths) WHERE c IN nodes(path))
+RETURN a.name, b.name, c.name AS PivotalNode, length(head(paths)) as pathLength, length(paths) as pathCount SKIP 490 LIMIT 10<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (a:Character {name: "Drogo"}), (b:Character {name: "Ramsay-Snow"})
+MATCH p=allShortestPaths((a)-[:INTERACTS*]-(b))
+RETURN p<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Centrality measures</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>In graph theory and network analysis, indicators of centrality identify the most important vertices within a graph.
+Applications include identifying the most influential person(s) in a social network, key infrastructure nodes in the Internet or urban networks, and super-spreaders of disease.</p>
+</div>
+<div class="paragraph">
+<p>This reproduces (partly) what Andrew Beveridge <a href="https://networkofthrones.wordpress.com/the-novels/" target="_blank">did for the novels</a></p>
+</div>
+<div class="paragraph">
+<p>We use the <a href="https://networkofthrones.wordpress.com/a-primer-on-network-analysis/" target="_blank">great explanations given by Andrew for the different network metrics</a></p>
+</div>
+
+
+
+   <h4>Degree Centrality</h4>
+   <div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>The degree centrality of a node is the number other nodes that are directly connected to it via a relationships.
+This is just a raw count of the number of people that the character interacted with at least once.</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Character)
+RETURN c.name AS character, size( (c)-[:INTERACTS]-() ) AS degree
+ORDER BY degree DESC<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>By book:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Character)
+UNWIND [1,2,3,45] as book
+WITH book, c.name AS character, size( (c)-[{book:book}]-() ) AS degree
+RETURN character, collect([book,degree]) as degrees, max(degree) as maxDegree
+ORDER BY maxDegree DESC;<!--/code--></pre>
+</div>
+</div>
+
+
+
+   <h4>Weighted Degree Centrality</h4>
+   <div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>The weighted degree centrality is the sum of the weights of the relationships of the node.
+This is the total number of interactions involving the character.</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Character)-[r:INTERACTS]-()
+RETURN c.name AS character, sum(r.weight) AS weightedDegree
+ORDER BY weightedDegree DESC LIMIT 100<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>By book:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Character)
+UNWIND [1,2,3,45] as book
+MATCH (c)-[r {book:book}]-()
+WITH book, c.name AS character, sum(r.weight) AS weightedDegree
+RETURN character, collect([book,weightedDegree]) as weightedDegrees, max(weightedDegree) as maxDegree
+ORDER BY maxDegree DESC;<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>APOC Procedures</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: right;">
+<div class="content">
+<img src="http://guides.neo4j.com/got/img/apoc_proc.png" alt="apoc proc">
+</div>
+</div>
+
+
+
+   <h4>User Defined Procedures</h4>
+   <div class="paragraph">
+<p>User defined procedures are written in Java, deployed to the database and callable from Cypher.</p>
+</div>
+<div class="paragraph">
+<p>The <a href="https://github.com/neo4j-contrib/neo4j-apoc-procedures" target="_blank">APOC library</a> is a library of useful procedures and functions for many common Neo4j tasks, including <a href="https://neo4j-contrib.github.io/neo4j-apoc-procedures/#_graph_algorithms" target="_blank">graph algorithms</a>, data import, refactoring, indexing, system monitoring, &#8230;&#8203;</p>
+</div>
+<div class="paragraph">
+<p>You install them by downloading the last release, putting it into $NEO4J_HOME/plugins and restarting Neo4j.
+The <a href="http://neo4j.com/sandbox" target="_blank">Neo4j-Sandbox</a> comes with APOC pre-installed.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Betweenness Centrality</h3>
+    <br/>
+    <div>
+      <div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Betweenness centrality identifies nodes that are strategically positioned in the network, meaning that information will often travel through that person.
+Such an intermediary position gives that person power and influence.
+Betweenness centrality is a raw count of the number of short paths that go through a given node.
+For example, if a node is located on a bottleneck between two large communities, then it will have high betweenness</p>
+</div>
+</blockquote>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="http://guides.neo4j.com/got/img/betweenness-centrality.png" alt="betweenness centrality">
+</div>
+</div>
+<div class="paragraph">
+<p>The red nodes have a high betweenness centrality and are connectors of clusters.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Character)
+WITH collect(c) AS characters
+CALL apoc.algo.betweenness(['INTERACTS'], characters, 'BOTH') YIELD node, score
+SET node.betweenness = score
+RETURN node.name AS name, score
+ORDER BY score DESC LIMIT 100<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Closeness Centrality</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Nodes with high closeness centality are often highly connected within clusters in the graph, but not necessarily highly connected outside of the cluster.</p>
+</div>
+<div class="paragraph">
+<p>Closeness centrality is the inverse of the average distance to all other characters in the network (farness).</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="http://guides.neo4j.com/got/img/closeness-centrality.png" alt="closeness centrality">
+</div>
+</div>
+<div class="paragraph">
+<p>Nodes with high closeness centrality are connected to many other nodes in a network.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Character)
+WITH collect(c) AS characters
+CALL apoc.algo.closeness(['INTERACTS'], characters, 'BOTH') YIELD node, score
+RETURN node.name AS name, score
+ORDER BY score DESC LIMIT 100<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>PageRank</h3>
+    <br/>
+    <div>
+      <div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>This is another version of weighted degree centrality with a feedback loop.
+This time, you only get your “fair share” of your neighbor’s importance.
+That is, your neighbor’s importance is split between their neighbors, proportional to the number of interactions with that neighbor.
+Intuitively, PageRank captures how effectively you are taking advantage of your network contacts.
+In our context, PageRank centrality nicely captures narrative tension.
+Indeed, major developments occur when two important characters interact.</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Character) WITH collect(c) AS nodes
+CALL apoc.algo.pageRankWithConfig(nodes,{types:'INTERACTS'}) YIELD node, score
+RETURN node, score
+ORDER BY score DESC LIMIT 100<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Community Detection</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We can detect communities in our data by running an algorithm which traverses the graph structure to find highly connected subgraphs with fewer connections other other subgraphs.</p>
+</div>
+<div class="paragraph">
+<p>For the label propagation algorithm that is used in this implementation, we need to normalize our weight to a range of 0..1.
+For simplicity we just normalize it on the max weight value.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH ()-[r:INTERACTS]-&gt;() WITH toFloat(max(r.weight)) as max
+MATCH ()-[r:INTERACTS]-&gt;() SET r.nweight = toFloat(r.weight) / max<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Run the algorithm</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL apoc.algo.community(25,['Character'],'community','INTERACTS','BOTH','nweight',10000);<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Largest Communities, group characters by community-id, select the people with the largest degree as main ones.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Character)
+WITH c, c.community as community, size( (c)-[:INTERACTS]-() ) as degree ORDER BY community ASC, degree DESC
+WITH community, (head(collect(c))).name as main, count(*) as size, collect(c.name)[0..7] as characters, collect(c) as all
+ORDER BY size DESC
+FOREACH (c IN all | SET c.communityName = main)
+RETURN community, main, size, characters<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We could even label our character nodes with their community label and use it for visualizing.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Character)
+CALL apoc.create.addLabels(c,[c.communityName]) yield node
+RETURN count(*)<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>E.g. showing the top 50 characters and their connections.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Character)
+WITH c ORDER BY size( (c)-[:INTERACTS]-() ) DESC LIMIT 50
+WITH collect(c) as characters
+RETURN [c IN characters | [ (c)-[r:INTERACTS]-(o) WHERE o IN characters AND r.weight &gt; 30 | [c,r,o]]] as graph<!--/code--></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="http://guides.neo4j.com/got/img/got-community-interactions.jpg" alt="got community interactions">
+</div>
+</div>
+<div class="paragraph">
+<p>With the latest APOC release we can even visually group our characters by <code>communityName</code>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL apoc.nodes.group(['Character'],['communityName'])<!--/code--></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="http://guides.neo4j.com/got/img/got-group-communities.jpg" alt="got group communities">
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Using Python igraph</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We can use Neo4j with Python data science tools as well&#8230;&#8203;</p>
+</div>
+<div class="paragraph">
+<p>Continue with this <a href="https://github.com/johnymontana/graph-of-thrones/blob/master/network-of-thrones.ipynb">iPython Notebook</a></p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Visualization</h3>
+    <br/>
+    <div>
+      <div class="imageblock">
+<div class="content">
+<img src="http://guides.neo4j.com/got/img/graph-of-thrones.png" alt="graph of thrones">
+</div>
+</div>
+<div class="paragraph">
+<p>Generated with <a href="https://github.com/johnymontana/neovis.js">neovis.js</a></p>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>
