@@ -9,7 +9,9 @@ One of the benefits of the graph data model is the ability to combine datasets a
 
 Data on recipients of federal government contracts are available online, at https://www.usaspending.gov/Pages/Default.aspx[USASpending.gov] 
 
-image:http://www.lyonwj.com/public/img/usaspending.png[]
+++++
+<img src="http://www.lyonwj.com/public/img/usaspending.png" style="max-height: 300px;">
+++++
 
 We may need to reference the https://www.usaspending.gov/DownloadCenter/Documents/USAspending.govDownloadsDataDictionary.pdf[data dictionary for USASpending.gov].
 
@@ -102,7 +104,9 @@ RETURN row.piid AS piid,
 
 How might we model this contract data as a graph? Let's examine the third contract in the table above:
 
-image:http://lyonwj.com/public/img/contract-data-model.png[]
+++++
+<img src="http://lyonwj.com/public/img/contract-data-model.png" style="max-height: 300px;">
+++++
 
 *How should we model government contracts in Neo4j?*
 
@@ -255,4 +259,4 @@ MATCH (p)-[]-(o:Organization)-[:AWARDED_CONTRACT]->(c:Contract),
 RETURN *
 ----
 
-This is of course the contract that [allows the Secret Service to rent space in Trump Tower](http://www.politico.com/story/2016/12/secret-service-faces-massive-bill-for-protecting-trump-232153) for protecting Trump and his associates.
+This is of course the contract that http://www.politico.com/story/2016/12/secret-service-faces-massive-bill-for-protecting-trump-232153[allows the Secret Service to rent space in Trump Tower] for protecting Trump and his associates.

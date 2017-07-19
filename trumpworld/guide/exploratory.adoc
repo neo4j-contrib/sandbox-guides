@@ -40,6 +40,8 @@ MATCH p=(node)-[]-()
 RETURN p
 ----
 
+== Exploratory Exercise
+
 *What are areas you're interested in exploring?*
 
 By filtering on names and connection types we can explore the networks around key people and organizations. For example:

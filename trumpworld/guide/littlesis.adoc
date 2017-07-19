@@ -8,7 +8,10 @@ One of the benefits of the graph data model is the ability to combine datasets a
 
 LittleSis is "a free database of who-knows-who at the heights of business and government". The dataset can be explored online at https://littlesis.org/lists[littlesis.org] 
 
-image:{img}/littlesis.png[]
+[subs=attributes]
+++++
+<img src="{img}/littlesis.png" style="max-height: 300px;">
+++++
 
 == The Data
 

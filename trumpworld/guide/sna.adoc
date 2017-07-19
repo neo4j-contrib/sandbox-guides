@@ -160,7 +160,11 @@ RETURN node.name AS name, score ORDER BY score DESC
 
 PageRank is an algorithm originally used by Google to rank the importance of web pages and is a type of eigenvector centrality
 
-image:http://www.lyonwj.com/public/img/page-rank.png[]
+
+++++
+<div class="col-sm-8">
+++++
+
 
 .Most central Person nodes by PageRank
 [source,cypher]
@@ -181,3 +185,11 @@ WITH node, score ORDER BY score LIMIT 5
 MATCH p=(node)-[]-()
 RETURN p
 ----
+
+++++
+</div>
+<div class="col-sm-4">
+
+<img src="http://www.lyonwj.com/public/img/page-rank.png" class="img-responsive">
+</div>
+++++
