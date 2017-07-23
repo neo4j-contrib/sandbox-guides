@@ -1,0 +1,184 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Data Load</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Creating nodes</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>You want to create a node in your graph for every record in your file. The keyword in Cypher is 'CREATE'</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "https://guides.neo4j.com/sandbox/legis-graph/data/cm.txt" AS row FIELDTERMINATOR "|"
+WITH row limit 10
+CREATE (s:State { code: row.CMTE_ST })<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Check what the previous load has produced&#8230;&#8203; something unexpected?</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Understanding how data load works (2)</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Duplicates! We want a single node representing a state so we can then link all cities in the state to it&#8230;&#8203;
+Let&#8217;s delete the states we have created and start again</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (s:State) DELETE s<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The keyword in Cypher is MERGE (semantics: CREATE if it does not exist yet, MATCH if it is already there)</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "https://guides.neo4j.com/sandbox/legis-graph/data/cm.txt" AS row FIELDTERMINATOR "|"
+WITH row limit 10
+MERGE (s:State { code: row.CMTE_ST })<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The same query with MERGE instead of CREATE should have done the job.
+Now let&#8217;s do the same with the cities in the sixth column. The same record may contain multiple entities.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "https://guides.neo4j.com/sandbox/legis-graph/data/cm.txt" AS row FIELDTERMINATOR "|"
+WITH row limit 10
+MERGE (s:State { code: row.CMTE_ST })
+MERGE (c:City { name: row.CMTE_CITY })<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And finally, we are ready to connect cities with states, we just need to add the named relationship</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "https://guides.neo4j.com/sandbox/legis-graph/data/cm.txt" AS row FIELDTERMINATOR "|"
+WITH row limit 10
+MERGE (s:State { code: row.CMTE_ST })
+MERGE (c:City { name: row.CMTE_CITY })
+MERGE (c)-[:LOCATED_IN]->(s)<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now you can remove the limit to run the script on the whole dataset
+And you can have a look at the entities you&#8217;ve just created using the same graph pattern</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:City)-[:LOCATED_IN]->(s:State)
+RETURN c,s LIMIT 15<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Understanding how data load works: Exercises</h3>
+    <br/>
+    <div>
+      <div class="ulist">
+<ul>
+<li>
+<p>Using the same file (cm.txt) try to create nodes representing committees identified by the committee ID (<code>CMTE_ID</code>) and treasurers identified by their name (<code>TRES_NM</code>) and connect them to indicate that the committee has this person as treasurer.</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "https://guides.neo4j.com/sandbox/legis-graph/data/cm.txt" AS row FIELDTERMINATOR "|"
+WITH row limit 10
+RETURN row.CMTE_ID AS committeId, row.TRES_NM AS treasurerName<!--/code--></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Extend your load script with more attributes of the committe using the keyword SET (Cypher refcard)</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "https://guides.neo4j.com/sandbox/legis-graph/data/cm.txt" AS row FIELDTERMINATOR "|"
+WITH row limit 10
+...
+MERGE (c:Committee ...
+SET c.name = row[...]<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>(watch out for unexpected problems when run on the whole data set, raw data is never perfect)</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Using the ccl.txt file now, load legislators and link them to the committees that fund them.</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>

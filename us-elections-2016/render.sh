@@ -8,7 +8,7 @@ $GUIDES/run.sh election-guide.adoc index.html +1 "$@"
 
 if [ "$1" == "publish" ]; then
   URL=guides.neo4j.com/sandbox/us-elections-2016
-  render http://$URL
+  render https://$URL
   if hash aws 2>/dev/null; then
     aws s3 cp --acl public-read --recursive --exclude "*" --include "*.html" --include "*.png" --include "*.jpg" --include "*.gif" . s3://${URL}/
     aws s3 cp --acl public-read index.html s3://${URL}

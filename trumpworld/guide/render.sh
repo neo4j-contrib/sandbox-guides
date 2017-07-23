@@ -15,9 +15,9 @@ $GUIDES/run.sh littlesis.adoc littlesis.html +1 "$@"
 
 if [ "$1" == "publish" ]; then
 	URL=guides.neo4j.com/sandbox/trumpworld
-	render http://$URL -a csv-url=http://guides.neo4j.com/sandbox/trumpworld/data/ -a env-training
+	render https://$URL -a csv-url=https://guides.neo4j.com/sandbox/trumpworld/data/ -a env-training
 	if hash aws 2>/dev/null; then
-		aws s3 cp --acl public-read --recursive --exclude "*" --include "*.html" --include "*.png" --include "*.jpg" --include "*.gif" --include "*.csv" s3://${URL}/
+		aws s3 cp --acl public-read --recursive --exclude "*" --include "*.html" --include "*.png" --include "*.jpg" --include "*.gif" --include "*.csv" . s3://${URL}/
 		aws s3 cp --acl public-read index.html s3://${URL}
 	else
 		s3cmd put --recursive -P *.html img data s3://${URL}/

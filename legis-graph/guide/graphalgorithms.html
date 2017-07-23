@@ -1,0 +1,340 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Congressional Graph Algorithms</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Network Analysis With Neo4j Graph Algorithms</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: right;">
+<div class="content">
+<img src="https://guides.neo4j.com/sandbox/legis-graph/img/lg_datamodel.png" alt="lg datamodel">
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Centralities</p>
+</li>
+<li>
+<p>Clustering</p>
+</li>
+<li>
+<p>Triadic closures and inferred relationships
+*</p>
+</li>
+<li>
+<p>Global graph algorithms with APOC</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Bill Cosponsorships</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Let&#8217;s start by using bill cosponsorships for our analysis. A cosponorship occurs any time two legislators sponsor the same bill.</p>
+</div>
+<div class="listingblock">
+<div class="title">Cosponsors for a single Bill</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (b:Bill) WITH b LIMIT 1
+MATCH (l:Legislator)<-[:SPONSORED_BY]-(b)
+RETURN *<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Bill cosponsorship is a specific example of the concept of <strong>inferred relationships</strong> or <strong>triadic closures</strong>. In this case we are inferring a relationship between two legislators who sponsor the same bill.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="https://guides.neo4j.com/sandbox/legis-graph/img/bill_cosponsors.png" alt="bill cosponsors">
+</div>
+</div>
+
+
+
+   <h4>Persisting Inferred Relationships</h4>
+   <div class="listingblock">
+<div class="title">Persist all COSPONSORED relationships</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// Persist inferred COSPONSORED relationships
+MATCH (l1:Legislator)<-[:SPONSORED_BY]-(b:Bill)-[:SPONSORED_BY]->(l2:Legislator)
+WHERE id(l1) < id(l2)
+WITH l1, l2, COUNT(*) AS weight
+CREATE (l1)-[r:COSPONSORED]->(l2)
+SET r.weight = weight<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Centrality measures</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>In graph theory and network analysis, indicators of centrality identify the most important vertices within a graph. Applications include identifying the most influential person(s) in a social network, key infrastructure nodes in the Internet or urban networks, and super-spreaders of disease.</p>
+</div>
+
+
+
+   <h4>Degree Centrality</h4>
+   <div class="paragraph">
+<p>Degree centrality is the number of relationships connected to a specific node. In the context of this network, it is the number of <code>COSPONSORED</code> relationships.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (l:Legislator)
+RETURN l.firstName + " " + l.lastName AS legislator, size ((l)&lt;-[:COSPONSORED]-()) AS degree ORDER BY degree DESC LIMIT 25<!--/code--></pre>
+</div>
+</div>
+
+
+
+   <h4>Weighted Degree Centrality</h4>
+   <div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (l:Legislator)-[r:COSPONSORED]-()
+RETURN l.firstName + " " + l.lastName AS legislator, sum(r.weight) AS weightedDegree ORDER BY weightedDegree DESC LIMIT 25<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Apoc Procedures</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: right;">
+<div class="content">
+<img src="https://dl.dropboxusercontent.com/u/67572426/graph_of_thrones/apoc_proc.png" alt="apoc proc">
+</div>
+</div>
+
+
+
+   <h4>User Defined Procedures</h4>
+   <div class="paragraph">
+<p>User defined procedures are written in Java, deployed to the database and callable from Cypher.</p>
+</div>
+
+
+
+   <h4><a href="https://github.com/neo4j-contrib/neo4j-apoc-procedures">Apoc library</a></h4>
+   <div class="paragraph">
+<p>Library of procedures for many common Neo4j tasks, including graph algorithsm, data import, refactoring, indexing, system monitoring, &#8230;&#8203;</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Betweenness Centrality</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>The betweenness centrality of a node in a network is the number of shortest paths between two other members in the network on which a given node appears.</p>
+</div>
+<div class="paragraph">
+<p>Betweenness centality is an important metric because it can be used to identify “brokers of information” in the network or nodes that connect disparate clusters.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="http://www.lyonwj.com/public/img/betweenness-centrality.png" alt="betweenness centrality">
+</div>
+</div>
+<div class="listingblock">
+<div class="title">The red nodes have a high betweenness centrality and are connectors of clusters.</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (l:Legislator)
+WITH collect(l) AS legislators
+CALL apoc.algo.betweenness(['COSPONSORED'], legislators, 'OUTGOING') YIELD node, score
+SET node.betweenness = score
+RETURN node.firstName + " " + node.lastName AS legislator, score ORDER BY score DESC LIMIT 25<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Closeness Centrality</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Nodes with high closeness centality are often highly connected within clusters in the graph, but not necessarily highly connected outside of the cluster.</p>
+</div>
+<div class="paragraph">
+<p>Closeness centrality is the inverse of the average distance to all other characters in the network.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="http://www.lyonwj.com/public/img/closeness-centrality.png" alt="closeness centrality">
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Nodes with high closeness centrality are connected to many other nodes in a network.</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (l:Legislator)
+WITH collect(l) AS legislators
+CALL apoc.algo.closeness(['COSPONSORED'], legislators, 'OUTGOING') YIELD node, score
+RETURN node.firstName + " " + node.lastName AS legislator, score ORDER BY score DESC LIMIT 25<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>PageRank</h3>
+    <br/>
+    <div>
+      <div class="imageblock">
+<div class="content">
+<img src="http://www.lyonwj.com/public/img/page-rank.png" alt="page rank">
+</div>
+</div>
+<div class="listingblock">
+<div class="title">The size of each node is proportional to the size and number of nodes with an outgoing relationship to it.</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (l:Legislator) WITH collect(l) AS ls
+CALL apoc.algo.pageRank(ls) YIELD node, score
+RETURN node.firstName + " " + node.lastName AS legislator, score ORDER BY score DESC LIMIT 10<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>PageRank - Inferred Relationships</h3>
+    <br/>
+    <div>
+      
+
+
+   <h4>Inferred Relationships and Political Influence</h4>
+   <div class="paragraph">
+<p>The main sponsor of a bill can be said to have demonstrated political influence over cosponsors. We can find these inferred <code>INFLUENCED</code> relationships in the graph with this query:</p>
+</div>
+<div class="listingblock">
+<div class="title">Find inferred INFLUENCED relationships</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (b:Bill)-[r:SPONSORED_BY]-&gt;(sponsor:Legislator)
+WHERE r.cosponsor = False
+MATCH (b)-[s:SPONSORED_BY]-&gt;(cosponsor:Legislator)
+WHERE s.cosponsor = True
+RETURN id(sponsor) AS source, id(cosponsor) AS target, count(*) AS weight ORDER BY weight DESC LIMIT 25<!--/code--></pre>
+</div>
+</div>
+
+
+
+   <h4>PageRank On Inferred Relationships</h4>
+   <div class="paragraph">
+<p>We can run PageRank using inferred relationships without actually persisting these to the graph:</p>
+</div>
+<div class="listingblock">
+<div class="title">Run PageRank on inferred INFLUENCED relationships (that are not persisted in the graph)</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL apoc.algo.pageRankWithCypher({iterations:20, write:true, node_cypher: 'MATCH (l:Legislator) RETURN id(l) AS id', rel_cypher:'MATCH (b:Bill)-[r:SPONSORED_BY]-&gt;(sponsor:Legislator)
+WHERE r.cosponsor = False
+MATCH (b)-[s:SPONSORED_BY]-&gt;(cosponsor:Legislator)
+WHERE s.cosponsor = True
+RETURN id(sponsor) AS source, id(cosponsor) AS target, count(*) AS weight ORDER BY weight DESC'})<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Most influential Senator with influence over certain topics</h3>
+    <br/>
+    <div>
+      <div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (b:Body {type: "Senate"})&lt;-[:ELECTED_TO]-(l:Legislator)&lt;-[:SPONSORED_BY]-(:Bill)-[d:DEALS_WITH]-&gt;(s:Subject)
+WHERE s.title CONTAINS "Technology"
+RETURN l, COUNT(*) AS num ORDER BY l.pagerank DESC LIMIT 10<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>

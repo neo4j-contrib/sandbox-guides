@@ -19,17 +19,16 @@
 
 Computer networks span all levels of the stack from physical connections up to mobile and web-applications connecting networks of users.
 
-Graph Databases offer a natural way of modelling, storing and querying all these types of computer networks.
+Graph Databases offer a natural way of modeling, storing and querying all these types of computer networks in order to improve communication with users, reduce downtime, and save money.
 
 A graph database like Neo4j can be utilized for:
 
+* Impact and Dependency Analysis
+* Route Cause Analysis
 * Configuration Management
-* Impact Analysis
-* Planning
 * Security and Hardening of Networks
 * Intrusion Detection
-* Traffic Analytics
-* Analytics of user behavior
+* Traffic and Usage Analytics
 
 In this example we want to look at Network Management and Impact Analysis from the level of routing (TCP/IP) upwards to managing applications and tracing their dependencies.
 
@@ -39,17 +38,27 @@ Throughout the guide you'll find Cypher statements that you can execute, by clic
 
 image::{images}/Network-Management-Model.svg[width=700, float=right]
 
-We can model the network endpoints (boxes like servers, routers, firewalls, racks) of the data center as nodes and the "cables" between them as relationships.
+We model the physical and virtual components of the network as nodes:
 
-Another type of node represent networks and interfaces.
+* servers
+* routers, switches, firewalls
+* racks
+* networks, network interfaces
 
-On the application level we have the operating system, virtual machines, application and services that are modeled as entities.
+We model the connections between these devices as relationships.
 
-Our example data is already set-up, in the "resources" section at the end, you'll find some pointers there.
+We also model the software running on our network as nodes:
 
-== DataCenter
+* oeprating systems
+* virtual machines
+* applications
+* services
 
-This is the full data model of your graph.
+Our example data is already set up.  You'll find some pointers to help you import your own data in the "resources" section at the end.
+
+== Data Center
+
+This is the full data model of your graph:
 
 image::{images}/network-schema-arrows.jpg[float=right]
 
@@ -61,19 +70,19 @@ CALL db.schema()
 ----
 
 Imagine we have a `DataCenter` connected to an Interconnect via an `Egress Router`.
-The datacenter uses a `10.x.x.x/8` IP address range.
+The data center uses a `10.x.x.x/8` IP address range.
 
-The DataCenter consists of several Zones which are connected to the main backbone each via a `Router` (10.zone.*/16).
+The `DataCenter` consists of several Zones which are connected to the main backbone each via a `Router` (10.zone.*/16).
 
 From there each zone is broken down into rows of `Racks`.
 
-Each `Rack` contains different types of `Servers` and has its own `Switch` to connect to the datacenter routers backplane.
+Each `Rack` contains different types of `Servers` and has its own `Switch` to connect to the data center routers backplane.
 
 Each `Server` has external network `Interfaces` that connect to the rack switch, the local networks being `10.zone.rack.*/24`.
 
-Each machine either runs a real Operating System (`OS`) or a Virtualization Manager that runs a number of Virtual Machines.
+Each machine either runs a real Operating System (`OS`) or a `Virtualization Manager that runs a number of Virtual Machines.
 
-For operational simplicity we only run one `Application` per OS which uses a number of `Ports` on the external interface.
+For operational simplicity we only run one `Application` per OS which binds to a number of `Ports` on the external network interface.
 
 ////
 // todo subset / asciidoctor diagram for networks
@@ -85,9 +94,9 @@ image::{images}/network-hardware-arrows.jpg[]
 
 Usually we would get this kind of information from a configuration management database (CMDB), network managment tools or agents installed on the machines.
 
-== Network Exploration: DataCenter and Zones
+== Network Exploration: Data Center and Zones
 
-Let's walk through the data, step by step. Let's start with the DataCenter.
+Let's walk through the data, step by step. Let's start with the data center.
 
 [source,cypher]
 ----
@@ -99,7 +108,7 @@ RETURN network;
 
 image::{images}/network-zones.jpg[float=right]
 
-The datacenter consists of 4 zones, each of which has it's own separate `Network` `10.zone.*/16`, and it's own `Router`.
+The data centerconsists of 4 zones, each of which has it's own separate `Network` `10.zone.*/16`, and it's own `Router`.
 
 We can draw out that verbal description in a query with patterns matching the network parts.
 
@@ -115,7 +124,7 @@ MATCH (dc)-[:CONTAINS]->(r:Router)-[:ROUTES]->(ri:Interface)-[:CONNECTS]->(nr)
 RETURN *;
 ----
 
-To visualize the DataCenter and it's components so far, we can also start at the center and then go 3 hops out.
+To visualize the `DataCenter` and it's components so far, we can also start at the center and then go 3 hops out.
 
 [source,cypher]
 ----
@@ -172,7 +181,7 @@ RETURN network;
 
 == Network Connectivity
 
-Now we could already have a look at the network connectivity in our datacenter.
+Now we could already have a look at the network connectivity in our data center.
 
 If we look now at the overall connections we need to use shortest-paths which represents the most efficient route.
 
@@ -301,11 +310,11 @@ RETURN t.name, t.id, t.cpu, t.ram, t.disk;
 
 == Machines
 
-Each Rack contains 200 machines of the types we just introduced, so that in total we get 8000 servers in our datacenter.
+Each Rack contains 200 machines of the types we just introduced, so that in total we get 8000 servers in our data center.
 
 As expected, the distribution of the types is inverse to their capabilities.
 
-As the graph visualization of our full datacenter would be pretty but otherwise useless ...
+As the graph visualization of our full data centerwould be pretty but otherwise useless ...
 
 image::{images}/network-8000-machines.jpg[]
 
@@ -355,7 +364,7 @@ ifndef::env-guide[]
 ----
 endif::env-guide[]
 
-We can also query for a distribution of machine types across the datacenter.
+We can also query for a distribution of machine types across the data center.
 
 [source,cypher]
 ----
@@ -382,7 +391,7 @@ ORDER BY c DESC;
 └──────────────────────────────────────────────────────────────────┴────┘
 ----
 
-Or if we treat our datacenter as a supercomputer, what's the total amount of CPUs, RAM and disk available:
+Or if we treat our data center as a supercomputer, what's the total amount of CPUs, RAM and disk available:
 
 [source,cypher]
 ----
@@ -762,7 +771,7 @@ CREATE (re)-[:ROUTES]->(:Interface {ip:"10.0.0.254"});
 
 === Zones
 
-The datacenter consists of 4 zones, each of which has it's own separate `Network` `10.zone.*/16`, and it's own `Router`.
+The data center consists of 4 zones, each of which has it's own separate `Network` `10.zone.*/16`, and it's own `Router`.
 
 
 [source,cypher]
@@ -808,7 +817,7 @@ RETURN t.name, t.id, t.cpu, t.ram, t.disk;
 
 === Machines
 
-Each Rack contains 200 machines of the types we just introduced, so that in total we get 8000 servers in our datacenter.
+Each Rack contains 200 machines of the types we just introduced, so that in total we get 8000 servers in our data center.
 
 The distribution of the types is inverse to their capabilities.
 
@@ -1058,3 +1067,4 @@ FOREACH (portNo in dep.ports |
   </li>
 </ul>
 ////
+

@@ -1,0 +1,140 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Exploratory Exercise</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Exploratory Exercise</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Given the data and our newly developed graph querying skills, let&#8217;s spend some time querying the data to find possible interesting stories.</p>
+</div>
+<div class="paragraph">
+<p>Break into groups, decide on an area of research and query the data to find potential stories. Each group will have the opportunity to present their results.</p>
+</div>
+
+
+
+   <h4>Suggested areas for research</h4>
+   <div class="paragraph">
+<p><strong>What can we learn about cabinet appointees and their connections?</strong></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH p=(a)-[r]-(b)
+WHERE r.connection CONTAINS "Nominee"
+RETURN p<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Extending the dataset. What other data sources could we include in the graph to enhance our understanding?</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Campaign contributions from the FEC</p>
+</li>
+<li>
+<p>Nonprofit and foundation disclosure data</p>
+</li>
+<li>
+<p>Combine with related data from littlesis.org, "the involuntary registry of the 1%"</p>
+</li>
+<li>
+<p>Add people involved with the election campaign</p>
+</li>
+<li>
+<p>Add more detailed information on the organizations and their setup (location, leadership, deals), e.g. by querying APIs like OpenCorporates or by integrating with the data from Aleph the OCCRP data portal</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Can we use centrality algorithms to find "influencers" in the network?</strong></p>
+</div>
+<div class="paragraph">
+<p>For example, we can examine the connections of the people with the highest PageRank score in the network:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// Find the first degree connections of the people with the highest PageRank score
+MATCH (c:Person)
+WITH collect(c) AS people
+CALL apoc.algo.pageRank(people) YIELD node, score
+WITH node, score ORDER BY score LIMIT 5
+MATCH p=(node)-[]-()
+RETURN p<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Exploratory Exercise</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p><strong>What are areas you&#8217;re interested in exploring?</strong></p>
+</div>
+<div class="paragraph">
+<p>By filtering on names and connection types we can explore the networks around key people and organizations. For example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// Find the second degree network of Goldman Sachs
+MATCH (o:Organization) WHERE o.name CONTAINS "GOLDMAN SACHS"
+MATCH p=(o)-[*2]-()
+RETURN p<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>

@@ -1,0 +1,446 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Legis-graph - Importing US Congress into a graph</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>The Data Model</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: right;">
+<div class="content">
+<img src="https://raw.githubusercontent.com/legis-graph/legis-graph/master/img/datamodel.png" alt="datamodel">
+</div>
+</div>
+<div class="paragraph">
+<p>This guide will walk us through importing data from govtrack.us into Neo4j. We&#8217;ll build the graph model to the right. As we go through we&#8217;ll learn about <code>LOAD CSV</code> functionality to import data into Neo4j from CSV files, how to define schema constraints and a bit about graph data modeling.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s get started!</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Importing Legislators</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We&#8217;ll start by importing legislators. Let&#8217;s first examine the data that we have available:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS
+FROM 'https://guides.neo4j.com/sandbox/legis-graph/data/legislators-current.csv' AS row
+RETURN row LIMIT 10;<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When we run this query we&#8217;re loading data from a CSV file, using the headers in the CSV file to define key-value pairs for each row and returing the resulting map/dictionary for the first 10 rows in the file.</p>
+</div>
+<div class="paragraph">
+<p>The standard approach when using <code>LOAD CSV</code> to import data is:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Create constraints</p>
+</li>
+<li>
+<p>Create nodes</p>
+</li>
+<li>
+<p>Create relationships</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Looking at the data from the previous query we can make a few observations:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>We have a unique identifier for each legislator, <code>thomasID</code></p>
+</li>
+<li>
+<p>We also have the congressional body to which they were elected (Senate, House)</p>
+</li>
+<li>
+<p>We have the State they represent</p>
+</li>
+<li>
+<p>We have a number of other properties for each legislator (religion, party, birthday, etc)</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>How should we model this data? Let&#8217;s consider:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>What nodes should be create?</p>
+</li>
+<li>
+<p>What are the relationships?</p>
+</li>
+<li>
+<p>What are the properties we want to store?</p>
+</li>
+<li>
+<p>Do we have any unique ids? How should we treat these differently from other properties?</p>
+</li>
+</ol>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Import Legislators - Schema Constraints</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Based on the concepts we discussed previously, lets use this data model:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="https://guides.neo4j.com/sandbox/legis-graph/img/lg-datamodel1.png" alt="lg datamodel1">
+</div>
+</div>
+<div class="paragraph">
+<p>We have three node labels here, each with a property that uniquely identifies that node.</p>
+</div>
+<div class="paragraph">
+<p>First we need to create uniqueness constraints for each label, property pair:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CREATE CONSTRAINT ON (l:Legislator) ASSERT l.thomasID IS UNIQUE;<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CREATE CONSTRAINT ON (s:State) ASSERT s.code IS UNIQUE;<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CREATE CONSTRAINT ON (b:Body) ASSERT b.type IS UNIQUE;<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can verify we&#8217;ve created the correct constraints / indexes by inspecting the schema in the browser:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->:schema<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Import Legislators - LOAD CSV</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We&#8217;ll use <code>LOAD CSV</code> now to create <code>Legislator</code> nodes:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS
+FROM 'https://guides.neo4j.com/sandbox/legis-graph/data/legislators-current.csv' AS row
+MERGE (l:Legislator {thomasID: row.thomasID})
+ON CREATE SET l = row<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can verify that we&#8217;ve created our <code>Legislator</code> nodes:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (l:Legislator) RETURN l;<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We still need to create our <code>State</code>, <code>Body</code>, and <code>Party</code> nodes. We can do this by iterating through the CSV file one more time:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS
+FROM 'https://guides.neo4j.com/sandbox/legis-graph/data/legislators-current.csv' AS row
+MATCH (l:Legislator {thomasID: row.thomasID})
+MERGE (s:State {code: row.state})
+CREATE UNIQUE (l)-[:REPRESENTS]->(s)
+MERGE (p:Party {name: row.currentParty})
+CREATE UNIQUE (l)-[:IS_MEMBER_OF]->(p)
+MERGE (b:Body {type: row.type})
+CREATE UNIQUE (l)-[:ELECTED_TO]->(b);<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Import Bills</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We also have information about every bill proposed during this congressional session:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS
+FROM 'https://guides.neo4j.com/sandbox/legis-graph/data/bills.csv' AS row
+RETURN row LIMIT 10<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We&#8217;ll use the <code>billID</code> property to uniquely identify bills:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="https://guides.neo4j.com/sandbox/legis-graph/img/lg-bill.png" alt="lg bill">
+</div>
+</div>
+<div class="paragraph">
+<p>First we extend our schema by defining a uniqueness constraint:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CREATE CONSTRAINT ON (b:Bill) ASSERT b.billID IS UNIQUE;<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s add these bills to the dataset:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS
+FROM 'https://guides.neo4j.com/sandbox/legis-graph/data/bills.csv' AS row
+MERGE (b:Bill {billID: row.billID})
+ON CREATE SET b = row<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that we used a new Cypher keyword above, <code>USING PERIODIC COMMIT</code>. Adding this keyword allows us to commit our import in batches of several transactions, increasing performance and reducing the memory footprint of the overall import. You can read more about periodic commit here.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Subjects</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Next we&#8217;ll add subjects to our data model:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="https://guides.neo4j.com/sandbox/legis-graph/img/lg-subject.png" alt="lg subject">
+</div>
+</div>
+<div class="paragraph">
+<p>Each bill can have one or more subjects:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS
+FROM 'https://guides.neo4j.com/sandbox/legis-graph/data/subjects.csv' AS row
+RETURN row LIMIT 10;<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Again, we create a uniqueness constraint:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CREATE CONSTRAINT ON (s:Subject) ASSERT s.title IS UNIQUE;<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS
+FROM 'https://guides.neo4j.com/sandbox/legis-graph/data/subjects.csv' AS row
+MERGE (s:Subject {title: row.title})<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Connecting Bills and Subjects</h3>
+    <br/>
+    <div>
+      <div class="imageblock">
+<div class="content">
+<img src="https://guides.neo4j.com/sandbox/legis-graph/img/lg-dealswith.png" alt="lg dealswith">
+</div>
+</div>
+<div class="paragraph">
+<p>Now we&#8217;ll connect Bills to the Subjects that they deal with.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS
+FROM 'https://guides.neo4j.com/sandbox/legis-graph/data/bill_subjects.csv' AS row
+MATCH (bill:Bill { billID: row.billID }), (subject:Subject { title: row.title })
+MERGE (bill)-[r:DEALS_WITH]->(subject);<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Bill Sponsorships</h3>
+    <br/>
+    <div>
+      <div class="imageblock">
+<div class="content">
+<img src="https://guides.neo4j.com/sandbox/legis-graph/img/lg-sponsoredby.png" alt="lg sponsoredby">
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS
+FROM 'https://guides.neo4j.com/sandbox/legis-graph/data/sponsors.csv' AS row
+MATCH (bill:Bill { billID: row.billID }), (legislator:Legislator { thomasID: row.thomasID })
+MERGE (bill)-[r:SPONSORED_BY]->(legislator)
+    ON CREATE SET r.cosponsor = CASE WHEN row.cosponsor = "0" THEN False ELSE True END ;<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Committees</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>In the final step we&#8217;ll add Committees and connect <code>Committee</code> nodes to bills if the bill was referred to that committee and to legislators if they serve on that committee:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="https://guides.neo4j.com/sandbox/legis-graph/img/lg-committee.png" alt="lg committee">
+</div>
+</div>
+<div class="paragraph">
+<p>Note that committees have a <code>thomasID</code> property that uniquely identifies them. So we&#8217;ll create a constraint on this property:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CREATE CONSTRAINT ON (c:Committee) ASSERT c.thomasID IS UNIQUE;<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// Create Committee nodes
+LOAD CSV WITH HEADERS
+FROM 'https://guides.neo4j.com/sandbox/legis-graph/data/committees-current.csv' AS row
+MERGE (c:Committee {thomasID: row.thomasID})
+  ON CREATE SET c = row;<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cyper" lang="cyper"><!--code class="cyper language-cyper"-->// Connect bills to committees
+LOAD CSV WITH HEADERS
+FROM 'https://guides.neo4j.com/sandbox/legis-graph/data/bill_committees.csv' AS row
+MATCH (b:Bill {billID: row.billID})
+MATCH (c:Committee {thomasID: row.committeeID})
+MERGE (b)-[:REFERRED_TO]->(c);<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// Load Committee Members
+LOAD CSV WITH HEADERS
+FROM 'https://guides.neo4j.com/sandbox/legis-graph/data/committee-members.csv' AS row
+MATCH (c:Committee {thomasID: row.committeeID})
+MATCH (l:Legislator {thomasID: row.legislatorID})
+CREATE UNIQUE (l)-[r:SERVES_ON]->(c)
+SET r.rank = toInt(row.rank);<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>

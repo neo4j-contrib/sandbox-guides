@@ -1,0 +1,331 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Exploring the TrumpWorld Graph</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Exercises</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: right;">
+<div class="content">
+<img src="https://guides.neo4j.com/sandbox/trumpworld/img/datamodel.png" alt="datamodel">
+</div>
+</div>
+<div class="paragraph">
+<p>The following slides contain some questions to help guide us as we explore the dataset. Keep in mind the data model to the right as you write the graph patterns necessary to answer the questions.</p>
+</div>
+<div class="paragraph">
+<p>Consult the <a href="http://neo4j.com/docs/stable/cypher-refcard/">Cypher Reference Card</a> to help find the syntax / commands for constructing your query.</p>
+</div>
+<div class="paragraph">
+<p>The structure of a basic query in Cypher is:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH ...a graph pattern...
+WHERE ...filters on matched patterns...
+RETURN ...selection of values returned by the query...<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Getting familiar with the data: Basic lookups (I)</h3>
+    <br/>
+    <div>
+      
+
+
+   <h4>Node lookups: exact matches</h4>
+   <div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (o:Organization)
+WHERE o.name = 'AFRICA-ISRAEL INVESTMENTS'
+RETURN o<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>or a more compact version:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (o:Organization { name : 'AFRICA-ISRAEL INVESTMENTS' } )
+RETURN o<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Try it yourself:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Find the UCLA Hospital</p>
+</li>
+<li>
+<p>Now find a person called Scott Walker</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Getting familiar with the data: Basic lookups (II)</h3>
+    <br/>
+    <div>
+      
+
+
+   <h4>Node lookups: partial matches</h4>
+   <div class="paragraph">
+<p>Now let&#8217;s say we want to find an organization but we don&#8217;t have the exact name, we just know that it starts with&#8230;&#8203;</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (o:Organization)
+WHERE o.name STARTS WITH "CA"
+RETURN o<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Cypher offers some other approximate match functions: 'ENDS WITH', 'CONTAINS' and '~' for regular expression matches. Check the <a href="https://neo4j.com/docs/cypher-refcard/current/">Cypher refcard</a> for details and examples of how to use them.</p>
+</div>
+<div class="paragraph">
+<p>Also, filters can be combined logically with AND &amp; OR to build composite conditions.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (x:Person)
+WHERE x.name CONTAINS 'BI' AND ...
+RETURN x<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Try it yourself:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Find organizations containing the word Mexico in their name</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Get familiar with the data: Building graph patterns</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>You can build a complex pattern incrementally by piping basic queries (MATCH + WHERE blocks) and reusing variable names between them. Let&#8217;s say we want to find nodes by name as we did in the previous section but then we want to follow from these nodes a particular type of relationships to reach other nodes with a given name. This is what it would look like in cypher:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (p:Person)
+WHERE p.name CONTAINS "ROSS"
+MATCH (p)-[:DIRECTOR]-(o)
+WHERE o.name CONTAINS "MEXICO"
+RETURN p, o<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Persons with a name containing "ROSS" connected through the :DIRECTOR relationships with nodes with "MEXICO" in their name.</p>
+</div>
+<div class="paragraph">
+<p>The two steps can be compacted in one pattern followed by a single where filter with all the intersection of all conditions. Something like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (p:Person)-[:DIRECTOR]-(o)
+WHERE p.name CONTAINS "ROSS" AND o.name CONTAINS "MEXICO"
+RETURN *<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Try it yourself:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Find the organizations that have the word Chicago in their name and have Donald Trump as president</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Aggregation, stats&#8230;&#8203;</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Sometimes we want to do aggregates on the result of a pattern match. Typical aggregate functions are count, sum, average, max, etc. <br>
+Let&#8217;s find for instance the number of organizations a person is connected to. We&#8217;re not interested in each individual one but rather the total number per person. Here is the Cypher for this example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (n:Person)-[:INVOLVED_WITH]-&gt;(o:Organization)
+RETURN n.name AS personName, COUNT(o) AS orgCount
+ORDER BY orgCount DESC LIMIT 10<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Try it yourself:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Find the number of board members in organizations ( relationship name is BOARD )</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>There are cases where we need to run aggregates on aggregates like in the nexte example. In such situations we&#8217;ll need to use the WITH clause to pipe your partial results to the next section of your query. WITH is like an intermediate RETURN. It separates query parts explicitly, allowing you to declare which variables to carry over to the next part.</p>
+</div>
+<div class="paragraph">
+<p>If we want to find what&#8217;s the average/max/min number of organizations a person is connected to, we&#8217;ll need to use WITH as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (n:Person)-[:INVOLVED_WITH]-&gt;(o:Organization)
+WITH n.name as personName, COUNT(o) AS numberOrgs
+RETURN AVG(numberOrgs) AS averageNumOrgs, MAX(numberOrgs) AS maxNumOrgs, MIN(numberOrgs) AS minNumOrgs<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Try it yourself:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Can you find organizations that have more than three people connected to them through the INVOLVED_WITH relationship?</p>
+</li>
+<li>
+<p>Build similar queries with other types of relationships and using different limits and try to understand what the results mean</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Explore by Organization</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p><strong>Try it yourself:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Can you find banks in the network?</p>
+</li>
+<li>
+<p>Who are the people connected to these banks?</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Explore using relationship properties</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>The property graph model allows for relationships to have properties of their own. These properties can be used in cypher as follows.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (p:Person)-[r]-(other)
+WHERE r.connection CONTAINS "Nominee"
+RETURN *<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This query returns all relationships that contain the term "Nominee" in the value of the 'connection' property of the relationship and that connect a node of type Person to any other node.</p>
+</div>
+<div class="paragraph">
+<p><strong>Try it yourself:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Find connections about loans</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>
