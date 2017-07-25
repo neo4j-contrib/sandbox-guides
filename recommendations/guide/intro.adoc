@@ -51,7 +51,7 @@ Generating personalized recommendations is one of the most common use cases for 
 
 [subs=attributes]
 ++++
-<img src="{img}/click-next.png" style="position:relative;right:-23px;top:-56px;" class="pull-right">
+<img src="https://guides.neo4j.com/sandbox/img/click-next.png" style="position:relative;right:-23px;top:-56px;" class="pull-right">
 ++++
 
 
