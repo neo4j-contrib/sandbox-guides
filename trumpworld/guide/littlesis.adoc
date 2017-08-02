@@ -85,5 +85,5 @@ Let's have a quick look at the LittleSis graph:
 [source,cypher]
 ----
 MATCH (x:LittleSisEntity)-[r {source:"LittleSis"}]-(y:LittleSisEntity)
-RETURN * LIMIT 500
+RETURN * LIMIT 100
 ----

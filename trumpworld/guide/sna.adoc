@@ -83,18 +83,21 @@ A node is said to be pivotal if it lies on all shortest paths between two other 
 
 .Source: https://www.cs.cornell.edu/home/kleinber/networks-book/[Networks, Crowds, Markets]
 
+We can calculate pivotal nodes for all pairs of nodes in the network with a single Cypher query. This will take a few seconds to complete since we have to consider all paths in the graph.
 [source,cypher]
 ----
 MATCH (a:Person), (b:Person)
+WHERE ID(a) < ID(b)
 MATCH p=allShortestPaths((a)-[*]-(b)) WITH collect(p) AS paths, a, b
 MATCH (c:Person) WHERE all(x IN paths WHERE c IN nodes(x)) AND NOT c IN [a,b]
-RETURN a.name, b.name, c.name AS PivotalNode LIMIT 10
+RETURN a.name, b.name, c.name AS PivotalNode LIMIT 100
 ----
 
+We can verify that a node is pivotal for a pair of nodes by visually inspecting all shortest paths connecting that pair of nodes. Let's veryify that Donald Trump is a pivotal node for Bob Dole and Peter Thiel:
 
 [source,cypher]
 ----
-MATCH (a:Person {name: "DOUGLAS DURBANO"}), (b:Person {name: "JOSHUA KUSHNER"})
+MATCH (a:Person {name: "BOB DOLE"}), (b:Person {name: "PETER THIEL"})
 MATCH p=allShortestPaths((a)-[*]-(b))
 RETURN p
 ----

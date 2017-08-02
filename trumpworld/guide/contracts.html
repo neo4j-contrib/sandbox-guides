@@ -254,7 +254,7 @@ WITH o,row.piid AS piid,
      row.vendorname AS vendor_name,
      row.mod_parent AS parent_org,
      toFloat(row.dollarsobligated) AS amount,
-     substring(row.contractingofficeagencyid, 6) AS agency,
+     row.contractingofficeagencyid AS agency,
      row.productorservicecode AS purpose
 
 MERGE (a:Agency {name: agency})
@@ -282,7 +282,7 @@ WHERE parent.name = row.mod_parent
 WITH parent, row.piid AS piid, row.fiscal_year AS fiscal_year,
     row.vendorname AS vendor_name, row.mod_parent AS parent_org,
     toFloat(row.dollarsobligated) AS amount,
-    substring(row.contractingofficeagencyid, 6) AS agency,
+    row.contractingofficeagencyid AS agency,
     row.productorservicecode AS purpose
 MERGE (vo:Organization {name: vendor_name})
 MERGE (a:Agency {name: agency})

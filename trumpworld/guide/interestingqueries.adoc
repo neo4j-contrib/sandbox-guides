@@ -15,7 +15,7 @@ LIMIT 5
 
 [source,cypher]
 ----
-MATCH network = (:Person {name:"JARED KUSHNER"})-[*..2]-()
+MATCH network = (:Person {name:"JOSHUA KUSHNER"})-[*..2]-()
 RETURN network
 ----
 
@@ -52,7 +52,7 @@ A nominee's graph of influence
 
 [source,cypher]
 ----
-MATCH path = (o:Organization)<-[:INVOLVED_WITH]-(p:Person)-[n:NOMINEE]->(djt)
+MATCH path = (o:Organization)<-[]-(p:Person)-[n:NOMINEE]->(djt)
 RETURN path
 ----
 

@@ -130,7 +130,7 @@ RETURN p<!--/code--></pre>
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// Find the second degree network of Goldman Sachs
 MATCH (o:Organization) WHERE o.name CONTAINS "GOLDMAN SACHS"
 MATCH p=(o)-[*2]-()
-RETURN p<!--/code--></pre>
+RETURN p LIMIT 100<!--/code--></pre>
 </div>
 </div>
 	</div>

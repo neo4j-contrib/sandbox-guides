@@ -157,18 +157,25 @@ RETURN p<!--/code--></pre>
       <div class="paragraph">
 <p>A node is said to be pivotal if it lies on all shortest paths between two other nodes in the network. We can find all pivotal nodes in the network.</p>
 </div>
-<div class="listingblock">
+<div class="paragraph">
 <div class="title">Source: <a href="https://www.cs.cornell.edu/home/kleinber/networks-book/">Networks, Crowds, Markets</a></div>
+<p>We can calculate pivotal nodes for all pairs of nodes in the network with a single Cypher query. This will take a few seconds to complete since we have to consider all paths in the graph.</p>
+</div>
+<div class="listingblock">
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (a:Person), (b:Person)
+WHERE ID(a) &lt; ID(b)
 MATCH p=allShortestPaths((a)-[*]-(b)) WITH collect(p) AS paths, a, b
 MATCH (c:Person) WHERE all(x IN paths WHERE c IN nodes(x)) AND NOT c IN [a,b]
-RETURN a.name, b.name, c.name AS PivotalNode LIMIT 10<!--/code--></pre>
+RETURN a.name, b.name, c.name AS PivotalNode LIMIT 100<!--/code--></pre>
 </div>
+</div>
+<div class="paragraph">
+<p>We can verify that a node is pivotal for a pair of nodes by visually inspecting all shortest paths connecting that pair of nodes. Let&#8217;s veryify that Donald Trump is a pivotal node for Bob Dole and Peter Thiel:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (a:Person {name: "DOUGLAS DURBANO"}), (b:Person {name: "JOSHUA KUSHNER"})
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (a:Person {name: "BOB DOLE"}), (b:Person {name: "PETER THIEL"})
 MATCH p=allShortestPaths((a)-[*]-(b))
 RETURN p<!--/code--></pre>
 </div>

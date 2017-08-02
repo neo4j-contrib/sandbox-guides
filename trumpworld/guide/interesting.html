@@ -70,7 +70,7 @@ LIMIT 5<!--/code--></pre>
     <div>
       <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH network = (:Person {name:"JARED KUSHNER"})-[*..2]-()
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH network = (:Person {name:"JOSHUA KUSHNER"})-[*..2]-()
 RETURN network<!--/code--></pre>
 </div>
 </div>
@@ -133,7 +133,7 @@ ORDER BY split(p.name," ")[-1] DESC LIMIT 5<!--/code--></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH path = (o:Organization)&lt;-[:INVOLVED_WITH]-(p:Person)-[n:NOMINEE]-&gt;(djt)
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH path = (o:Organization)&lt;-[]-(p:Person)-[n:NOMINEE]-&gt;(djt)
 RETURN path<!--/code--></pre>
 </div>
 </div>
