@@ -1,0 +1,183 @@
+= Trumpworld Network Analysis
+:icons: font
+
+== Analyzing The Network
+
+=== Number of nodes
+
+[source,cypher]
+----
+MATCH (c) RETURN count(c)
+----
+
+.How many people?
+[source,cypher]
+----
+MATCH (p:Person) RETURN count(p);
+----
+
+.How many organizations?
+[source,cypher]
+----
+MATCH (o:Organization) RETURN count(o);
+----
+
+=== Summary statistics
+
+[source, cypher]
+----
+MATCH (p:Person)-[]-()
+WITH p, COUNT(*) AS num
+RETURN min(num) AS min, max(num) AS max, avg(num) AS avg, stdev(num) AS stdev
+----
+
+=== Diameter of the network
+
+The diameter (or geodesic) of a network is defined as the longest shortest path in the network.
+
+[source,cypher]
+----
+// Find maximum diameter of network
+// maximum shortest path between two nodes
+MATCH (a:Person), (b:Person) WHERE id(a) > id(b)
+MATCH p=shortestPath((a)-[*]-(b))
+RETURN length(p) AS len, extract(x IN nodes(p) | x.name) AS path
+ORDER BY len DESC LIMIT 4
+----
+
+== Shortest Path
+
+We can use the shortestPath function in Cypher to find the shortest path between any two characters in the graph. Let’s find the shortest path from Catelyn Stark to Kahl Drogo:
+
+[source,cypher]
+----
+// Shortest path
+MATCH (donald:Person {name: "DONALD J. TRUMP"}), (prince:Person {name: "ERIK PRINCE"})
+MATCH p=shortestPath((donald)-[*]-(prince))
+RETURN p
+----
+
+=== All shortest paths
+
+There might be other paths of the same length connecting Catelyn and Drogo. We can find these with the allShortestPaths Cypher function:
+
+[source,cypher]
+----
+// All shortest paths
+MATCH (donald:Person {name: "DONALD J. TRUMP"}), (prince:Person {name: "ERIK PRINCE"})
+MATCH p=allShortestPaths((donald)-[*]-(prince))
+RETURN p
+----
+
+[source,cypher]
+----
+// All shortest paths
+MATCH (donald:Person {name: "ERIK PRINCE"}), (prince:Person {name: "VLADIMIR PUTIN"})
+MATCH p=allShortestPaths((donald)-[*]-(prince))
+RETURN p
+----
+
+== Pivotal Nodes
+
+A node is said to be pivotal if it lies on all shortest paths between two other nodes in the network. We can find all pivotal nodes in the network.
+
+.Source: https://www.cs.cornell.edu/home/kleinber/networks-book/[Networks, Crowds, Markets]
+
+[source,cypher]
+----
+MATCH (a:Person), (b:Person)
+MATCH p=allShortestPaths((a)-[*]-(b)) WITH collect(p) AS paths, a, b
+MATCH (c:Person) WHERE all(x IN paths WHERE c IN nodes(x)) AND NOT c IN [a,b]
+RETURN a.name, b.name, c.name AS PivotalNode LIMIT 10
+----
+
+
+[source,cypher]
+----
+MATCH (a:Person {name: "DOUGLAS DURBANO"}), (b:Person {name: "JOSHUA KUSHNER"})
+MATCH p=allShortestPaths((a)-[*]-(b))
+RETURN p
+----
+
+== Centrality measures
+
+In graph theory and network analysis, indicators of centrality identify the most important vertices within a graph. Applications include identifying the most influential person(s) in a social network, key infrastructure nodes in the Internet or urban networks, and super-spreaders of disease.
+
+=== Degree Centrality
+
+.Person degree centrality
+[source,cypher]
+----
+MATCH (c:Person)
+RETURN c.name AS person, size( (c)-[]-() ) AS degree ORDER BY degree DESC LIMIT 100
+----
+
+.Organization degree centrality
+[source,cypher]
+----
+MATCH (o:Organization)
+RETURN o.name AS org, size( (o)-[]-() ) AS degree ORDER BY degree DESC LIMIT 25
+----
+
+== Betweenness Centrality
+
+The betweenness centrality of a node in a network is the number of shortest paths between two other members in the network on which a given node appears.
+
+Betweenness centality is an important metric because it can be used to identify “brokers of information” in the network or nodes that connect disparate clusters.
+
+image::http://www.lyonwj.com/public/img/betweenness-centrality.png[]
+
+.The red nodes have a high betweenness centrality and are connectors of clusters.
+
+[source,cypher]
+----
+MATCH (c:Person)
+WITH collect(c) AS people
+CALL apoc.algo.betweenness([], people, 'OUTGOING') YIELD node, score
+//SET node.betweenness = score
+RETURN node.name AS name, score ORDER BY score DESC
+----
+
+== Closeness Centrality
+
+Nodes with high closeness centality are often highly connected within clusters in the graph, but not necessarily highly connected outside of the cluster.
+
+Closeness centrality is the inverse of the average distance to all other characters in the network.
+
+image::http://www.lyonwj.com/public/img/closeness-centrality.png[]
+
+.Nodes with high closeness centrality are connected to many other nodes in a network.
+
+[source,cypher]
+----
+MATCH (c:Person)
+WITH collect(c) AS people
+CALL apoc.algo.closeness([], people, 'OUTGOING') YIELD node, score
+RETURN node.name AS name, score ORDER BY score DESC
+----
+
+== PageRank
+
+PageRank is an algorithm originally used by Google to rank the importance of web pages and is a type of eigenvector centrality
+
+image:http://www.lyonwj.com/public/img/page-rank.png[]
+
+.Most central Person nodes by PageRank
+[source,cypher]
+----
+MATCH (c:Person)
+WITH collect(c) AS people
+CALL apoc.algo.pageRank(people) YIELD node, score
+RETURN node.name AS name, score ORDER BY score DESC
+----
+
+.Direct connections of the most central Person nodes, by PageRank
+[source,cypher]
+----
+MATCH (c:Person)
+WITH collect(c) AS people
+CALL apoc.algo.pageRank(people) YIELD node, score
+WITH node, score ORDER BY score LIMIT 5
+MATCH p=(node)-[]-()
+RETURN p
+----

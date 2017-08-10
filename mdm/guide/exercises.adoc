@@ -1,0 +1,159 @@
+= Exploring the TrumpWorld Graph
+
+== Exercises
+
+image::{img}/datamodel.png[float=right]
+
+The following slides contain some questions to help guide us as we explore the dataset. Keep in mind the data model to the right as you write the graph patterns necessary to answer the questions.
+
+Consult the http://neo4j.com/docs/stable/cypher-refcard/[Cypher Reference Card] to help find the syntax / commands for constructing your query.
+
+The structure of a basic query in Cypher is:
+
+[source,cypher]
+----
+MATCH ...a graph pattern...
+WHERE ...filters on matched patterns... 
+RETURN ...selection of values returned by the query...
+----
+
+== Getting familiar with the data: Basic lookups (I)
+
+=== Node lookups: exact matches
+
+[source,cypher]
+----
+MATCH (o:Organization) 
+WHERE o.name = 'AFRICA-ISRAEL INVESTMENTS' 
+RETURN o
+----
+
+or a more compact version:
+
+[source,cypher]
+----
+MATCH (o:Organization { name : 'AFRICA-ISRAEL INVESTMENTS' } ) 
+RETURN o
+----
+
+
+*Try it yourself:*
+
+* Find the UCLA Hospital
+* Now find a person called Scott Walker
+
+== Getting familiar with the data: Basic lookups (II)
+
+=== Node lookups: partial matches
+
+Now let's say we want to find an organization but we don't have the exact name, we just know that it starts with...
+
+[source,cypher]
+----
+MATCH (o:Organization)
+WHERE o.name STARTS WITH "CA"
+RETURN o
+----
+
+Cypher offers some other approximate match functions: 'ENDS WITH', 'CONTAINS' and '~' for regular expression matches. Check the https://neo4j.com/docs/cypher-refcard/current/[Cypher refcard] for details and examples of how to use them.
+
+Also, filters can be combined logically with AND & OR to build composite conditions.
+
+[source,cypher]
+----
+MATCH (x:Person)
+WHERE x.name CONTAINS 'BI' AND ...
+RETURN x
+----
+
+
+*Try it yourself:*
+
+* Find organizations containing the word Mexico in their name
+
+
+== Get familiar with the data: Building graph patterns 
+
+You can build a complex pattern incrementally by piping basic queries (MATCH + WHERE blocks) and reusing variable names between them. Let's say we want to find nodes by name as we did in the previous section but then we want to follow from these nodes a particular type of relationships to reach other nodes with a given name. This is what it would look like in cypher:
+
+[source,cypher]
+----
+MATCH (p:Person)
+WHERE p.name CONTAINS "ROSS"
+MATCH (p)-[:DIRECTOR]-(o)
+WHERE o.name CONTAINS "MEXICO"
+RETURN p, o
+----
+
+Persons with a name containing "ROSS" connected through the :DIRECTOR relationships with nodes with "MEXICO" in their name.
+
+The two steps can be compacted in one pattern followed by a single where filter with all the intersection of all conditions. Something like this:
+
+[source,cypher]
+----
+MATCH (p:Person)-[:DIRECTOR]-(o)
+WHERE p.name CONTAINS "ROSS" AND o.name CONTAINS "MEXICO"
+RETURN *
+----
+
+*Try it yourself:*
+
+* Find the organizations that have the word Chicago in their name and have Donald Trump as president
+
+
+== Aggregation, stats...
+
+Sometimes we want to do aggregates on the result of a pattern match. Typical aggregate functions are count, sum, average, max, etc.  +
+Let's find for instance the number of organizations a person is connected to. We're not interested in each individual one but rather the total number per person. Here is the Cypher for this example:
+
+[source,cypher]
+----
+MATCH (n:Person)-[:INVOLVED_WITH]->(o:Organization) 
+RETURN n.name AS personName, COUNT(o) AS orgCount
+ORDER BY orgCount DESC LIMIT 10
+----
+
+*Try it yourself:*
+
+* Find the number of board members in organizations ( relationship name is BOARD )
+
+There are cases where we need to run aggregates on aggregates like in the nexte example. In such situations we'll need to use the WITH clause to pipe your partial results to the next section of your query. WITH is like an intermediate RETURN. It separates query parts explicitly, allowing you to declare which variables to carry over to the next part.
+
+If we want to find what's the average/max/min number of organizations a person is connected to, we'll need to use WITH as follows:
+
+[source,cypher]
+----
+MATCH (n:Person)-[:INVOLVED_WITH]->(o:Organization) 
+WITH n.name as personName, COUNT(o) AS numberOrgs
+RETURN AVG(numberOrgs) AS averageNumOrgs, MAX(numberOrgs) AS maxNumOrgs, MIN(numberOrgs) AS minNumOrgs
+----
+
+*Try it yourself:*
+
+* Can you find organizations that have more than three people connected to them through the INVOLVED_WITH relationship?
+* Build similar queries with other types of relationships and using different limits and try to understand what the results mean
+
+
+== Explore by Organization
+
+*Try it yourself:*
+
+* Can you find banks in the network?
+* Who are the people connected to these banks?
+
+== Explore using relationship properties
+
+The property graph model allows for relationships to have properties of their own. These properties can be used in cypher as follows.
+
+[source,cypher]
+----
+MATCH (p:Person)-[r]-(other)
+WHERE r.connection CONTAINS "Nominee"
+RETURN *
+----
+
+This query returns all relationships that contain the term "Nominee" in the value of the 'connection' property of the relationship and that connect a node of type Person to any other node.
+
+*Try it yourself:*
+
+* Find connections about loans
