@@ -4,8 +4,20 @@
 
 == The Graph of Thrones
 
-image::{img}/got_header.png[float=left]
-image::{img}/graphs-are-coming.jpg[float=right]
+[subs=attributes]
+++++
+<div class="col-lg-8">
+<img src="{img}/got_header.png" class="img-responsive">
+</div>
+++++
+
+[subs=attributes]
+++++
+<div class="col-lg-4">
+<img src="{img}/graphs-are-coming.jpg" class="img-responsive">
+</div>
+++++
+
 
 == Analyzing Text
 
@@ -53,6 +65,15 @@ Source: https://github.com/mathbeveridge/asoiaf/blob/master/data/asoiaf-book3-ed
 
 The data for all 5 books is published here: https://github.com/mathbeveridge/asoiaf
 
+== Graph model
+
+[subs=attributes]
+++++
+<img src="{img}/datamodel.png" class="img-responsive">
+++++
+
+
+
 == Import
 
 [source,cypher]
@@ -68,7 +89,7 @@ LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/mathbeveridge/asoi
 MERGE (src:Character {name: row.Source})
 MERGE (tgt:Character {name: row.Target})
 // global relationship
-MERGE (src)-[r:INTERACTS]->(tgt) ON CREATE SET r.weight = toInt(row.weight)
+MERGE (src)-[r:INTERACTS]->(tgt) ON CREATE SET r.weight = toInteger(row.weight)
 ----
 
 Then for each of the books we can create a dedicated relationship, suffixed with the number of the book.
@@ -113,7 +134,7 @@ MERGE (src)-[r:INTERACTS45]->(tgt) ON CREATE SET r.weight = toInt(row.weight), r
 
 [source,cypher]
 ----
-CALL apoc.meta.graph()
+CALL db.schema()
 ----
 
 == The Graph of Thrones
@@ -165,7 +186,7 @@ RETURN book, min(num) AS min, max(num) AS max, avg(num) AS avg_characters, stdev
 ORDER BY book
 ----
 
-=== Diameter of the network
+== Diameter of the network
 
 The diameter (or geodesic) of a network is defined as the longest shortest path in the network.
 
@@ -230,7 +251,7 @@ This runs for a bit, as it has to compute across:
 ----
 // Find all pivotal nodes in network
 MATCH (a:Character), (b:Character) WHERE id(a) > id(b)
-MATCH p=allShortestPaths((a)-[:INTERACTS*]-(b)) WITH collect(p) AS paths, a, b
+MATCH p=allShortestPaths((a)-[:INTERACTS*..9]-(b)) WITH collect(p) AS paths, a, b
 UNWIND nodes(head(paths)) as c // first path
 WITH * WHERE NOT c IN [a,b] AND all(path IN tail(paths) WHERE c IN nodes(path))
 RETURN a.name, b.name, c.name AS PivotalNode, length(head(paths)) as pathLength, length(paths) as pathCount SKIP 490 LIMIT 10
@@ -304,7 +325,7 @@ RETURN character, collect([book,weightedDegree]) as weightedDegrees, max(weighte
 ORDER BY maxDegree DESC;
 ----
 
-== APOC Procedures
+== Neo4j Graph Algorithms
 
 image::{img}/apoc_proc.png[float=right]
 
@@ -312,10 +333,22 @@ image::{img}/apoc_proc.png[float=right]
 
 User defined procedures are written in Java, deployed to the database and callable from Cypher.
 
+=== APOC Procedures
 The https://github.com/neo4j-contrib/neo4j-apoc-procedures[APOC library^] is a library of useful procedures and functions for many common Neo4j tasks, including https://neo4j-contrib.github.io/neo4j-apoc-procedures/#_graph_algorithms[graph algorithms^], data import, refactoring, indexing, system monitoring, ...
 
 You install them by downloading the last release, putting it into $NEO4J_HOME/plugins and restarting Neo4j.
 The http://neo4j.com/sandbox[Neo4j-Sandbox^] comes with APOC pre-installed.
+
+=== Neo4j Graph Algorithms
+The https://github.com/neo4j-contrib/neo4j-graph-algorithms[Neo4j Graph Algorithms library] bundles several user defined procedures for running graph algorithms in Neo4j. You can access the most recent Neo4j Graph Algorithms release https://github.com/neo4j-contrib/neo4j-graph-algorithms/releases[here].
+
+==== Procedure Sandboxing
+
+As an additional security feature, procedures are sandboxed within Neo4j, restricting their access to the database. To use our graph algorithm procedures we'll need to edit `neo4j.conf` and add:
+
+> dbms.security.procedures.unrestricted=*
+
+To give unrestricted access to all procedures.
 
 == Betweenness Centrality
 
@@ -330,14 +363,21 @@ image::{img}/betweenness-centrality.png[]
 
 The red nodes have a high betweenness centrality and are connectors of clusters.
 
+
+
+We can run Betweenness Centrality using the `algo` package. This will calculate betweenness centrality for each node and set the `betweenness` property:
+
 [source,cypher]
 ----
-MATCH (c:Character)
-WITH collect(c) AS characters
-CALL apoc.algo.betweenness(['INTERACTS'], characters, 'BOTH') YIELD node, score
-SET node.betweenness = score
-RETURN node.name AS name, score 
-ORDER BY score DESC LIMIT 100
+CALL algo.betweenness('Character', 'INTERACTS', {write:true, writeProperty:"betweenness", stats:true})
+----
+
+Then to find the characters with the highest betweenness centrality:
+
+[source,cypher]
+----
+MATCH (c:Character) WHERE exists(c.betweenness)
+RETURN c.name AS name, c.betweenness AS betweenness ORDER BY betweenness DESC LIMIT 25
 ----
 
 == Closeness Centrality
@@ -356,7 +396,7 @@ MATCH (c:Character)
 WITH collect(c) AS characters
 CALL apoc.algo.closeness(['INTERACTS'], characters, 'BOTH') YIELD node, score
 RETURN node.name AS name, score 
-ORDER BY score DESC LIMIT 100
+ORDER BY score DESC
 ----
 
 == PageRank
@@ -374,7 +414,7 @@ ____
 ----
 MATCH (c:Character) WITH collect(c) AS nodes
 CALL apoc.algo.pageRankWithConfig(nodes,{types:'INTERACTS'}) YIELD node, score
-RETURN node, score
+RETURN node.name, score
 ORDER BY score DESC LIMIT 100
 ----
 
