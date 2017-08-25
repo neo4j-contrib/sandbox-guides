@@ -1,0 +1,1015 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Network Management - Introduction</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    <style type="text/css">
+.smallest {
+   font-size:0.6em;
+}
+</style>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Network Management - Introduction</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Computer networks span all levels of the stack from physical connections up to mobile and web-applications connecting networks of users.</p>
+</div>
+<div class="paragraph">
+<p>Graph Databases offer a natural way of modelling, storing and querying all these types of computer networks.</p>
+</div>
+<div class="paragraph">
+<p>A graph database like Neo4j can be utilized for:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Configuration Management</p>
+</li>
+<li>
+<p>Impact Analysis</p>
+</li>
+<li>
+<p>Planning</p>
+</li>
+<li>
+<p>Security and Hardening of Networks</p>
+</li>
+<li>
+<p>Intrusion Detection</p>
+</li>
+<li>
+<p>Traffic Analytics</p>
+</li>
+<li>
+<p>Analytics of user behavior</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>In this example we want to look at Network Management and Impact Analysis from the level of routing (TCP/IP) upwards to managing applications and tracing their dependencies.</p>
+</div>
+<div class="paragraph">
+<p>Throughout the guide you&#8217;ll find Cypher statements that you can execute, by clicking on them and then executing them by hitting the run button.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Modeling</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: right;">
+<div class="content">
+<img src="http://guides.neo4j.com/sandbox/network-management/img/Network-Management-Model.svg" alt="Network Management Model" width="700">
+</div>
+</div>
+<div class="paragraph">
+<p>We can model the network endpoints (boxes like servers, routers, firewalls, racks) of the data center as nodes and the "cables" between them as relationships.</p>
+</div>
+<div class="paragraph">
+<p>Another type of node represent networks and interfaces.</p>
+</div>
+<div class="paragraph">
+<p>On the application level we have the operating system, virtual machines, application and services that are modeled as entities.</p>
+</div>
+<div class="paragraph">
+<p>Our example data is already set-up, in the "resources" section at the end, you&#8217;ll find some pointers there.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>DataCenter</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>This is the full data model of your graph.</p>
+</div>
+<div class="imageblock" style="float: right;">
+<div class="content">
+<img src="http://guides.neo4j.com/sandbox/network-management/img/network-schema-arrows.jpg" alt="network schema arrows">
+</div>
+</div>
+<div class="paragraph">
+<p>If you want to see it yourself, run</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL db.schema()<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Imagine we have a <code>DataCenter</code> connected to an Interconnect via an <code>Egress Router</code>.
+The datacenter uses a <code>10.x.x.x/8</code> IP address range.</p>
+</div>
+<div class="paragraph">
+<p>The DataCenter consists of several Zones which are connected to the main backbone each via a <code>Router</code> (10.zone.*/16).</p>
+</div>
+<div class="paragraph">
+<p>From there each zone is broken down into rows of <code>Racks</code>.</p>
+</div>
+<div class="paragraph">
+<p>Each <code>Rack</code> contains different types of <code>Servers</code> and has its own <code>Switch</code> to connect to the datacenter routers backplane.</p>
+</div>
+<div class="paragraph">
+<p>Each <code>Server</code> has external network <code>Interfaces</code> that connect to the rack switch, the local networks being <code>10.zone.rack.*/24</code>.</p>
+</div>
+<div class="paragraph">
+<p>Each machine either runs a real Operating System (<code>OS</code>) or a Virtualization Manager that runs a number of Virtual Machines.</p>
+</div>
+<div class="paragraph">
+<p>For operational simplicity we only run one <code>Application</code> per OS which uses a number of <code>Ports</code> on the external interface.</p>
+</div>
+<div class="paragraph">
+<p>Usually we would get this kind of information from a configuration management database (CMDB), network managment tools or agents installed on the machines.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Network Exploration: DataCenter and Zones</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Let&#8217;s walk through the data, step by step. Let&#8217;s start with the DataCenter.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH network = (dc:DataCenter {name:"DC1",location:"Iceland, Rekjavik"})
+             -[:CONTAINS]-&gt;(:Router)
+             -[:ROUTES]-&gt;(:Interface)
+RETURN network;<!--/code--></pre>
+</div>
+</div>
+<div class="imageblock" style="float: right;">
+<div class="content">
+<img src="http://guides.neo4j.com/sandbox/network-management/img/network-zones.jpg" alt="network zones">
+</div>
+</div>
+<div class="paragraph">
+<p>The datacenter consists of 4 zones, each of which has it&#8217;s own separate <code>Network</code> <code>10.zone.*/16</code>, and it&#8217;s own <code>Router</code>.</p>
+</div>
+<div class="paragraph">
+<p>We can draw out that verbal description in a query with patterns matching the network parts.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (dc:DataCenter {name:"DC1"})-[:CONTAINS]-&gt;(re:Router:Egress)-[:ROUTES]-&gt;(rei:Interface)
+
+MATCH (nr:Network:Zone)&lt;-[:CONNECTS]-(rei)
+
+// router in DC, connect it via an interface to the zone network
+MATCH (dc)-[:CONTAINS]-&gt;(r:Router)-[:ROUTES]-&gt;(ri:Interface)-[:CONNECTS]-&gt;(nr)
+
+RETURN *;<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To visualize the DataCenter and it&#8217;s components so far, we can also start at the center and then go 3 hops out.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH path = (dc:DataCenter)-[*3]-(:Network)
+RETURN path;<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We could also get statistical information, like the addresses of routers and interfaces in each network.</p>
+</div>
+<div class="paragraph">
+<p>You can see very well how the graph representation in the match pattern resembles our domain model.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (r:Router)-[:ROUTES]-&gt;(ri:Interface)-[:CONNECTS]-&gt;(nr:Network)
+RETURN nr.ip as network_ip, ri.ip as router_if_ip, r.name as router, r.zone as zone;<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>╒════════════╤══════════════╤═════════╤══════╕
+│"network_ip"│"router_if_ip"│"router" │"zone"│
+╞════════════╪══════════════╪═════════╪══════╡
+│"10.1"      │"10.1.0.254"  │"DC1-R-1"│1     │
+├────────────┼──────────────┼─────────┼──────┤
+│"10.2"      │"10.2.0.254"  │"DC1-R-2"│2     │
+├────────────┼──────────────┼─────────┼──────┤
+│"10.3"      │"10.3.0.254"  │"DC1-R-3"│3     │
+├────────────┼──────────────┼─────────┼──────┤
+│"10.4"      │"10.4.0.254"  │"DC1-R-4"│4     │
+└────────────┴──────────────┴─────────┴──────┘</pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Network Exploration: Racks</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: right;">
+<div class="content">
+<img src="http://guides.neo4j.com/sandbox/network-management/img/network-rack.jpg" alt="network rack" width="600">
+</div>
+</div>
+<div class="paragraph">
+<p>Each zone contains 10 <code>Racks</code>, each of which has it&#8217;s own <code>Switch</code> and subnet with an IP like this pattern <code>10.zone.rack.*/24</code>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (dc:DataCenter {name:"DC1"})-[:CONTAINS]-&gt;(rack:Rack)-[:HOLDS]-&gt;(s:Switch)-[:ROUTES]-&gt;(si:Interface)&lt;-[:ROUTES]-(nr:Network:Zone)
+
+RETURN *;<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now our network has grown quite a bit:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH network = (dc:DataCenter)-[*6]-(:Rack)
+RETURN network;<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Network Connectivity</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Now we could already have a look at the network connectivity in our datacenter.</p>
+</div>
+<div class="paragraph">
+<p>If we look now at the overall connections we need to use shortest-paths which represents the most efficient route.</p>
+</div>
+<div class="listingblock">
+<div class="title">Connectivity before: 40 routes a 5 hops</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH path = allShortestPaths( (rack:Rack)-[:HOLDS|:ROUTES|:CONNECTS*]-(router:Router:Egress) )
+RETURN length(path) as hops, count(*) as count;<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>What happens if one of our cables gets loose or cut, i.e. the <code>ROUTES</code> relationship between the switch&#8217;s interface and the network is gone.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s <strong>cut the cable</strong> of this first switch.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (:Interface {ip:"10.1.1.254"})&lt;-[rel:ROUTES]-(:Network)
+DELETE rel<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Connectivity after: 39 routes a 5 hops</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH path = allShortestPaths( (rack:Rack)-[:HOLDS|:ROUTES|:CONNECTS*]-(router:Router:Egress) )
+RETURN length(path) as hops, count(*) as count;<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now all the machines in that Rack are cut off, no connection anymore, which we can demonstrate by trying to find the shortest path.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH connection = allShortestPaths( (rack:Rack {name:"DC1-RCK-1-1"})-[:HOLDS|:ROUTES|:CONNECTS*]-(router:Router:Egress) )
+RETURN connection;<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>How can we fix that?
+We could connect each switch to all the other three networks too, so we would survive the loss of 3 of those 4 connections.</p>
+</div>
+<div class="listingblock">
+<div class="title">Createing new, redundant network connections</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// for all zones
+MATCH (nr:Network:Zone)
+// find *all* switches and their interface
+MATCH (s:Switch)-[:ROUTES]-&gt;(si:Interface)
+// connect them to all the zones, if not yet connected
+MERGE (si)&lt;-[:ROUTES]-(nr);<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH path = allShortestPaths((rack:Rack)-[:HOLDS|:ROUTES|:CONNECTS*]-(router:Router:Egress))
+RETURN length(path) as hops, count(*) as count;<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>╒══════╤═══════╕
+│"hops"│"count"│
+╞══════╪═══════╡
+│5     │160    │
+└──────┴───────┘</pre>
+</div>
+</div>
+<div class="imageblock" style="float: right;">
+<div class="content">
+<img src="http://guides.neo4j.com/sandbox/network-management/img/network-alternative-routes.jpg" alt="network alternative routes">
+</div>
+</div>
+<div class="paragraph">
+<p>Cut the first cable of this first switch again.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (:Interface {ip:"10.1.1.254"})&lt;-[rel:ROUTES]-(:Network)
+WITH rel LIMIT 1
+DELETE rel<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>But that Rack is now still connected with 3 alternative routes.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH path = allShortestPaths((rack:Rack {zone:1,rack:1})-[:HOLDS|:ROUTES|:CONNECTS*]-(router:Router:Egress))
+RETURN path;<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now let&#8217;s look at the servers in those racks.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Machine types</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Similar to the machines you can rent on AWS we use machine types, for which we auto-created some reasonable capacities for CPU, RAM and DISK.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t:Type)
+RETURN t.name, t.id, t.cpu, t.ram, t.disk;<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>╒══════════════════╤══════╤═══════╤═══════╤════════╕
+│"t.name"          │"t.id"│"t.cpu"│"t.ram"│"t.disk"│
+╞══════════════════╪══════╪═══════╪═══════╪════════╡
+│"xs-1/1/1"        │0     │1      │1      │1       │
+├──────────────────┼──────┼───────┼───────┼────────┤
+│"s-2/4/5"         │1     │2      │4      │5       │
+├──────────────────┼──────┼───────┼───────┼────────┤
+│"m-4/16/25"       │2     │4      │16     │25      │
+├──────────────────┼──────┼───────┼───────┼────────┤
+│"l-8/64/125"      │3     │8      │64     │125     │
+├──────────────────┼──────┼───────┼───────┼────────┤
+│"xl-16/256/625"   │4     │16     │256    │625     │
+├──────────────────┼──────┼───────┼───────┼────────┤
+│"xxl-32/1024/3125"│5     │32     │1024   │3125    │
+└──────────────────┴──────┴───────┴───────┴────────┘</pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Machines</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Each Rack contains 200 machines of the types we just introduced, so that in total we get 8000 servers in our datacenter.</p>
+</div>
+<div class="paragraph">
+<p>As expected, the distribution of the types is inverse to their capabilities.</p>
+</div>
+<div class="paragraph">
+<p>As the graph visualization of our full datacenter would be pretty but otherwise useless &#8230;&#8203;</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="http://guides.neo4j.com/sandbox/network-management/img/network-8000-machines.jpg" alt="network 8000 machines">
+</div>
+</div>
+<div class="imageblock" style="float: right;">
+<div class="content">
+<img src="http://guides.neo4j.com/sandbox/network-management/img/network-rack-machines-type.jpg" alt="network rack machines type" width="400">
+</div>
+</div>
+<div class="paragraph">
+<p>We&#8217;d rather look at the contents of a single rack</p>
+</div>
+<div class="listingblock">
+<div class="title">Visualization of Rack <code>DC1-RCK-2-1</code></div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (r:Rack {name:"DC1-RCK-2-1"})-[:HOLDS]-&gt;(m:Machine),
+      (m)-[:ROUTES]-&gt;(i:Interface)-[:CONNECTS]-&gt;(si)&lt;-[:ROUTES]-(s:Switch),
+      (m)-[:TYPE]-&gt;(type:Type)
+RETURN *<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>or it&#8217;s stats.</p>
+</div>
+<div class="listingblock">
+<div class="title">Contents of Rack <code>DC1-RCK-2-1</code></div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (r:Rack {name:"DC1-RCK-2-1"})-[:HOLDS]-&gt;(m:Machine),
+      (m)-[:ROUTES]-&gt;(i:Interface)-[:CONNECTS]-&gt;(si)&lt;-[:ROUTES]-(s:Switch),
+      (m)-[:TYPE]-&gt;(type:Type)
+RETURN r.name as rack, si.ip as switchIp, properties(type) as type, count(m) as machines, min(i.ip) as minIp, max(i.ip) as maxIp
+ORDER BY machines DESC;<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can also query for a distribution of machine types across the datacenter.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (r:Rack)-[:HOLDS]-&gt;(m:Machine)-[:TYPE]-&gt;(type:Type)
+RETURN properties(type) as type, count(*) as c
+ORDER BY c DESC;<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>╒══════════════════════════════════════════════════════════════════╤════╕
+│"t"                                                               │"c" │
+╞══════════════════════════════════════════════════════════════════╪════╡
+│{"disk":5,"name":"s-2/4/5","cpu":2,"id":1,"ram":4}                │3760│
+├──────────────────────────────────────────────────────────────────┼────┤
+│{"disk":1,"name":"xs-1/1/1","cpu":1,"id":0,"ram":1}               │2080│
+├──────────────────────────────────────────────────────────────────┼────┤
+│{"disk":25,"name":"m-4/16/25","cpu":4,"id":2,"ram":16}            │1360│
+├──────────────────────────────────────────────────────────────────┼────┤
+│{"disk":125,"name":"l-8/64/125","cpu":8,"id":3,"ram":64}          │520 │
+├──────────────────────────────────────────────────────────────────┼────┤
+│{"disk":625,"name":"xl-16/256/625","cpu":16,"id":4,"ram":256}     │200 │
+├──────────────────────────────────────────────────────────────────┼────┤
+│{"disk":3125,"name":"xxl-32/1024/3125","cpu":32,"id":5,"ram":1024}│80  │
+└──────────────────────────────────────────────────────────────────┴────┘</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Or if we treat our datacenter as a supercomputer, what&#8217;s the total amount of CPUs, RAM and disk available:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (m:Machine)-[:TYPE]-&gt;(type:Type)
+RETURN count(*) as count, sum(type.cpu) as cpus, sum(type.ram) as ram, sum(type.disk) as disk;<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Not bad, that&#8217;s quite some compute power.</div>
+<div class="content">
+<pre>╒═══════╤══════╤══════╤══════╕
+│"count"│"cpus"│"ram" │"disk"│
+╞═══════╪══════╪══════╪══════╡
+│8000   │24960 │205280│494880│
+└───────┴──────┴──────┴──────┘</pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Software: Operating Systems and Applications</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Bare-metal hardware is cool, but something has to run on it to make it useable.</p>
+</div>
+<div class="paragraph">
+<p>Most likely it will be some kind of virtualization infrastructure that allows dynamic reallocation of the compute, memory and disk resources.</p>
+</div>
+<div class="paragraph">
+<p>Because of the added complexity, we skip this for now.</p>
+</div>
+<div class="paragraph">
+<p>For our software we differentiate between <code>Operating Systems, Services and Applications</code> (which could also be micro services).</p>
+</div>
+<div class="paragraph">
+<p>Each of them has a name, version(s) and dependencies.</p>
+</div>
+<div class="paragraph">
+<p>In  a more elaborate model we could also handle other resource requirements like RAM / CPU / DISK per running software instance.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s look at our available operating systems.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (o:OS:Software)-[:VERSION]-&gt;(v)
+OPTIONAL MATCH (v)&lt;-[:PREVIOUS]-(vnext)
+RETURN o.name as os, v.name as version, vnext.name as next_version
+ORDER BY os, version;<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Similar for our other software</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (s:Software) WHERE not s:OS
+OPTIONAL MATCH (s)-[:VERSION]-&gt;(v)
+OPTIONAL MATCH (s)-[:DEPENDS_ON]-&gt;(dv)&lt;-[:VERSION]-(d)
+RETURN s.name, collect(v.name) as versions, filter(x IN collect([d.name,dv.name]) WHERE x[0] IS NOT NULL) as dependencies, s.ports;<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Software: Running on Machines</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Each of our machines is set up to run an OS and a single application, each of which might require other dependencies that are also installed.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="http://guides.neo4j.com/sandbox/network-management/img/network-software-arrows.jpg" alt="network software arrows">
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (m:Machine) WHERE (m)-[:RUNS]-&gt;() AND rand() &lt; 0.05 WITH m LIMIT 1
+MATCH (m)-[r:RUNS]-&gt;(p:Process)-[i:INSTANCE]-&gt;(sv)
+OPTIONAL MATCH (sv)&lt;-[v:VERSION]-(sw)
+RETURN *<!--/code--></pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="http://guides.neo4j.com/sandbox/network-management/img/network-software-machine.jpg" alt="network software machine">
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Dependency Analysis</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We could look at dependencies between data center elements on the physical level, like routers, switches and interfaces.</p>
+</div>
+<div class="paragraph">
+<p>Another way to look at it is to determine dependencies between machines based on their internal and external connections.</p>
+</div>
+<div class="paragraph">
+<p>But we can also use the software and its dependencies to determine bottlenecks and frequently dependent upon components.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s look at all the software that uses Neo4j and the running Neo4j instances.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (s)-[:DEPENDS_ON]-&gt;(nv:Version)&lt;-[:VERSION]-(n:Software:Service {name:"neo4j"})
+MATCH (s)&lt;-[:INSTANCE]-(sp)&lt;-[:RUNS]-(sm:Machine)
+MATCH (sp)-[DEPENDS_ON]-&gt;(np)-[:INSTANCE]-&gt;(nv)
+MATCH (np)&lt;-[:RUNS]-(nm:Machine)
+RETURN sm as software_machine, sp as software_process, s as software, nv as neo_version,np as neo4j_process, np as neo_machine
+LIMIT 10<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Configuration Management</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Proper IT infrastructures use a large number of configuration parameters to customize commodity hard- and software for the custom uses.</p>
+</div>
+<div class="paragraph">
+<p>To manage the volume of interdependent variables Configuration Management Databases (CMDBs) are used to configure and keep track of what is set where.</p>
+</div>
+<div class="paragraph">
+<p>Systems require certain variables, they can report what is currently configured so that the CMDB software can detect eventual deltas and issue necessary updates.</p>
+</div>
+<div class="paragraph">
+<p>Security related and other upgrades have to be rolled out across the infrastructure in a coordinated fashion to make sure there is always a</p>
+</div>
+<div class="paragraph">
+<p>In the past these CMDBs were mostly used for network, hardware and OS level configuration.</p>
+</div>
+<div class="paragraph">
+<p>Today more and more application level (micro-) services need similar information to get access to internal and external services they depend on.
+Those mostly use databases like ZooKepper, Konsul, Eureka, Zipkin? and ?? (HashiCorp?, Pivotal?)</p>
+</div>
+<div class="paragraph">
+<p>Several of the managed variables are related, especially if they manage (transitive dependencies).
+Version conflicts of used dependencies are critical to detect early on.
+Although through isolation via containerization this is less of an issue nowadays.</p>
+</div>
+<div class="paragraph">
+<p>Partially systems like Ansible, Puppet and Chef are used to manage software installation, and update roll outs.</p>
+</div>
+<div class="paragraph">
+<p>Due to the variety of systems used for providing configuration to the infrastructure, it can be useful to create a unified, up to date view of the situation in your systems graph.</p>
+</div>
+
+
+
+   <h4>Upgrade OS Version and its Dependencies for a Version Range</h4>
+   <div class="paragraph">
+<p>We&#8217;re looking for machines in our Graph-CMDB whose Operating systems have to be updated.
+The OS versions were linked in a list of <code>:PREVIOUS</code> connections.
+So we can easily determine if someone have an older than the expected version, even if version numbers are not sortable.
+Those machine will be marked for an update to the correct version.</p>
+</div>
+<div class="listingblock">
+<div class="title">Mark for update</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (os:OS:Software)-[:VERSION]-&gt;(newVersion) WHERE os.name = 'Debian' and newVersion.name = '8-Jessie'
+
+MATCH (m:Machine)-[:RUNS]-&gt;(op:OS:Process)-[:INSTANCE]-&gt;(currentVersion)
+WHERE (currentVersion)&lt;-[:PREVIOUS*]-(newVersion)
+
+// create update request
+CREATE (m)-[:UPDATE_TO {ts:timestamp()}]-&gt;(newVersion)<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>All machines with <code>UPDATE_TO</code> requests can be found by tools and operators.</p>
+</div>
+<div class="listingblock">
+<div class="title">Find pending updates</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (r:Rack)-[:HOLDS]-&gt;(m:Machine)-[:UPDATE_TO]-&gt;(vNew:Version)&lt;-[:VERSION]-(os:OS:Software)
+MATCH (m)-[:RUNS]-&gt;(:OS:Process)-[:INSTANCE]-&gt;(vCurr)
+WHERE vCurr &lt;&gt; vNew
+RETURN r.name, m.name, os.name, vCurr.name as currentVersion, vNew.name as newVersion
+LIMIT 100;<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When the local OS is physically updated, the old <code>:OS:Process</code> will be stopped and the one will run.</p>
+</div>
+<div class="listingblock">
+<div class="title">Replace old OS instance with new</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (m:Machine)-[:UPDATE_TO]-&gt;(vNew:Version)&lt;-[:VERSION]-(os:OS:Software)
+MATCH (m)-[:RUNS]-&gt;(op:OS:Process)-[:INSTANCE]-&gt;(vCurr)
+WHERE vCurr &lt;&gt; vNew
+CREATE (m)-[:RUNS]-&gt;(opNew:OS:Process)-[:INSTANCE]-&gt;(vNew)
+DETACH DELETE op;<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>After the physical update has been performed, the machines will report the now updated version and the update request can be removed.</p>
+</div>
+<div class="listingblock">
+<div class="title">Remove resolved update requests</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (m:Machine)-[update:UPDATE_TO]-&gt;(v:Version)&lt;-[:VERSION]-(os:OS:Software)
+WHERE (m)-[:RUNS]-&gt;(:OS:Process)-[:INSTANCE]-&gt;(v)
+
+DELETE update;<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>IT-Monitoring and Governance</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Live network operations need to be supervised to ensure smooth operations, prevent bottlenecks, protect from attacks and vulnerabilities and allow maintenance planning and failure handling.</p>
+</div>
+<div class="paragraph">
+<p>The information is either acquired by listening on network traffic and inferring running services and user and application activity combined with port-scans.</p>
+</div>
+<div class="paragraph">
+<p>Alternatively, agents installed on the machines report the state of each server to the network or centralized databases which update the live state of the network.</p>
+</div>
+<div class="paragraph">
+<p>Based on our existing model, those incoming messages and events can do the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Create new entries for Servers, Switches, Interfaces</p>
+</li>
+<li>
+<p>Track running Services via used ports and traffic</p>
+</li>
+<li>
+<p>Infer user and application activity and group by network segment, source, used service</p>
+</li>
+<li>
+<p>Detect anormal operations like attacks or potential bottlenecks and issue warnings</p>
+</li>
+<li>
+<p>Track violations of rules, like isolation of the DMZ, certain firewall rules etc.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Here is an example of a new connection coming in and the graph being updated accordingly.
+Subsequent information for that connection will be aggregated until it is closed, then the totals could be added to the general <code>CONNECTIONS</code> relationship between the two IPs.</p>
+</div>
+<div class="paragraph">
+<p>We could generate some events, by having processes from some machines accessing processes from other (random) Machines.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (m:Machine) WITH collect(m) as machines
+WITH machines, size(machines) as len
+UNWIND range(1,10) as idx
+WITH machines[toInteger(rand()*len)] as source, machines[toInteger(rand()*len)] as target
+MATCH (source)-[:ROUTES]-&gt;(si:Interface)-[:EXPOSES]-&gt;(sp:Port)&lt;-[:LISTENS]-(sourceAppProcess)-[:INSTANCE]-&gt;(sourceApp)
+WITH target, source,si,head(collect(sp)) as sp, sourceAppProcess,sourceApp
+// todo limit to first port
+MATCH (target)-[:ROUTES]-&gt;(ti:Interface)-[:EXPOSES]-&gt;(tp:Port)&lt;-[:LISTENS]-(targetAppProcess)-[:INSTANCE]-&gt;(targetApp)
+WITH source,si,sp, sourceAppProcess,sourceApp,target,ti,head(collect(tp)) as tp, targetAppProcess, targetApp
+// todo limit to first port
+RETURN {id: apoc.create.uuid(), type:"OpenConnection",source:{ip:si.ip, port:sp.port},target:{ip:ti.ip,port:tp.port},
+        connection: {source:sourceApp.name, target:targetApp.name, user: "user"+toString(toInt(rand()*1000))+"@"+source.name,
+        time:timestamp(), packets: 1, mtu: 1500 }} as event<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->:param events:
+[
+{"source":{"ip":"10.1.7.100","port":11210},"id":"3e41d6f0-fdce-48f4-9bff-818359d8f0af","target":{"ip":"10.3.3.112","port":8080},
+ "connection":{"source":"couchbase","target":"webapp","user":"user436@DC1-RCK-1-7-M-100","time":1490540382971},"type":"OpenConnection",
+ "packets": 1, "mtu": 1500, "time": 1490904418539 },
+{"source":{"ip":"10.1.4.91","port":7474},"id":"fed44be6-55f5-4e42-aab1-bebc5c818268","target":{"ip":"10.4.6.7","port":8080},
+ "connection":{"source":"neo4j","target":"webapp","user":"user911@DC1-RCK-1-4-M-91","time":1490540382971},"type":"OpenConnection",
+ "packets": 1, "mtu": 1500, "time": 1490904464824 }
+]<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->UNWIND {events} AS event
+WITH event WHERE event.type = 'OpenConnection'
+
+MERGE (si:Interface {ip:event.source.ip})
+MERGE (si)-[:OPENS]-&gt;(sp:Port {port: event.source.port})
+
+MERGE (ti:Interface {ip:event.target.ip})
+MERGE (ti)-[:LISTENS]-&gt;(tp:Port {port:event.target.port})
+
+CREATE (sp)&lt;-[:FROM]-(c:Connection {id:event.id})–[:TO]-&gt;(tp)
+SET c += event.connection // type, timestamp, user-info, ...
+MERGE (si)-[cstats:CONNECTIONS]-&gt;(ti)
+SET si.count = coalesce(si.count,0) + 1
+SET si.packets = coalesce(si.packets,0) + event.packets
+SET si.volume = coalesce(si.volume,0) + event.packets * event.mtu<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>All the information is aggregated in a live graph representation which is available for querying for alerts &amp; notifications, dashboards, inventory summaries, reports and more.</p>
+</div>
+<div class="paragraph">
+<p>Historic information can be stored as well as a timeline chain of changes attributed to cause.
+Both can be queried by operators to drill down into detailed analysis.</p>
+</div>
+<div class="listingblock">
+<div class="title">Connections opened over a time range</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (si:Interface)-[:OPENS]-&gt;(sp:Port)&lt;-[:FROM]-(c:Connection)–[:TO]-&gt;(tp:Port)&lt;-[:LISTENS]-(ti:Interface)
+WHERE c.type = 'OpenConnection'
+RETURN si.ip as source, ti.ip as target, apoc.date.format(c.time,'ms','yyyy-MM-dd HH') as hour, count(distinct c) as count
+ORDER BY hour ASC, count DESC
+LIMIT 100;<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Examples for graph based Network Management Solutions</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>A number of commercial solutions provide this kind of service, some of them are running Neo4j.</p>
+</div>
+<div class="paragraph">
+<p>There are also open source solutions like <a href="https://github.com/LendingClub/mercator">Mercator from Lending Club</a> and the <a href="http://assimilationsystems.com/">Assimilation Project by Alan Robertson</a>.</p>
+</div>
+<div class="paragraph">
+<p>This real-time IT inventory information is also required for due diligence, e.g. for corporate investments, mergers or acquisitions.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Monitoring Use-Cases</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Our graph contains both the static topological information and a lot of runtime information using the base topology.
+From the runtime data we can retrieve different metrics.</p>
+</div>
+
+
+
+   <h4>For instance, minimal, average and maximal runtimes of software instances per type</h4>
+   <div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (v)&lt;-[:INSTANCE]-(sp:Process)&lt;-[:RUNS]-(sm:Machine)
+MATCH (s:Software)-[:VERSION]-&gt;(v:Version)
+WITH s.name as software, v.name as version, timestamp() - sp.startTime as runtime
+RETURN software, version, count(*) as instances, { min: min(runtime), max: max(runtime), avg:avg(runtime) } as runtime<!--/code--></pre>
+</div>
+</div>
+
+
+
+   <h4>Data Transer Volume between Interfaces</h4>
+   <div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH path = (source:Interface)-[con:CONNECTIONS]-&gt;(target:Interface)
+RETURN source.ip, target.ip, sum(con.packets) as packets, sum(con.volume) as volume<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Resource Management Graph</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>If you use a resource manager like Apaoche Mesos (or DC/OS), Kubernetes etc. you specify for each piece of software you run not just name, version and dependencies but also resource requirements like cpu, ram, disk, ports and more.</p>
+</div>
+<div class="paragraph">
+<p>A scheduler then takes the available resources of a configured machine cluster to schedule and allocate it&#8217;s resources to the needs and numbers of the required instances of software to run.
+It also takes care of health checks, and (re)starting / (re)scheduling and (re)routing of individual new or failed instances.</p>
+</div>
+<div class="paragraph">
+<p>To model the resource graph of such a system is interesting to look at and reason about, especially if other requirements like indicated co-location or disk-reuse are taken into account.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>References</h3>
+    <br/>
+    <div>
+      <div class="ulist">
+<ul>
+<li>
+<p><a href="https://neo4j.com/use-cases/network-and-it-operations/">Neo4j Solutions: Network &amp; IT Operations</a></p>
+</li>
+<li>
+<p><a href="https://neo4j.com/resources/network-datacenter-white-paper/">WP: Graph Databases Solve Problems in Network and Data Center Management</a></p>
+</li>
+<li>
+<p><a href="http://assimilationsystems.com/">Assimilation Systems</a> <a href="https://neo4j.com/blog/solve-network-management-problems-with-neo4j/">Interview with Founder Alan Robertson</a></p>
+</li>
+<li>
+<p><a href="https://neo4j.com/graphgists/?category=network-and-it-operations">Network Management GraphGists</a></p>
+</li>
+<li>
+<p>Lending Club Engineering created a number of network managment projects using Neo4j</p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://neo4j.com/blog/managing-microservices-neo4j/">Presentation</a>, <a href="https://www.slideshare.net/robschoening/managing-microservices-with-neo4j-53389282">Slides</a></p>
+</li>
+<li>
+<p>MacGyver: DevOps Multi-Tool <a href="https://github.com/LendingClub?q=macgyver">Repositories</a> <a href="https://www.slideshare.net/neo4j/neo4j-for-cloud-management-at-scale">Slides</a></p>
+</li>
+<li>
+<p>Mercator: produce graph model projections of infrastructure <a href="https://github.com/LendingClub/mercator">Repository</a></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><a href="http://springinpractice.com/2011/12/17/domain-modeling-with-spring-data-neo4j-code">Building the Zkybase CMDB using Neo4j and Spring Data Neo4j</a></p>
+</li>
+<li>
+<p><a href="http://lightmesh.com/">LigthMesh CMDB solution from Neo4j Partner xnlogic</a></p>
+</li>
+<li>
+<p><a href="https://labs.vmware.com/vmtj/simplifying-virtualization-management-with-graph-databases">Article: Simplifying Virtualization Management with Graph Databases</a></p>
+</li>
+<li>
+<p><a href="https://www.vmware.com/pdf/vi_architecture_wp.pdf">WhitePaper: VMware Infrastructure Architecture Overview</a></p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>
