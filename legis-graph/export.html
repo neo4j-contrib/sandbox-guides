@@ -1,0 +1,289 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Legis-graph - Exploring US Congress as A Graph</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+   <h4>Legis-graph - Exploring US Congress as A Graph</h4>
+   
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Exporting data from Neo4j</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: right;">
+<div class="content">
+<img src="https://raw.githubusercontent.com/legis-graph/legis-graph/master/img/datamodel.png" alt="datamodel">
+</div>
+</div>
+<div class="paragraph">
+<p>We will start with one of the queries that analised the contributions by party for a certain occupation.</p>
+</div>
+<div class="paragraph">
+<p>Because we want to export the data for external analysis, instead of running the aggregates in Neo4j, we will export all individual donations as records with the relevant fields.</p>
+</div>
+<div class="paragraph">
+<p>We are flattening our graph into a file, exactly the opposite of what we did when we loaded it.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (o:Occupation) WHERE o.name CONTAINS "MARKETING"
+MATCH (o)-[:HAS_OCCUPATION]-(con:Contributor)-[:MADE_CONTRIBUTION]-&gt;(cont:Contribution)-[:MADE_TO]-&gt;(com:FECCommittee)-[:FUNDS]-&gt;(cand:Legislator)
+RETURN con.name AS contributorName, cont.amount AS contributionAmount, com.name AS committeeName, cand.firstName + ' '  + cand.lastName AS candidateName, cand.party AS candidateParty<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Export the results to a file by clicking on the download icon on the top right corner of the results box.</p>
+</div>
+<div class="paragraph">
+<p>Your file is ready to be loaded by Tableau, QlikSense, Excel, your favourite BI/viz/analytics tool</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Exercises</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: right;">
+<div class="content">
+<img src="https://raw.githubusercontent.com/legis-graph/legis-graph/master/img/datamodel.png" alt="datamodel">
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Extend the previous query by adding geographic info to the exported file. Suggestion: Tableau likes zipcodes and we can get zipcodes from the FEC committees (cm.txt) data file.</p>
+</li>
+<li>
+<p>Build a map visualization of the contributions by party by state/city</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Data Quality</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Zip codes in the committee dataset are not perfect. There are different levels of granularity.</p>
+</div>
+<div class="paragraph">
+<p>Can you identify in the graph the ones that the visualization tool does not understand?</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (cont:Contribution)-[:MADE_TO]-&gt;(com:FECCommittee)-[:FUNDS]-&gt;(cand:Legislator)
+RETURN distinct com.zip<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>How can we try to make all consistent? Truncating the string? Using regular expressions?</p>
+</div>
+<div class="paragraph">
+<p>We may want to update the value of the date field or we can leave it as is and just apply the correction on export</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Exercise:</h3>
+    <br/>
+    <div>
+      <div class="ulist">
+<ul>
+<li>
+<p>Apply the zip code correction to the export query. You can truncate the zip codes using the substring function.</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH ...
+RETURN ... , truncate(...) AS zip<!--/code--></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Create a new field on Committee nodes called zip5 containing the 5 digit version of the zip code</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH ... (com:Committee) ...
+SET com.zip5 = truncate(...)<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The previous could also be done using regular expressions if the modification was more complicated ( Matching on WHERE with <em>=~</em> and updating with procedure/function: <em>apoc.text.replace(&lt;original&gt;,&lt;expr&gt;,&lt;repl&gt;)</em>    )</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Using time</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Contributions have a date but the format needs to be modified to be usable by Tableau. We need to transform dates like '10072015' into '10/07/2015'</p>
+</div>
+<div class="paragraph">
+<p>We are going to fix it using a combination of substring function and apoc.text.join</p>
+</div>
+<div class="paragraph">
+<p>Again, we can update the value of the date field or we can leave it as is and just apply the format on export</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->apoc.text.join([substring(cont.date...), ... ],"/")<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And now we are going to produce a time series representation of the donations in Tableau</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Advanced analysis for more complex problems</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>The 'Renaissance Tech problem'</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (n:Employer)
+WHERE n.name CONTAINS 'RENAISSANCE TECH'
+RETURN n.name AS name ORDER BY name<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>What can we do about it?</p>
+</div>
+<div class="paragraph">
+<p>One idea: some word (token) analysis. We are going to look at the words that form an employer name.</p>
+</div>
+<div class="paragraph">
+<p>But before we do that let&#8217;s create an index to improve lookup performance.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CREATE INDEX ON :EmployerToken(name)<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And now we tokenize the company names</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (o:Employer)
+UNWIND split(o.name, ' ') AS word
+WITH o, word
+MERGE (t:EmployerToken {name : replace(replace(word,'.',''),',','')})
+CREATE (o)-[:HAS_TOKEN]-&gt;(t)<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Look what we&#8217;ve done:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH  (e1)-[:HAS_TOKEN]-(t1:EmployerToken)-[:HAS_TOKEN]-(e2)-[:HAS_TOKEN]-(t2:EmployerToken)-[:HAS_TOKEN]-(e3)
+RETURN * limit 10<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now we can ask queries about how similar company names are:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->//Token Analysis
+MATCH (t:EmployerToken) WHERE t.name = 'RENAISSANCE'
+MATCH (emp1)-[:HAS_TOKEN]-&gt;(t)&lt;-[:HAS_TOKEN]-(emp2) WHERE emp1.name &lt; emp2.name
+WITH emp1.name AS employer1,
+     size((emp1)-[:HAS_TOKEN]-&gt;()) AS emp1tokencount,
+     emp2.name AS employer2,
+     size((emp2)-[:HAS_TOKEN]-&gt;()) AS emp2tokencount,
+     size((emp1)-[:HAS_TOKEN]-&gt;()&lt;-[:HAS_TOKEN]-(emp2)) as overlap
+//DEFINE YOUR THRESHOLD
+WHERE  toFloat(overlap) &gt; ((emp1tokencount + emp2tokencount) / 4)
+return employer1, emp1tokencount, employer2, emp2tokencount,
+       ((emp1tokencount + emp2tokencount) / 4)  as threshold,
+       overlap order by overlap DESC limit 100<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And from here, decide what do do: do we link the nodes? do we normalize names into a 'canonical' version?</p>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>

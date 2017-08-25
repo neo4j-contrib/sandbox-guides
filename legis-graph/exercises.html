@@ -1,0 +1,316 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Legis-graph - Exploring US Congress as A Graph</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+   <h4>Legis-graph - Exploring US Congress as A Graph</h4>
+   
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Exercises</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: right;">
+<div class="content">
+<img src="https://raw.githubusercontent.com/legis-graph/legis-graph/master/img/datamodel.png" alt="datamodel">
+</div>
+</div>
+<div class="paragraph">
+<p>The following slides contain some questions to help guide us as we explore the dataset. Keep in mind the data model to the right as you write the graph patterns necessary to answer the questions.</p>
+</div>
+<div class="paragraph">
+<p>Consult the <a href="http://neo4j.com/docs/stable/cypher-refcard/">Cypher Reference Card</a> to help find the syntax / commands for constructing your query.</p>
+</div>
+<div class="paragraph">
+<p>The typical format for writing each query will be:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH ...some graph pattern...
+RETURN ...<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Get familiar with the data&#8230;&#8203; basic lookups</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: right;">
+<div class="content">
+<img src="https://raw.githubusercontent.com/legis-graph/legis-graph/master/img/datamodel.png" alt="datamodel">
+</div>
+</div>
+
+
+
+   <h4>Looking for exact matches</h4>
+   <div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (l:Legislator)
+WHERE l.lastName = 'McCain'
+RETURN l<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>or a more compact version:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (x:Legislator {lastName : 'McCain'})
+RETURN x<!--/code--></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Try to find senator Barrasso</p>
+</li>
+<li>
+<p>Now try to find a legislator called 'Johnson', filters on non unique properties may return multiple results!</p>
+</li>
+<li>
+<p>Identify unique identifiers for the entities in your graph</p>
+</li>
+</ul>
+</div>
+
+
+
+   <h4>Looking for approximate matches</h4>
+   <div class="paragraph">
+<p>Legislator name starting with&#8230;&#8203;</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (x:Legislator)
+WHERE x.lastName STARTS WITH "Ca"
+RETURN x<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>you have other approximate match functions: 'ENDS WITH', 'CONTAINS', '~'. Check the Cypher refcard for more.
+Filters can be combined logically with AND &amp; OR</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (x:Legislator)
+WHERE x.lastName CONTAINS 'bi' AND x.birthday &gt; "1970"
+RETURN x<!--/code--></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Find bills mentioning Cuba in its title</p>
+</li>
+<li>
+<p>Find legislators older than 65 and with name ending in 'son'</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Get familiar with the data&#8230;&#8203; let&#8217;s start building patterns</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: right;">
+<div class="content">
+<img src="https://raw.githubusercontent.com/legis-graph/legis-graph/master/img/datamodel.png" alt="datamodel">
+</div>
+</div>
+<div class="paragraph">
+<p>You can build a pattern incrementally by adding new queries</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (l:Legislator)
+WHERE l.lastName = 'McCain'
+MATCH (b:Bill)-[sb:SPONSORED_BY]-&gt;(l)
+WHERE b.officialTitle CONTAINS 'Affordable Care'
+RETURN b<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>or compact all patterns first patterns first:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (b:Bill)-[sb:SPONSORED_BY]-&gt;(l:Legislator)
+WHERE l.lastName = 'McCain'
+  AND b.officialTitle CONTAINS 'Affordable Care'
+RETURN b<!--/code--></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Find the bills referred to the House Committee on Agriculture that mention livestock in their title</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Explore by State</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: right;">
+<div class="content">
+<img src="https://raw.githubusercontent.com/legis-graph/legis-graph/master/img/datamodel.png" alt="datamodel">
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Who are the legislators who represent NY?</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH ...graph pattern for Legislator nodes  connected to State nodes...
+WHERE ...filter for NY State...
+RETURN ....<!--/code--></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>What political parties do they represent?</p>
+</li>
+<li>
+<p>How many NY Democrats are serving in the House?</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Committees</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: right;">
+<div class="content">
+<img src="https://raw.githubusercontent.com/legis-graph/legis-graph/master/img/datamodel.png" alt="datamodel">
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>For the legislators representing NY, what are the Committees on which they serve?</p>
+</li>
+<li>
+<p>What are the subjects of the bills referred to these committees?</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Bill Sponsorship</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: right;">
+<div class="content">
+<img src="https://raw.githubusercontent.com/legis-graph/legis-graph/master/img/datamodel.png" alt="datamodel">
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Who sponsors the most bills?</p>
+</li>
+</ul>
+</div>
+<div class="ulist">
+<div class="title">Note that when we return values along with an aggregation such as <code>COUNT</code> Cypher treats the statement as an implicit <code>GROUP BY</code></div>
+<ul>
+<li>
+<p>Who sponsors the most bills for the subject "News media and reporting"?</p>
+</li>
+<li>
+<p>Which legislators frequently sponsor bills together?</p>
+</li>
+<li>
+<p>Choose a specific legislator and find the subjects of the bills this legislator sponsors. What are the most common subjects.</p>
+</li>
+<li>
+<p><strong>(Bonus)</strong> Only include bills where this legislator was the main sponsor.</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>

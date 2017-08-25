@@ -1,0 +1,135 @@
+= Legis-graph - Exploring US Congress as A Graph
+
+== Exercises
+
+image::https://raw.githubusercontent.com/legis-graph/legis-graph/master/img/datamodel.png[float=right]
+
+The following slides contain some questions to help guide us as we explore the dataset. Keep in mind the data model to the right as you write the graph patterns necessary to answer the questions.
+
+Consult the http://neo4j.com/docs/stable/cypher-refcard/[Cypher Reference Card] to help find the syntax / commands for constructing your query.
+
+The typical format for writing each query will be:
+
+[source,cypher]
+----
+MATCH ...some graph pattern...
+RETURN ...
+----
+
+== Get familiar with the data... basic lookups
+
+image::https://raw.githubusercontent.com/legis-graph/legis-graph/master/img/datamodel.png[float=right]
+
+=== Looking for exact matches
+
+[source,cypher]
+----
+MATCH (l:Legislator)
+WHERE l.lastName = 'McCain'
+RETURN l
+----
+
+or a more compact version:
+
+[source,cypher]
+----
+MATCH (x:Legislator {lastName : 'McCain'})
+RETURN x
+----
+
+* Try to find senator Barrasso
+* Now try to find a legislator called 'Johnson', filters on non unique properties may return multiple results!
+* Identify unique identifiers for the entities in your graph
+
+=== Looking for approximate matches
+
+Legislator name starting with...
+
+[source,cypher]
+----
+MATCH (x:Legislator)
+WHERE x.lastName STARTS WITH "Ca"
+RETURN x
+----
+
+you have other approximate match functions: 'ENDS WITH', 'CONTAINS', '~'. Check the Cypher refcard for more.
+Filters can be combined logically with AND & OR
+
+[source,cypher]
+----
+MATCH (x:Legislator)
+WHERE x.lastName CONTAINS 'bi' AND x.birthday > "1970"
+RETURN x
+----
+
+* Find bills mentioning Cuba in its title
+* Find legislators older than 65 and with name ending in 'son'
+
+== Get familiar with the data... let's start building patterns
+
+image::https://raw.githubusercontent.com/legis-graph/legis-graph/master/img/datamodel.png[float=right]
+
+You can build a pattern incrementally by adding new queries
+
+[source,cypher]
+----
+MATCH (l:Legislator)
+WHERE l.lastName = 'McCain'
+MATCH (b:Bill)-[sb:SPONSORED_BY]->(l)
+WHERE b.officialTitle CONTAINS 'Affordable Care'
+RETURN b
+----
+
+or compact all patterns first patterns first:
+
+[source,cypher]
+----
+MATCH (b:Bill)-[sb:SPONSORED_BY]->(l:Legislator)
+WHERE l.lastName = 'McCain'
+  AND b.officialTitle CONTAINS 'Affordable Care'
+RETURN b
+----
+
+* Find the bills referred to the House Committee on Agriculture that mention livestock in their title
+
+
+
+== Explore by State
+
+image::https://raw.githubusercontent.com/legis-graph/legis-graph/master/img/datamodel.png[float=right]
+
+* Who are the legislators who represent NY?
+
+[source,cypher]
+----
+MATCH ...graph pattern for Legislator nodes  connected to State nodes...
+WHERE ...filter for NY State...
+RETURN ....
+----
+
+* What political parties do they represent?
+* How many NY Democrats are serving in the House?
+
+
+== Committees
+
+image::https://raw.githubusercontent.com/legis-graph/legis-graph/master/img/datamodel.png[float=right]
+
+* For the legislators representing NY, what are the Committees on which they serve?
+* What are the subjects of the bills referred to these committees?
+
+== Bill Sponsorship
+
+image::https://raw.githubusercontent.com/legis-graph/legis-graph/master/img/datamodel.png[float=right]
+
+* Who sponsors the most bills?
+
+.Note that when we return values along with an aggregation such as `COUNT` Cypher treats the statement as an implicit `GROUP BY`
+
+* Who sponsors the most bills for the subject "News media and reporting"?
+
+* Which legislators frequently sponsor bills together?
+
+* Choose a specific legislator and find the subjects of the bills this legislator sponsors. What are the most common subjects.
+
+* *(Bonus)* Only include bills where this legislator was the main sponsor.
