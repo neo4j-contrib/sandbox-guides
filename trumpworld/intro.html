@@ -1,0 +1,225 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Trumpworld</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+   <h4>Trumpworld</h4>
+   
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>The Trumpworld Graph</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>As part of the Buzzfeed article <a href="https://www.buzzfeed.com/johntemplon/help-us-map-trumpworld?utm_term=.kd5QM0z1q#.ekLzoZ316">Help Us Map TrumpWorld</a>, the four investigative journalists, John Templon, Alex Campbell, Anthony Cormier, and Jeremy Singer-Vine asked the public to help them map and analyze the data that they investigated, confirmed and published:</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Now we are asking the public to use our data to find connections we may have missed, and to give us context we don’t currently understand.
+We hope you will help us — and the public — learn more about TrumpWorld and how this unprecedented array of businesses might affect public policy.</p>
+</div>
+</blockquote>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="https://img.buzzfeed.com/buzzfeed-static/static/2017-01/13/13/asset/buzzfeed-prod-fastlane-01/sub-buzz-31493-1484333437-1.jpg?no-auto" alt="sub buzz 31493 1484333437 1">
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Looking at the Data</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>The <a href="https://www.buzzfeed.com/johntemplon/help-us-map-trumpworld">Buzzfeed article</a> linked int he tweet points to a Google Spreadsheet with collected and verified/researched data of relationships of Trump organizations to other organizations, in total we have 770 organizations (as of today) with 611 relationships.</p>
+</div>
+<div class="paragraph">
+<p>There is a great blog post covering modeling, importing, and querying this data in Neo4j <a href="https://neo4j.com/blog/buzzfeed-trumpworld-dataset-neo4j/">here</a>.</p>
+</div>
+<div class="paragraph">
+<p>The data is fortunately available as a public google doc, so we can use our old trick of loading the CSV-Download URL with <code>LOAD CSV</code> into Neo4j.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s have a look at the data first, here as a sample:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->WITH
+'https://docs.google.com/spreadsheets/d/1Z5Vo5pbvxKJ5XpfALZXvCzW26Cl4we3OaN73K9Ae5Ss/export?format=csv&amp;id=1Z5Vo5pbvxKJ5XpfALZXvCzW26Cl4we3OaN73K9Ae5Ss&amp;gid=1996904412' AS url
+LOAD CSV WITH HEADERS FROM url AS row
+RETURN row.`Entity A`,row.`Entity B`,row.Connection, row.`Source(s)`
+LIMIT 5<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Most Connected People and Organizations</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>The most frequently mentioned organizations and people can be found with this query:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->WITH
+'https://docs.google.com/spreadsheets/d/1Z5Vo5pbvxKJ5XpfALZXvCzW26Cl4we3OaN73K9Ae5Ss/export?format=csv&amp;id=1Z5Vo5pbvxKJ5XpfALZXvCzW26Cl4we3OaN73K9Ae5Ss&amp;gid=1996904412' AS url
+LOAD CSV FROM url AS row
+WITH row
+UNWIND  row[1..2] AS org
+RETURN org, count(*)
+ORDER BY count(*) DESC LIMIT 10<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>What kind of connections exist in the data?</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>What kind of relationships exist in the data:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->WITH
+'https://docs.google.com/spreadsheets/d/1Z5Vo5pbvxKJ5XpfALZXvCzW26Cl4we3OaN73K9Ae5Ss/export?format=csv&amp;id=1Z5Vo5pbvxKJ5XpfALZXvCzW26Cl4we3OaN73K9Ae5Ss&amp;gid=1996904412' AS url
+LOAD CSV WITH HEADERS FROM url AS row
+RETURN row.Connection AS type, count(*)
+ORDER BY count(*) DESC<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>The Labeled Property Graph Model</h3>
+    <br/>
+    <div>
+      <div class="imageblock">
+<div class="content">
+<img src="http://guides.neo4j.com/sandbox/trumpworld/img/datamodel.png" alt="datamodel">
+</div>
+</div>
+<div class="paragraph">
+<p><strong>How could we model this data as a graph?</strong></p>
+</div>
+<div class="paragraph">
+<p>The data model we work with in Neo4j is called the labeled property graph. The main elements of the model are:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Nodes</strong> - these are the entities or objects in the graph.</p>
+</li>
+<li>
+<p><strong>Labels</strong> - nodes can have one or more labels. Labels define the type or class of the node (such as <code>Person</code> or <code>Organization</code>)</p>
+</li>
+<li>
+<p><strong>Relationships</strong> - relationships connect nodes. Relationships have a single type and direction.</p>
+</li>
+<li>
+<p><strong>Properties</strong> - we can store key-value pair properties on nodes and relationships.</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Working With Neo4j</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Let&#8217;s first identify the tools and concepts we&#8217;ll be using:</p>
+</div>
+<div class="ulist">
+<div class="title">Neo4j Tools</div>
+<ul>
+<li>
+<p><strong>Neo4j Browser</strong> - Neo4j Browser (this web application!) is a query workbench for querying Neo4j and visualizing the results.</p>
+</li>
+<li>
+<p><strong>Cypher</strong> - Cypher is the query language for graphs used to interact with Neo4j. Cypher is an expressive query language designed for graphs that allows the user to define graph queries defining a traversal.</p>
+</li>
+<li>
+<p><strong><code>LOAD CSV</code></strong> - functionality built into Cypher that allows for importing data into Neo4j from CSV / flat files.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Next, let&#8217;s introduce the dataset we&#8217;ll be using today.</p>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>

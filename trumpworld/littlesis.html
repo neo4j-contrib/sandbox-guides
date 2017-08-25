@@ -1,0 +1,178 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Extending The Data Model - LittleSis</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+   <h4>Extending The Data Model - LittleSis</h4>
+   
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Extending The Network - LittleSis.org People and organizations</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>One of the benefits of the graph data model is the ability to combine datasets and query across them. Next we will look at how we can extend the graph by adding new entities from the LittleSis data set. The model will not change as we will only bring people and organizations.</p>
+</div>
+<div class="paragraph">
+<p>LittleSis is "a free database of who-knows-who at the heights of business and government". The dataset can be explored online at <a href="https://littlesis.org/lists">littlesis.org</a></p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="http://guides.neo4j.com/sandbox/trumpworld/img/littlesis.png" alt="littlesis"></span></p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>The Data</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>The littlesis graph is much bigger than the Trump world one, like a hundred times. It contains over 250k persons and organizations compared to the 2.2k in the Trump world. Because of that we will only use a small portion of the LittleSis dataset.</p>
+</div>
+<div class="paragraph">
+<p>You can find them as CSV files here <a href="https://github.com/johnymontana/neo4j-datasets/tree/master/trumpworld/data/littlesis-extract">https://github.com/johnymontana/neo4j-datasets/tree/master/trumpworld/data/littlesis-extract</a></p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Extending The Datamodel</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Let&#8217;s start by setting up an index on entities from the LittleSis dataset</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CREATE INDEX ON :LittleSisEntity(littleSisId)<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Load LittleSis ids for people in the Trump World graph.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/johnymontana/neo4j-datasets/master/trumpworld/data/littlesis-extract/people.csv" AS row
+MATCH (p:Person { name : row.name})
+SET p:LittleSisEntity, p.littleSisId = row.entity_id<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And then we do the same with organizations:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/johnymontana/neo4j-datasets/master/trumpworld/data/littlesis-extract/orgs.csv" AS row
+MATCH (o:Organization { name : row.name})
+SET o:LittleSisEntity, o.littleSisId = row.entity_id<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The next two queries will load into the graph people and organizations from LittleSis that are connected to entities in the Trump World graph but not yet present in it. This will extend the graph significantly so you may want to skip this part if you want to only add relationships from LittleSis between pre-existing people and organizations.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/johnymontana/neo4j-datasets/master/trumpworld/data/littlesis-extract/related-people.csv" AS row
+MERGE (p:Person { name : row.name })
+ON CREATE SET p:LittleSisEntity, p.littleSisId = row.id<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And again, we&#8217;ll do the same with organizations</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/johnymontana/neo4j-datasets/master/trumpworld/data/littlesis-extract/related-orgs.csv" AS row
+WITH row WHERE row.name IS NOT NULL
+MERGE (o:Organization { name : row.name })
+ON CREATE SET o:LittleSisEntity, o.littleSisId = row.id<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Finally, we&#8217;ll add the relationships between the LittleSis entities we&#8217;ve just loaded.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "https://raw.githubusercontent.com/johnymontana/neo4j-datasets/master/trumpworld/data/littlesis-extract/rels.csv" AS row
+MATCH (from:LittleSisEntity {littleSisId : row.entity_id})
+MATCH (to:LittleSisEntity {littleSisId : row.relatedEntityId})
+CALL apoc.create.relationship(from, toUpper(row.reltype), { relDetail: row.reldesc, source:'LittleSis'} ,to) YIELD rel
+RETURN count(rel) AS relsCreated<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Querying the LittleSis graph</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Let&#8217;s have a quick look at the LittleSis graph:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (x:LittleSisEntity)-[r {source:"LittleSis"}]-(y:LittleSisEntity)
+RETURN * LIMIT 500<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>

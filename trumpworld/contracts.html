@@ -1,0 +1,452 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Extending The Data - US Government Contracts</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+   <h4>Extending The Data - US Government Contracts</h4>
+   
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Extending The Network - US Government Contracts</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>One of the benefits of the graph data model is the ability to combine datasets and query across them. Next we will look at how we can add data on recipients of US Government contracts.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>USASpending.gov</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Data on recipients of federal government contracts are available online, at <a href="https://www.usaspending.gov/Pages/Default.aspx">USASpending.gov</a></p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="http://www.lyonwj.com/public/img/usaspending.png" alt="usaspending"></span></p>
+</div>
+<div class="paragraph">
+<p>We may need to reference the <a href="https://www.usaspending.gov/DownloadCenter/Documents/USAspending.govDownloadsDataDictionary.pdf">data dictionary for USASpending.gov</a>.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>The Data</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Each row in the CSV file represents a contract that has been awarded to an organization, issued by a federal government agency (actually each row represents a <strong>transaction</strong>, and we could have multiple transactions per contract, but let&#8217;s simplify our thinking and just think of each row as a contract).</p>
+</div>
+<div class="paragraph">
+<p>Looking at the data dictionary we can see that each row has <strong>a lot</strong> of fields (225 actually!), so there is a lot of information encoded in each row. We are mainly interested in:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>What organization was awarded the contract?</p>
+</li>
+<li>
+<p>What is the parent organization of the awardee (is it a subsidiary)?</p>
+</li>
+<li>
+<p>The amount of the contract</p>
+</li>
+<li>
+<p>The agency issuing the contract</p>
+</li>
+<li>
+<p>The purpose of the contract</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>We can use Cypher&#8217;s <code>LOAD CSV</code> functionality to exaimine the first few rows of the CSV file and return specifically the columns we are interested in:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// Load the contractors CSV file and return the first 5 rows
+// but only the columns we're interested in
+LOAD CSV WITH HEADERS
+FROM "http://guides.neo4j.com/sandbox/trumpworld/data/contracts_2016.csv" AS row
+WITH row LIMIT 5
+RETURN row.piid AS piid,
+       row.fiscal_year AS fiscal_year,
+       row.vendorname AS vendor_name,
+       row.mod_parent AS parent_org,
+       row.dollarsobligated AS amount,
+       row.contractingofficeagencyid AS agency,
+       row.productorservicecode AS purpose<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>MATCHing on organizations</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>So here we can see some contracts that were issued by the Federal Prison System to various vendors. Now we could certainly import the entire dataset into Neo4j and run some interesting queries for analysis, but we&#8217;re specifically interested in finding contracts that were awarded to vendors that appear in the Trumpworld dataset. Let&#8217;s see if we can find any. To do this we need to <code>MATCH</code> on <code>Organization</code> nodes where the <code>name</code> property of the organization is equal to the <code>vendorname</code> column in the CSV file. We have to look through 5000 rows before we find a match:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM
+"http://guides.neo4j.com/sandbox/trumpworld/data/contracts_2016.csv" AS row
+
+WITH row LIMIT 5000
+MATCH (o:Organization) WHERE o.name = row.vendorname
+RETURN row.piid AS piid,
+       row.fiscal_year AS fiscal_year,
+       row.vendorname AS vendor_name,
+       row.mod_parent AS parent_org,
+       row.dollarsobligated AS amount,
+       row.contractingofficeagencyid AS agency,
+       row.productorservicecode AS purpose<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Here we see Duke University showing up as a vendor. This means that Duke University must be in the Trumpworld data.</p>
+</div>
+
+
+
+   <h4>How is Duke University connected to Donald Trump?</h4>
+   <div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH p=(duke:Organization)-[*1..5]-(donald:Person)
+WHERE duke.name   = "DUKE UNIVERSITY" AND
+      donald.name = "DONALD J. TRUMP"
+RETURN p LIMIT 1<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Vendor Parent Organizations</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We can see that in this case the <code>vendor_name</code> and <code>parent_org</code> values are the same. This means that Duke University isn&#8217;t part of larger organization. Parent company information is provided by Dun &amp; Bradstreet. We are also interested in finding contracts that were awarded to subsidiaries of companies in Trumpworld, as this would also help us identify potential conflicts of interest. To find these contracts (one that was awarded to a vendor where the vendor is a subsidiary of a company that appears in Trumpworld) we&#8217;ll need to match on <code>Organization</code> nodes where the <code>name</code> property is equal to the <code>parent_org</code> column and where the <code>vendor_name</code> is not equal to <code>parent_org</code>. To find examples of these we need to look through a few more rows - the first 50000 (but don&#8217;t worry there are more than 4 million rows in this CSV file!):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS
+FROM "http://guides.neo4j.com/sandbox/trumpworld/data/contracts_2016.csv" AS row
+WITH row LIMIT 50000
+MATCH (o:Organization)
+WHERE o.name = row.mod_parent
+    AND NOT row.mod_parent = row.vendorname
+RETURN row.piid AS piid,
+       row.fiscal_year AS fiscal_year,
+       row.vendorname AS vendor_name,
+       row.mod_parent AS parent_org,
+       row.dollarsobligated AS amount,
+       row.contractingofficeagencyid AS agency,
+       row.productorservicecode AS purpose<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>The Labeled Property Graph Model</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>How might we model this contract data as a graph? Let&#8217;s examine the third contract in the table above:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="http://lyonwj.com/public/img/contract-data-model.png" alt="contract data model"></span></p>
+</div>
+<div class="paragraph">
+<p><strong>How should we model government contracts in Neo4j?</strong></p>
+</div>
+<div class="paragraph">
+<p>The entities we want to model are <code>Organization</code>, <code>Contract</code>, and government <code>Agency</code>.</p>
+</div>
+<div class="paragraph">
+<p>Note that we have an overlap on <code>Organization</code>, which allows us to combine these two datasets and query across them.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Loading The Data</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Now we&#8217;re ready to import the data into the Trumpworld graph. We&#8217;ll end running two import queries:</p>
+</div>
+<div class="paragraph">
+<p><strong>First, where the vendor of the contract appears as an organization in Trumpworld</strong></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS
+FROM "http://guides.neo4j.com/sandbox/trumpworld/data/contracts_2016.csv" AS row
+
+MATCH (o:Organization) WHERE o.name = row.vendorname
+
+WITH o,row.piid AS piid,
+     row.fiscal_year AS fiscal_year,
+     row.vendorname AS vendor_name,
+     row.mod_parent AS parent_org,
+     toFloat(row.dollarsobligated) AS amount,
+     substring(row.contractingofficeagencyid, 6) AS agency,
+     row.productorservicecode AS purpose
+
+MERGE (a:Agency {name: agency})
+MERGE (c:Contract {piid: piid})
+ON CREATE SET c.amount = amount,
+    c.purpose = purpose,
+    c.fiscal_year = fiscal_year
+// sum the transactions per contract
+ON MATCH SET c.amount = c.amount + amount
+MERGE (a)-[:ISSUED_CONTRACT]->(c)
+MERGE (c)<-[:AWARDED_CONTRACT]-(o)<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Then, a second query for loading contracts where the vendor&#8217;s <strong>parent company</strong> appears as an organization in Trumpworld</strong></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS
+FROM "http://guides.neo4j.com/sandbox/trumpworld/data/contracts_2016.csv" AS row
+
+MATCH (parent:Organization)
+WHERE parent.name = row.mod_parent
+    AND NOT row.mod_parent = row.vendorname
+WITH parent, row.piid AS piid, row.fiscal_year AS fiscal_year,
+    row.vendorname AS vendor_name, row.mod_parent AS parent_org,
+    toFloat(row.dollarsobligated) AS amount,
+    substring(row.contractingofficeagencyid, 6) AS agency,
+    row.productorservicecode AS purpose
+MERGE (vo:Organization {name: vendor_name})
+MERGE (a:Agency {name: agency})
+MERGE (c:Contract {piid: piid})
+ON CREATE SET c.amount = amount,
+    c.purpose = purpose,
+    c.fiscal_year = fiscal_year
+// sum the transactions per contract
+ON MATCH SET c.amount = c.amount + amount
+MERGE (a)-[:ISSUED_CONTRACT]->(c)
+MERGE (c)<-[:AWARDED_CONTRACT]-(vo)
+MERGE (parent)<-[:PARENT_ORG]-(vo)<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Analyzing Trumpworld + USASpending</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Now that we&#8217;ve imported the USASpending data, let&#8217;s take a look at the Merchandise Mart Properties, Inc contract. Since this is the Trumpworld graph, a logical question we might ask is "What is the connection from this contract to Donald Trump?". We can do this using the <code>shortestPath</code> function in Cypher:</p>
+</div>
+<div class="listingblock">
+<div class="title">The shortest path from a specific contract to Donald Trump.</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Contract {piid: "DJU4500517056"})
+MATCH (c)<-[:ISSUED_CONTRACT]-(a:Agency)
+MATCH (donald:Person {name: "DONALD J. TRUMP"})
+MATCH p=shortestPath( (donald)-[*]-(c) )
+RETURN *<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s digest the result of this query. This graph visualization is showing us a contract awarded by the Federal Prison System for the lease of facilities that was awarded to a real estate company whose parent company is an investor in a company whose CEO is the son-in-law (and close advisor) of Donald Trump.</p>
+</div>
+<div class="paragraph">
+<p>Of course, this is just one shortest path, there may be others. Let&#8217;s find <strong>all</strong> shortest paths connecting this contract to Donald Trump:</p>
+</div>
+<div class="listingblock">
+<div class="title">All shortest paths from a specific contract to Donald Trump.</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Contract {piid: "DJU4500517056"})
+MATCH (c)<-[:ISSUED_CONTRACT]-(a:Agency)
+MATCH (donald:Person {name: "DONALD J. TRUMP"})
+MATCH p=allShortestPaths( (donald)-[*]-(c) )
+RETURN *<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Cabinet Nominees</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>What connections do Trump&#8217;s cabinet nominees have to contract vendors and parent companies of contract vendors?</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (donald:Person {name: "DONALD J. TRUMP"})<-[r:NOMINEE]-(cabinet:Person)
+MATCH p=(cabinet)--(o:Organization)-[*1..2]-(c:Contract)--(a:Agency)
+RETURN *<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Connections from Trump&#8217;s cabinet nominees to government contracts.</strong></p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s take a closer look at the connection between some specific cabinet nominees to government contracts.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Rex Tillerson</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Rex Tillerson is Trump&#8217;s nominee for Secretary of State. He is also the former CEO and chairman of Exxon Mobil. Let&#8217;s explore his connections in Trumpworld.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (p:Person {name:"REX TILLERSON"})--(o:Organization {name: "EXXON MOBIL CORPORATION"}),
+ path=(o)-[*1..2]-(c:Contract)--(a:Agency)
+RETURN *<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Connections from Rex Tillerson to government contracts, through Exxon Mobil.</strong></p>
+</div>
+<div class="paragraph">
+<p>We can see that Exxon Mobil itself was only awarded two contracts, one from the Department of the Army and another from the Department of the Navy. However, because we are modeling parent companies as well we can see that a subsidiary of Exxon Mobil (Mobil Oil Guam Inc) has been awarded significant contracts from the Department of the Navy and the Defense Logistics Agency.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>James Mattis</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>James Mattis is Trump&#8217;s nominee for Secretary of Defense.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (p:Person {name:"JAMES MATTIS"})--(o:Organization),
+ path=(o)-[*1..2]-(c:Contract)--(a:Agency)
+RETURN *<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Connections to Trump</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Are there any direct connections from Trump to Organizations receiving government contracts?</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (p:Person) WHERE p.name CONTAINS "DONALD J. TRUMP"
+MATCH (p)-[]-(o:Organization)-[:AWARDED_CONTRACT]->(c:Contract),
+      (c)<-[:ISSUED_CONTRACT]-(a:Agency)
+RETURN *<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This is of course the contract that [allows the Secret Service to rent space in Trump Tower](<a href="http://www.politico.com/story/2016/12/secret-service-faces-massive-bill-for-protecting-trump-232153" class="bare">http://www.politico.com/story/2016/12/secret-service-faces-massive-bill-for-protecting-trump-232153</a>) for protecting Trump and his associates.</p>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>

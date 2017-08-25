@@ -1,0 +1,316 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Trumpworld Network Analysis</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+   <h4>Trumpworld Network Analysis</h4>
+   
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Analyzing The Network</h3>
+    <br/>
+    <div>
+      
+
+
+   <h4>Number of nodes</h4>
+   <div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c) RETURN count(c)<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">How many people?</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (p:Person) RETURN count(p);<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">How many organizations?</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (o:Organization) RETURN count(o);<!--/code--></pre>
+</div>
+</div>
+
+
+
+   <h4>Summary statistics</h4>
+   <div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (p:Person)-[]-()
+WITH p, COUNT(*) AS num
+RETURN min(num) AS min, max(num) AS max, avg(num) AS avg, stdev(num) AS stdev<!--/code--></pre>
+</div>
+</div>
+
+
+
+   <h4>Diameter of the network</h4>
+   <div class="paragraph">
+<p>The diameter (or geodesic) of a network is defined as the longest shortest path in the network.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// Find maximum diameter of network
+// maximum shortest path between two nodes
+MATCH (a:Person), (b:Person) WHERE id(a) &gt; id(b)
+MATCH p=shortestPath((a)-[*]-(b))
+RETURN length(p) AS len, extract(x IN nodes(p) | x.name) AS path
+ORDER BY len DESC LIMIT 4<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Shortest Path</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We can use the shortestPath function in Cypher to find the shortest path between any two characters in the graph. Let’s find the shortest path from Catelyn Stark to Kahl Drogo:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// Shortest path
+MATCH (donald:Person {name: "DONALD J. TRUMP"}), (prince:Person {name: "ERIK PRINCE"})
+MATCH p=shortestPath((donald)-[*]-(prince))
+RETURN p<!--/code--></pre>
+</div>
+</div>
+
+
+
+   <h4>All shortest paths</h4>
+   <div class="paragraph">
+<p>There might be other paths of the same length connecting Catelyn and Drogo. We can find these with the allShortestPaths Cypher function:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// All shortest paths
+MATCH (donald:Person {name: "DONALD J. TRUMP"}), (prince:Person {name: "ERIK PRINCE"})
+MATCH p=allShortestPaths((donald)-[*]-(prince))
+RETURN p<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// All shortest paths
+MATCH (donald:Person {name: "ERIK PRINCE"}), (prince:Person {name: "VLADIMIR PUTIN"})
+MATCH p=allShortestPaths((donald)-[*]-(prince))
+RETURN p<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Pivotal Nodes</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>A node is said to be pivotal if it lies on all shortest paths between two other nodes in the network. We can find all pivotal nodes in the network.</p>
+</div>
+<div class="listingblock">
+<div class="title">Source: <a href="https://www.cs.cornell.edu/home/kleinber/networks-book/">Networks, Crowds, Markets</a></div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (a:Person), (b:Person)
+MATCH p=allShortestPaths((a)-[*]-(b)) WITH collect(p) AS paths, a, b
+MATCH (c:Person) WHERE all(x IN paths WHERE c IN nodes(x)) AND NOT c IN [a,b]
+RETURN a.name, b.name, c.name AS PivotalNode LIMIT 10<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (a:Person {name: "DOUGLAS DURBANO"}), (b:Person {name: "JOSHUA KUSHNER"})
+MATCH p=allShortestPaths((a)-[*]-(b))
+RETURN p<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Centrality measures</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>In graph theory and network analysis, indicators of centrality identify the most important vertices within a graph. Applications include identifying the most influential person(s) in a social network, key infrastructure nodes in the Internet or urban networks, and super-spreaders of disease.</p>
+</div>
+
+
+
+   <h4>Degree Centrality</h4>
+   <div class="listingblock">
+<div class="title">Person degree centrality</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Person)
+RETURN c.name AS person, size( (c)-[]-() ) AS degree ORDER BY degree DESC LIMIT 100<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Organization degree centrality</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (o:Organization)
+RETURN o.name AS org, size( (o)-[]-() ) AS degree ORDER BY degree DESC LIMIT 25<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Betweenness Centrality</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>The betweenness centrality of a node in a network is the number of shortest paths between two other members in the network on which a given node appears.</p>
+</div>
+<div class="paragraph">
+<p>Betweenness centality is an important metric because it can be used to identify “brokers of information” in the network or nodes that connect disparate clusters.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="http://www.lyonwj.com/public/img/betweenness-centrality.png" alt="betweenness centrality">
+</div>
+</div>
+<div class="listingblock">
+<div class="title">The red nodes have a high betweenness centrality and are connectors of clusters.</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Person)
+WITH collect(c) AS people
+CALL apoc.algo.betweenness([], people, 'OUTGOING') YIELD node, score
+//SET node.betweenness = score
+RETURN node.name AS name, score ORDER BY score DESC<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Closeness Centrality</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Nodes with high closeness centality are often highly connected within clusters in the graph, but not necessarily highly connected outside of the cluster.</p>
+</div>
+<div class="paragraph">
+<p>Closeness centrality is the inverse of the average distance to all other characters in the network.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="http://www.lyonwj.com/public/img/closeness-centrality.png" alt="closeness centrality">
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Nodes with high closeness centrality are connected to many other nodes in a network.</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Person)
+WITH collect(c) AS people
+CALL apoc.algo.closeness([], people, 'OUTGOING') YIELD node, score
+RETURN node.name AS name, score ORDER BY score DESC<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>PageRank</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>PageRank is an algorithm originally used by Google to rank the importance of web pages and is a type of eigenvector centrality</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="http://www.lyonwj.com/public/img/page-rank.png" alt="page rank"></span></p>
+</div>
+<div class="listingblock">
+<div class="title">Most central Person nodes by PageRank</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Person)
+WITH collect(c) AS people
+CALL apoc.algo.pageRank(people) YIELD node, score
+RETURN node.name AS name, score ORDER BY score DESC<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Direct connections of the most central Person nodes, by PageRank</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Person)
+WITH collect(c) AS people
+CALL apoc.algo.pageRank(people) YIELD node, score
+WITH node, score ORDER BY score LIMIT 5
+MATCH p=(node)-[]-()
+RETURN p<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>
