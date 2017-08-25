@@ -1,0 +1,13 @@
+version: 2
+jobs:
+   build:
+     docker:
+             - image: node:6.10
+     steps:
+       - checkout
+       - run: pwd
+       - run: ls
+       - run: apt-get -y -qq update
+       - run: apt-get -y -qq install python-pip python-dev
+       - run: pip install awscli
+       - run: aws s3 cp . s3://guides.neo4j.com/test  --acl public-read --recursive --exclude "*" --include "*.html" --include "*.png" --include "*.jpg" --include "*.gif" --include "*.csv"
