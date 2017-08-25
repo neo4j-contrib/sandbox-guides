@@ -1,5 +1,5 @@
 echo "Usage: sh render.sh [publish]"
-GUIDES=../../neo4j-guides
+GUIDES=../neo4j-guides
 
 function render {
 $GUIDES/run.sh intro.adoc index.html +1 "$@"
