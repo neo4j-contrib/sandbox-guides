@@ -1,0 +1,442 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Credit Risk</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+   <h4>Credit Risk</h4>
+   
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Introduction</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>RAB is building a new credit risk system based on Neo4j that aggregates data from several sources</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>CRM System</p>
+</li>
+<li>
+<p>Lending System</p>
+</li>
+<li>
+<p>Credit rating agencies external data feed</p>
+</li>
+<li>
+<p>Market data external data feed</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This system has a dashboard that helps credit analysts research companies and calculate <strong>their credit risk score</strong>. This score is based on company financials, performance forecast and credit agency ratings.</p>
+</div>
+<div class="paragraph">
+<p>Data model of this solution stores data about</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Company assets</p>
+</li>
+<li>
+<p>Stock prices</p>
+</li>
+<li>
+<p>Commodity prices</p>
+</li>
+<li>
+<p>Credit ratings</p>
+</li>
+<li>
+<p>Forecasted earning</p>
+</li>
+<li>
+<p>Loans and their calculated risk scores</p>
+</li>
+</ul>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="http://guides.neo4j.com/sandbox/mdm/img/model_risk.png" alt="model risk">
+</div>
+</div>
+<div class="paragraph">
+<p>The time is January 2016. Letís see what the oil prices are</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match path=(c:Commodity {name:'Brent Crude'})-[:LAST_COMMODITY_PRICE]-&gt;(p:CommodityPrice)-[:PREVIOUS_COMMODITY_PRICE*..]-&gt;(p2:CommodityPrice)
+return path<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The price is around 37 dollars for barrel</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Companies and Loans</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Letís see the companies that we have in our database and their assets</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (co:Company)
+return co.name, co.sharesOutstanding<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And now letís look at Boreal Engineering, its assets</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (co:Company {name:"Boreal Engineering"})-[:OWNS]-&gt;(a:Assets),
+(co)-[:ISSUED]-&gt;(s:Stock)-[:LAST_PRICE]-&gt;(p:StockPrice)
+return co.name, a.cashValue, a.stockValue, p.price, co.sharesOutstanding<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>its stock price</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (co:Company {name:"Boreal Engineering"})-[:OWNS]-&gt;(a:Assets),
+(co)-[:ISSUED]-&gt;(s:Stock)-[:LAST_STOCK_PRICE]-&gt;(p:StockPrice)
+return co.name, a.cashValue, a.stockValue, p.price, co.sharesOutstanding<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>its loan from RAB and the risk score RAB has assigned to this loan</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (co:Company {name:"Boreal Engineering"}) &lt;- [b:BORROWER] - (l:Loan) - [:LAST_RISK_SCORE] -&gt; (rs:RiskScore)
+return co, l, rs<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>1 is 100% which the best risk score possible.</p>
+</div>
+<div class="paragraph">
+<p>Letís also check Boreal payment potential, which is based on the assets that it owns and its earnings forecast.</p>
+</div>
+<div class="paragraph">
+<p>We will set it first for both loans that we have in our demo. Neo4j is schema-on-read database and it will let us do this. Note that we store this value on the BORROWER relationship itself</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (co:Company {name:"Boreal Engineering"}) &lt;- [b:BORROWER] - (l:Loan)
+set b.paymentPotential=42.717<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (co:Company {name:"Hull Staffing Solutions"}) &lt;- [b:BORROWER] - (l:Loan)
+set b.paymentPotential=11.5<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Letís verify it is there</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (co:Company {name:"Boreal Engineering"}) &lt;- [b:BORROWER] - (l:Loan)
+return co.name, b.paymentPotential<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Boreal payment potential is 42.717 M which is more than the remaining payment on the loan 42.4 M.</p>
+</div>
+<div class="paragraph">
+<p>Last letís check Boreal credit rating</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (co:Company {name:"Boreal Engineering"}) - [b:LAST_CREDIT_RATING] -&gt; (cr:CreditRating)
+return co.name, cr.rating<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It is Aaa, best possible</p>
+</div>
+<div class="paragraph">
+<p>Go to next page</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>STEP 1 Oil price drops</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Now a credit event happens ñ oil price drops. Letís simulate it and create a new node in time series</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (co:Commodity {name:"Brent Crude"})-[ol:LAST_COMMODITY_PRICE]-&gt;(cpo:CommodityPrice)
+create (cpo)&lt;-[np:PREVIOUS_COMMODITY_PRICE]-(cpn:CommodityPrice {date:"20160106", price:29.00})&lt;-[nl:LAST_COMMODITY_PRICE]-(co)
+delete ol
+return co, cpn, cpo<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Letís check the new time series</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (co:Commodity {name:"Brent Crude"})
+match (cp:CommodityPrice)
+return co, cp<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Next we will explore the effects of this event</p>
+</div>
+<div class="paragraph">
+<p>Go to next page</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>STEP 2 Impact to Heritage Energy</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Heritage Energy stock price drops from 42.35 to 20.00</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (co:Company {name:"Heritage Energy"})-[:ISSUED]-&gt;(s:Stock)-[:LAST_STOCK_PRICE]-&gt;(sp:StockPrice)
+return co, s, sp<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As the result RAB analysts downgrade their earnings forecast from 6 M</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (co:Company {name:"Heritage Energy"})-[:LAST_FORECAST]-&gt;(f:Forecast)
+return co, f<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>to 2.8 M</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (co:Company {name:"Heritage Energy"})-[:LAST_FORECAST]-&gt;(f:Forecast)
+set f.earningsPerShare = 0.35
+set f.earnings = 2.8
+return co, f<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The analyst took this action because credit risk system dashboard notified him that performance and valuation of Heritage Energy is dependent on the oil prices</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (co:Company) - [:DEPENDS] -&gt; (com:Commodity)
+return co, com<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>STEP 3 Impact to companies connected to Heritage Energy</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Heritage Energy stock price drop</p>
+</div>
+<div class="paragraph">
+<p>Credit risk system dashboard alerts RAB analyst to review all companies associated with Heritage Energy (HEN)</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (co1) - [:CONTRACTED] -&gt; (co2:Company)
+return co1, co2<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>RAB analyst lowers the earnings forecast of Boreal Engineering (BOR) based on the fact that it has a large contract to develop Alberta oil sands with HEN. (letís check the values before the change)</p>
+</div>
+<div class="paragraph">
+<p>Letís check the values first</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (co:Company {name:"Boreal Engineering"})-[:LAST_FORECAST]-&gt;(f:Forecast),
+(co)&lt;-[b:BORROWER]-(l:Loan),
+(co)-[:OWNS]-(a:Assets)
+return co, f, b, l, a<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And then apply RAB analyst updates</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (co:Company {name:"Boreal Engineering"})-[:LAST_FORECAST]-&gt;(f:Forecast)
+set f.earningsPerShare = 0.12
+set f.earnings = 2.215
+return co, f<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This will result in a systematic update of BOR payment potential for the loan that it has with RAB.</p>
+</div>
+<div class="paragraph">
+<p>The payment potential is basically the sum of all assets plus the sum of projected earnings for the remaining term of the loan. Remember its value was 42.717 which is enough to pay off the loan of 42.4 M. Now it should go down to 33.858 because BOR earnings forecast was lowered from 4.429 M to 2.215 M. Loan term is 4 years. And BOR total assets stayed the same at 25 M</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (co:Company {name:"Boreal Engineering"})-[:LAST_FORECAST]-&gt;(f:Forecast),
+(co)&lt;-[b:BORROWER]-(l:Loan),
+(co)-[:OWNS]-(a:Assets)
+set b.paymentPotential = a.totalValue + f.earnings * l.loanTerm
+return b.paymentPotential<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This change in tern impacts performance score calculated by the credit risk system. It goes down form 100 percent to 79.9 percent. And the overall risk score, which is comprised of performance score and the agency score goes down from 100 to 79.9 as well. (Both scores were 100 before)</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>STEP 4 Impact to Boreal Engineering stock assets</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Rockies Rail stock fell from 8.48 to 2.75. As the result the value of Boreal engineering assets went down from 25 M to 12 M. As the result performance score is systematically downgraded from 79.9 percent to 49.2 percent.</p>
+</div>
+<div class="paragraph">
+<p>The rating agency also downgraded BOR from Aaa to A. As the result its agency score fell from 100 percent to 80 percent.</p>
+</div>
+<div class="paragraph">
+<p>Overall credit risk score is a combination of performance score and agency score. It fell from 79.9 percent to 39.4 percent</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>STEP 5 Impact to companies that have contracts with Boreal Engineering and Heritage Energy</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Analyst looks at Hull Staffing Solutions (HSS) based on connected data displayed by Credit Risk System dashboard. Analyst learns that HSS has significant number of staff working on Alberta oil sands project with BOR and lowers earnings forecast for HSS.</p>
+</div>
+<div class="paragraph">
+<p>Analysts predicts that since ARC has a contract with HEN, the refinery will have idle capacity. Therefore Analyst lowers earnings forecast for ARC. Market reacts as well, and both HSS and ARC stock price fall</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>STEP 6 Forced contract termination between Boreal Engineering and Hull Staffing Solution leads to depletion of assets of both companies</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>BOR stock falls as it announces restricting as a result of oil price drop. BOR terminates its contract with HSS and has to pay a termination fee in cash. The value of BOR&#8217;s assets goes down further. As a result of BOR contract termination, HSS is forced to start  spending its cash assets in order to finance its operations.</p>
+</div>
+<div class="paragraph">
+<p>The same holds true for ROC as they are loosing money</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>STEP 7 Credit rating agencies react. As predicted by RAB analysts, loans with BOR and HSS are at risk</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Analyst revises earnings forecasts for both BOR and HSS based on public information about companies being restructured. This makes credit risk score for both companies to go down even further. The share prices for both BOR and HSS also go down</p>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>
