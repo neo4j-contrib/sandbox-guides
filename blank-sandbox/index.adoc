@@ -3,3 +3,12 @@
 == Importing Data
 
 This Sandbox is a completely vanilla instance of Neo4j.  We provide no additional data.  You may wish to https://neo4j.com/developer/guide-importing-data-and-etl/[import your own data].
+
+== Resources
+
+* http://neo4j.com/graphgists[Graph Gist Examples]
+* http://neo4j.com/docs/stable/cypher-refcard/[Cypher Reference Card]
+* http://neo4j.com/docs/developer-manual/current/#cypher-query-lang[Neo4j Developer Manual]
+* http://neo4j.com/developer/resources#_neo4j_cypher_resources[Cypher Resource Collection]
+* http://graphdatabases.com[e-book: Graph Databases (free)]
+
