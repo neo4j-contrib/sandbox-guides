@@ -73,12 +73,12 @@
    <h4>Let’s see what data is in this database.</h4>
    <div class="paragraph">
 <p>Run the embedded query to examine graph structure that we have just created.
-We see nodes for each type of entity, connected by the relationships they have. For a large graph we should sample 1000 nodes of each label to find relationships.</p>
+We see nodes for each type of entity, connected by the relationships they have.</p>
 </div>
 <div class="listingblock">
 <div class="title">Meta Graph</div>
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable code runnable standalone-example ng-binding"><code class="cypher language-cypher">CALL apoc.meta.graphSample(1000)</code></pre>
+<pre mode="cypher"  class="highlight pre-scrollable code runnable standalone-example ng-binding"><code class="cypher language-cypher">CALL apoc.meta.graphSample()</code></pre>
 <div class="paragraph">
           <p>To execute this query, please <strong>click</strong> on the statement above to put the query in the query editor above. <br/>Hit the triangular <span class="icon"><i class="fa fa-play-circle"></i></span> button or press <span class="keyseq"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span> to <strong>run it</strong> and see the resulting visualization.</p>
 </div>
