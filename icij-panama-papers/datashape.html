@@ -20,7 +20,7 @@
 
 
       <div class="paragraph">
-        <p>The Offfshore Leaks Database contains in a structured way the contents of the more than 3 million database files inside the Panama Papers leak and the client databases from the Offshore Leaks investigation.</p>
+        <p>The Offshore Leaks Database contains in a structured way the contents of the more than 3 million database files inside the Paradise and Panama Papers leaks and the client databases from the Offshore Leaks investigation.</p>
       </div>
 
       <div class="paragraph">
@@ -44,6 +44,9 @@
           <li>
             <p><code>Address</code> - The registered address as it appears in the original databases obtained by ICIJ.</p>
           </li>
+          <li>
+            <p><code>Other</code> - Other entities found in the data.</p>
+          </li>
         </ul>
       </div>
     </div>
@@ -58,10 +61,7 @@
       <h4>Graph Patterns</h4>
       <div class="paragraph">
         <p>Neo4j’s query language, Cypher, is centered around <strong>graph patterns</strong> which represents entities with parentheses, for example, <br/>
-	    <code>(e:Entity)</code> and connections with arrows, for example <code>-[:INTERMEDIARY_OF]-&gt;</code>.</p>
-      </div>
-      <div class="paragraph">
-        <p><code>:Entity</code> and <code>:INTERMEDIARY_OF</code> are the types of the entity and the connection, respectively.</p>
+	    <code>(e:Entity)</code> and connections with arrows, for example <code>-[:INTERMEDIARY_OF]-&gt;</code>. <code>:Entity</code> and <code>:INTERMEDIARY_OF</code> are the types of the entity and the connection, respectively.</p>
       </div>
       <div class="paragraph">
         <p>Here is an example pattern: <code>(:Intermediary)-[:INTERMEDIARY_OF]-&gt;(:Entity)</code>.
@@ -77,8 +77,8 @@
       </div>
       <table class="tableblock frame-all grid-all spread">
       <colgroup>
-      <col style="width: 20%;">
-      <col style="width: 80%;">
+      <col style="width: 15%;">
+      <col style="width: 85%;">
       </colgroup>
       <tbody>
       <tr>
@@ -104,10 +104,10 @@
       </tbody>
       </table>
       <div class="listingblock">
-      <div class="title">Jurisdiction distribution of Mossack Fonseca Clients</div>
+      <div class="title">Jurisdiction distribution of Appleby Clients</div>
       <div class="content">
       <pre mode="cypher"  class="highlight pre-scrollable code runnable standalone-example ng-binding"><code class="cypher language-cypher">MATCH (intermediary:Intermediary)-[:INTERMEDIARY_OF]-&gt;(e:Entity)
-WHERE intermediary.name CONTAINS 'MOSSACK'
+WHERE intermediary.name CONTAINS 'Appleby'
 RETURN e.jurisdiction AS country, COUNT(*) AS frequency
 ORDER BY frequency DESC LIMIT 20;</code></pre>
       </div>
@@ -137,7 +137,7 @@ ORDER BY frequency DESC LIMIT 20;</code></pre>
         <img style="margin-left:1em;" class="img-responsive img-thumbnail pull-right" src="https://cloudfront-files-1.publicintegrity.org/offshoreleaks/neo4j/guide/img/datamodel.png" alt="data model" width="50%" height="auto">
       </div>
       <div class="paragraph">
-      <p>Nodes are the entities in the graph. These are the types of nodes that you will encounter in the Panama Papers data:</p>
+      <p>Nodes are the entities in the graph. These are the types of nodes that you will encounter in the Paradise and Panama Papers data:</p>
       </div>
       <div class="ulist">
       <ul>
@@ -152,6 +152,9 @@ ORDER BY frequency DESC LIMIT 20;</code></pre>
       </li>
       <li>
       <p><code>Address</code> - The registered address according to the information on file.</p>
+      </li>
+      <li>
+        <p><code>Other</code> - Other entities found in the data.</p>
       </li>
       </ul>
       </div>
@@ -201,12 +204,13 @@ ORDER BY frequency DESC LIMIT 20;</code></pre>
       <div class="title">All relationship types in the graph</div>
       <div class="content">
       <pre mode="cypher"  class="highlight pre-scrollable code runnable standalone-example ng-binding"><code class="cypher language-cypher">MATCH (n)-[r]->(m) 
-RETURN labels(n) AS fromLabel,type(r) AS relType, collect(distinct labels(m)) AS toLabels, count(*) AS frequency 
-ORDER BY frequency DESC;</code></pre>
+WITH labels(n) AS fromLabel,type(r) AS relType, collect(distinct head(labels(m))) AS toLabels, count(*) AS frequency 
+WHERE frequency > 1000
+RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pre>
       </div>
       </div>
       <div class="paragraph">
-      <p>We will next walk through each node and see what properties are available for each.</p>
+      <p>We will next walk through each node type and see what properties are available for each.</p>
       </div>
   	</div>
   </div>
@@ -603,16 +607,19 @@ ORDER BY frequency DESC;</code></pre>
       <div class="ulist">
 <ul>
 <li>
-<p><a href="https://panamapapers.icij.org/">The Panama Papers ICIJ Site</a></p>
+  <p><a target="_blank" href="https://icij.org/paradisepapers/">The Paradise Papers ICIJ Site</a></p>
 </li>
 <li>
-<p><a href="https://offshoreleaks.icij.org/">The Offshore Leaks Online Database</a></p>
+<p><a target="_blank" href="https://panamapapers.icij.org/">The Panama Papers ICIJ Site</a></p>
 </li>
 <li>
-<p><a href="https://neo4j.com/docs/cypher-refcard/current/">Cypher Reference Card</a></p>
+<p><a target="_blank" href="https://offshoreleaks.icij.org/">The Offshore Leaks Online Database</a></p>
 </li>
 <li>
-<p><a href="https://neo4j.com/developer">Neo4j Developer Documentation</a></p>
+<p><a target="_blank" href="https://neo4j.com/docs/cypher-refcard/current/">Cypher Reference Card</a></p>
+</li>
+<li>
+<p><a target="_blank" href="https://neo4j.com/developer">Neo4j Developer Documentation</a></p>
 </li>
 </ul>
 </div>
@@ -635,8 +642,8 @@ ORDER BY frequency DESC;</code></pre>
           Shape of the data</a></li>
     </ul>
     <ul class="list-inline list-right">
-      <li><a href="https://panamapapers.icij.org/" tooltip="Read about it."> <img src="https://panamapapers.icij.org/assets/Logo_bg@2x.png" width="auto" height="28px" class="icij"/></a></li>
-      <li><a target="_blank" href="https://twitter.com/intent/tweet?original_referer=https%3A%2F%2Foffshoreleaks.icij.org%2F&amp;ref_src=twsrc%5Etfw&amp;text=Look%20what%20I%20have%20found%20in%20the%20%23PanamaPapers%20%40Neo4j%20graph%20database%20release%3A&amp;tw_p=tweetbutton&amp;url=https%3A%2F%2Foffshoreleaks.icij.org%2F" tooltip="Tweet about it." class="fa fa-twitter-square"></a></li>
+      <li><a target="_blank" href="https://icij.org/paradisepapers/" tooltip="Read about it."> <img src="https://panamapapers.icij.org/assets/Logo_bg@2x.png" width="auto" height="28px" class="icij"/></a></li>
+      <li><a target="_blank" target="_blank" href="https://twitter.com/intent/tweet?original_referer=https%3A%2F%2Foffshoreleaks.icij.org%2F&amp;ref_src=twsrc%5Etfw&amp;text=Look%20what%20I%20have%20found%20in%20the%20%23Paradise%20and%20Papers%20%40Neo4j%20graph%20database%20release%3A&amp;tw_p=tweetbutton&amp;url=https%3A%2F%2Foffshoreleaks.icij.org%2F" tooltip="Tweet about it." class="fa fa-twitter-square"></a></li>
     </ul>
   </footer>
 </article>
