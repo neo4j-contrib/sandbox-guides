@@ -1,5 +1,5 @@
 <style type="text/css" media="screen">
-@import url("https://cloudfront-files-1.publicintegrity.org/offshoreleaks/neo4j/guide/styles/panama_guide.css");
+@import url("https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/styles/panama_guide.css");
 </style>
 <article class="guide" ng-controller="AdLibDataController">
   <carousel class="deck container-fluid panama-deck">
@@ -14,7 +14,7 @@
 
   <div class="row">
     <div class="col-md-6">
-      <img class="img-responsive img-thumbnail" src="https://cloudfront-files-1.publicintegrity.org/offshoreleaks/neo4j/guide/img/datamodel.png" alt="data model">
+      <img class="img-responsive img-thumbnail" src="https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/img/datamodel.png" alt="data model">
     </div>
     <div class="col-md-6 col-sm-6">
 
@@ -58,6 +58,7 @@
   <div class="row">
     <div class="col-sm-12">
       <h3>Cypher Introduction</h3>
+<br/>
       <h4>Graph Patterns</h4>
       <div class="paragraph">
         <p>Neo4j’s query language, Cypher, is centered around <strong>graph patterns</strong> which represents entities with parentheses, for example, <br/>
@@ -70,51 +71,48 @@
 
 
 
-      <h4>Other Clauses</h4>
+<div class="listingblock">
+    <h4>Other Clauses</h4>
       <div class="paragraph">
         <p>The following clauses may follow a <code>MATCH</code> clause.
           They work with the properties stored at the nodes and relationships found in the graph matching that pattern.</p>
       </div>
-      <table class="tableblock frame-all grid-all spread">
-      <colgroup>
-      <col style="width: 15%;">
-      <col style="width: 85%;">
-      </colgroup>
-      <tbody>
-      <tr>
-      <td class="tableblock halign-left valign-top"><p class="tableblock">filter</p></td>
-      <td class="tableblock halign-left valign-top"><p class="tableblock"><code>WHERE intermediary.name CONTAINS 'MOSSACK'</code></p></td>
-      </tr>
-      <tr>
-      <td class="tableblock halign-left valign-top"><p class="tableblock">aggregate</p></td>
-      <td class="tableblock halign-left valign-top"><p class="tableblock"><code>WITH e.jurisdiction AS country, COUNT(*) AS frequency</code></p></td>
-      </tr>
-      <tr>
-      <td class="tableblock halign-left valign-top"><p class="tableblock">return</p></td>
-      <td class="tableblock halign-left valign-top"><p class="tableblock"><code>RETURN country, frequency</code></p></td>
-      </tr>
-      <tr>
-      <td class="tableblock halign-left valign-top"><p class="tableblock">order</p></td>
-      <td class="tableblock halign-left valign-top"><p class="tableblock"><code>ORDER BY frequency DESC</code></p></td>
-      </tr>
-      <tr>
-      <td class="tableblock halign-left valign-top"><p class="tableblock">limit</p></td>
-      <td class="tableblock halign-left valign-top"><p class="tableblock"><code>LIMIT 20;</code></p></td>
-      </tr>
-      </tbody>
-      </table>
-      <div class="listingblock">
-      <div class="title">Jurisdiction distribution of Appleby Clients</div>
-      <div class="content">
-      <pre mode="cypher"  class="highlight pre-scrollable code runnable standalone-example ng-binding"><code class="cypher language-cypher">MATCH (intermediary:Intermediary)-[:INTERMEDIARY_OF]-&gt;(e:Entity)
+    <div class="row">
+        <div class="col-lg-1">filter</div>
+        <div class="col-lg-6"><code>WHERE intermediary.name CONTAINS 'MOSSACK'</code></div>
+    </div>
+    <div class="row">
+        <div class="col-lg-1">aggregate</div>
+        <div class="col-lg-6"><code>WITH e.jurisdiction AS country, COUNT(*) AS frequency</code></div>
+    </div>
+    <div class="row">
+        <div class="col-lg-1">return</div>
+        <div class="col-lg-6"><code>RETURN country, frequency</code></div>
+    </div>
+    <div class="row">
+        <div class="col-lg-1">order</div>
+        <div class="col-lg-6"><code>ORDER BY frequency DESC</code></div>
+    </div>
+    <div class="row">
+        <div class="col-lg-1">limit</div>
+        <div class="col-lg-6"><code>LIMIT 20;</code></div>
+    </div>
+   </div>
+<br/>
+<div class="listingblock">
+    <h4>Jurisdiction distribution of Appleby Clients</h4>
+    <div class="row">
+        <div class="col-lg-6">
+          <pre mode="cypher" class="highlight pre-scrollable code runnable standalone-example ng-binding"><code class="cypher language-cypher">MATCH (intermediary:Intermediary)-[:INTERMEDIARY_OF]-&gt;(e:Entity)
 WHERE intermediary.name CONTAINS 'Appleby'
 RETURN e.jurisdiction AS country, COUNT(*) AS frequency
 ORDER BY frequency DESC LIMIT 20;</code></pre>
-      </div>
-      </div>
-      <div class="paragraph">
-      <p>Click on the block to put the query in the topmost window on the query editor. Hit the triangular <span class="icon"><i class="fa fa-play-circle"></i></span> button or press <span class="keyseq"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span> to run it and see the resulting visualization.</p>
-      </div>
+        </div>
+        <div class="col-lg-6">
+            <p>Click on the block to put the query in the topmost window on the query editor. Hit the triangular <span class="icon"><i class="fa fa-play-circle"></i></span> button or press <span class="keyseq"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span> to run it and see the resulting visualization.</p>
+        </div>
+    </div>
+</div>
     </div>
   </div>
 
@@ -134,7 +132,7 @@ ORDER BY frequency DESC LIMIT 20;</code></pre>
   <div class="row">
     <div class="col-md-12">
       <div class="visible-md visible-lg">
-        <img style="margin-left:1em;" class="img-responsive img-thumbnail pull-right" src="https://cloudfront-files-1.publicintegrity.org/offshoreleaks/neo4j/guide/img/datamodel.png" alt="data model" width="50%" height="auto">
+        <img style="margin-left:1em;" class="img-responsive img-thumbnail pull-right" src="https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/img/datamodel.png" alt="data model" width="50%" height="auto">
       </div>
       <div class="paragraph">
       <p>Nodes are the entities in the graph. These are the types of nodes that you will encounter in the Paradise and Panama Papers data:</p>
@@ -174,7 +172,7 @@ ORDER BY frequency DESC LIMIT 20;</code></pre>
   <div class="row">
     <div class="col-sm-12">
       <div class="visible-md visible-lg">
-        <img style="margin-left:1em;" class="img-responsive img-thumbnail pull-right" src="https://cloudfront-files-1.publicintegrity.org/offshoreleaks/neo4j/guide/img/datamodel.png" alt="data model" width="50%" height="auto">
+        <img style="margin-left:1em;" class="img-responsive img-thumbnail pull-right" src="https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/img/datamodel.png" alt="data model" width="50%" height="auto">
       </div>
       <div class="paragraph">
       <p>Relationships connect the nodes in the graph.</p>
@@ -195,8 +193,6 @@ ORDER BY frequency DESC LIMIT 20;</code></pre>
       </li>
       <li>
       <p><code>(:Officer|Intermediary)-[:OFFICER_OF]-&gt;(:Entity)</code></p>
-      </li>
-      <li>
       </li>
       </ul>
       </div>
@@ -229,7 +225,7 @@ RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pr
     
     <div class="col-sm-12">
       <div class="visible-md visible-lg">
-        <img style="margin-left:1em;" class="img-responsive img-thumbnail pull-right" src="https://cloudfront-files-1.publicintegrity.org/offshoreleaks/neo4j/guide/img/datamodel.png" alt="data model" width="50%" height="auto">
+        <img style="margin-left:1em;" class="img-responsive img-thumbnail pull-right" src="https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/img/datamodel.png" alt="data model" width="50%" height="auto">
       </div>
       <div class="paragraph">
       <p>Each <code>Intermediary</code> node represents a go-between for someone seeking an offshore corporation and an offshore service provider&#8201;&#8212;&#8201;usually a law-firm or a middleman that asks an offshore service provider to create an offshore firm for a intermediary.</p>
@@ -250,7 +246,7 @@ RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pr
       <p><code>address</code> - The address of the intermediary.</p>
       </li>
       <li>
-		<p><code>sourceID</code> - <code>Offshore Leaks</code> or <code>Panama Papers</code> depending on the data&#8217;s source</p>
+		<p><code>sourceID</code> - <code>Offshore Leaks</code> <code>Panama Papers</code> or <code>Paradise Papers</code> depending on the data&#8217;s source</p>
       </li>
       <li>
       <p><code>status</code></p>
@@ -324,7 +320,7 @@ RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pr
   <div class="row">
     <div class="col-sm-12">
       <div class="visible-md visible-lg">
-        <img style="margin-left:1em;" class="img-responsive img-thumbnail pull-right" src="https://cloudfront-files-1.publicintegrity.org/offshoreleaks/neo4j/guide/img/datamodel_med.png" alt="data model" width="50%" height="auto">
+        <img style="margin-left:1em;" class="img-responsive img-thumbnail pull-right" src="https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/img/datamodel_med.png" alt="data model" width="50%" height="auto">
       </div>
 <div class="paragraph">
 <p>Each <code>Entity</code> is a company, trust or fund created in a low-tax, offshore jurisdiction by an agent.</p>
@@ -342,7 +338,7 @@ RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pr
 <p><code>name</code> - The name of the legal entity.</p>
 </li>
 <li>
-	<p><code>sourceID</code> - <code>Offshore Leaks</code> or <code>Panama Papers</code> depending on the data&#8217;s source</p>
+	<p><code>sourceID</code> - <code>Offshore Leaks</code> <code>Panama Papers</code> or <code>Paradise Papers</code> depending on the data&#8217;s source</p>
 </li>
 <li>
 <p><code>address</code> - This field includes the registered address connected to the entity only when the address is the same as the one of the intermediary. Otherwise, the registered address information is stored in the address node connected to this Entity node through a REGISTERED_ADDRESS relationship.</p>
@@ -445,7 +441,7 @@ RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pr
   <div class="row">
     <div class="col-sm-12">
       <div class="visible-md visible-lg">
-        <img style="margin-left:1em;" class="img-responsive img-thumbnail pull-right" src="https://cloudfront-files-1.publicintegrity.org/offshoreleaks/neo4j/guide/img/datamodel_med.png" alt="data model" width="50%" height="auto">
+        <img style="margin-left:1em;" class="img-responsive img-thumbnail pull-right" src="https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/img/datamodel_med.png" alt="data model" width="50%" height="auto">
       </div>
 <div class="paragraph">
 <p>Each <code>Officer</code> node represents the beneficiary, director, or shareholder of the offshore legal entity, such as a beneficiary, shareholder, or director, etc.</p>
@@ -466,7 +462,7 @@ RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pr
 <p><code>valid_until</code></p>
 </li>
 <li>
-	<p><code>sourceID</code> - <code>Offshore Leaks</code> or <code>Panama Papers</code> depending on the data&#8217;s source</p>
+	<p><code>sourceID</code> - <code>Offshore Leaks</code> <code>Panama Papers</code> or <code>Paradise Papers</code> depending on the data&#8217;s source</p>
 </li>
 <li>
 <p><code>country_codes, countries</code></p>
@@ -546,7 +542,7 @@ RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pr
   <div class="row">
     <div class="col-sm-12">
       <div class="visible-md visible-lg">
-        <img style="margin-left:1em;" class="img-responsive img-thumbnail pull-right" src="https://cloudfront-files-1.publicintegrity.org/offshoreleaks/neo4j/guide/img/datamodel_med.png" alt="data model" width="50%" height="auto">
+        <img style="margin-left:1em;" class="img-responsive img-thumbnail pull-right" src="https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/img/datamodel_med.png" alt="data model" width="50%" height="auto">
       </div>
 <div class="paragraph">
 <p>The <code>Address</code> node represents the address as found on file for the <code>Intermediary</code>, <code>Officer</code>, or <code>Entity</code>.</p>
@@ -564,7 +560,7 @@ RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pr
 <p><code>address</code> - the address as it appears in the records</p>
 </li>
 <li>
-	<p><code>sourceID</code> - <code>Offshore Leaks</code> or <code>Panama Papers</code> depending on the data&#8217;s source</p>
+	<p><code>sourceID</code> - <code>Offshore Leaks</code> <code>Panama Papers</code> or <code>Paradise Papers</code> depending on the data&#8217;s source</p>
 </li>
 <li>
 <p><code>valid_until</code></p>
@@ -601,43 +597,102 @@ RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pr
 
 <slide class="row-fluid">
   <div class="col-sm-12">
-    <h3>Further Resources</h3>
+    <h3>Explore the Panama and Paradise Papers Yourself</h3>
     <br/>
-    <div>
-      <div class="ulist">
-<ul>
-<li>
-  <p><a target="_blank" href="https://icij.org/paradisepapers/">The Paradise Papers ICIJ Site</a></p>
-</li>
-<li>
-<p><a target="_blank" href="https://panamapapers.icij.org/">The Panama Papers ICIJ Site</a></p>
-</li>
-<li>
-<p><a target="_blank" href="https://offshoreleaks.icij.org/">The Offshore Leaks Online Database</a></p>
-</li>
-<li>
-<p><a target="_blank" href="https://neo4j.com/docs/cypher-refcard/current/">Cypher Reference Card</a></p>
-</li>
-<li>
-<p><a target="_blank" href="https://neo4j.com/developer">Neo4j Developer Documentation</a></p>
-</li>
-</ul>
-</div>
-	</div>
+    
+    
+    
+    
+    <div class="row">
+      <div class="col-lg-4">
+        <div>
+          <h3 style="padding:10px;">Further Resources</h3>
+          <div class="ulist">
+            <ul>
+              <li>
+                <p><a target="_blank" href="https://icij.org/paradisepapers/">The Paradise Papers ICIJ Site</a></p>
+              </li>
+              <li>
+                <p><a target="_blank" href="https://panamapapers.icij.org/">The Panama Papers ICIJ Site</a></p>
+              </li>
+              <li>
+                <p><a target="_blank" href="https://offshoreleaks.icij.org/">The Offshore Leaks Database</a></p>
+              </li>
+              <li>
+                <p><a target="_blank" href="https://neo4j.com/docs/cypher-refcard/current/">Cypher Reference Card</a></p>
+              </li>
+              <li>
+                <p><a target="_blank" href="https://neo4j.com/developer">Neo4j Developer Documentation</a></p>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="box-max"><img class="img-responsive img-thumbnail" src="https://panamapapers.icij.org/assets/logo_icij_complete.png" width="300">
+      </div>
+      
+    <br/>
+      </div>
+      
+      
+      <div class="col-lg-8">
+        <div class="teaser teaser-3">
+          <h3>Investigative Queries</h3>
+          <p class="lead">Explore the data yourself.</p>
+          <div class="icon-holder">
+            <div class="icon sl sl-show yellow icon"></div>
+            <ul class="topic-bullets">
+              <li>Cypher query language intro</li>
+              <li>Finding companies and individuals</li>
+              <li>Path finding</li>
+            </ul>
+            <div class="clearfix"></div>
+          </div>
+          <a play-topic="https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/examples.html"><button click-to-code="':play https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/examples.html'" class="btn btn-cta" style="background: #B3490E;padding:1em;color:#fff;">Run Queries</button></a>
+        </div>
+        <div class="teaser teaser-3">
+          <h3>Shape of the Data</h3>
+          <p class="lead">Understand the data model.</p>
+          <div class="icon-holder">
+            <div class="icon sl sl-network green icon"></div>
+            <ul class="topic-bullets">
+              <li>What are the nodes?</li>
+              <li>What are the relationships?</li>
+              <li>What are the properties?</li>
+            </ul>
+            <div class="clearfix"></div>
+          </div>
+          <a play-topic="https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/datashape.html"><button click-to-code="':play https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/datashape.html'" class="btn btn-cta" style="background: #B3490E;padding:1em;color:#fff;">Start Learning</button></a>
+        </div>
+        <div class="teaser teaser-3">
+          <h3>Send ICIJ a tip</h3>
+          <p class="lead">Help us investigate.</p>
+          <div class="icon-holder">
+            <div class="icon sl sl-pencil red icon"></div>
+            <ul class="topic-bullets">
+              <li>Interesting connections</li>
+              <li>Entities that matter to you</li>
+            </ul>
+            <div class="clearfix"></div>
+          </div>
+          <a target="_blank" target="_blank" href="https://offshoreleaks.icij.org/tips/new" class="btn" id="b"><button class="btn btn-cta" style="background: #1da1f2;padding:1em; color:#fff;">Send tip</button></a>
+        </div>
+      </div>
+    </div>
   </div>
 </slide>
+
   </carousel>
 
 
   <footer class="panama">
     <ul class="list-inline">
-      <li><a click-to-code="':play https://cloudfront-files-1.publicintegrity.org/offshoreleaks/neo4j/guide/'" class="sl sl-house">
+      <li><a click-to-code="':play https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/'" class="sl sl-house">
 
           Introduction</a></li>
-      <li><a click-to-code="':play https://cloudfront-files-1.publicintegrity.org/offshoreleaks/neo4j/guide/examples.html'" class="sl sl-show">
+      <li><a click-to-code="':play https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/examples.html'" class="sl sl-show">
 
           Investigative queries</a></li>
-      <li><a click-to-code="':play https://cloudfront-files-1.publicintegrity.org/offshoreleaks/neo4j/guide/datashape.html'" class="sl sl-network-trio">
+      <li><a click-to-code="':play https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/datashape.html'" class="sl sl-network-trio">
 
           Shape of the data</a></li>
     </ul>
