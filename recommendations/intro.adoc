@@ -152,7 +152,7 @@ The data model of graph databases is called the labeled property graph model.
 *Properties*: Key-value pair properties can be stored on both nodes and relationships.
 
 === Eliminate Data Silos
-We said earlier that one of the benefits of using graphs for recommendations is the ability to combine data from multiple silos. That's exactly what we've done here:
+In this use case, we are using graphs to combine data from multiple silos.
 
 *Product Catalog*: Data describing movies comes from the product catalog silo.
 
@@ -396,7 +396,7 @@ ORDER BY commonGenres DESC LIMIT 10;
 
 === Personalized Recommendations Based on Genres
 
-If we know what movies a user has watched, we can use this information to recommend movies similar to those they've watched previously:
+If we know what movies a user has watched, we can use this information to recommend similar movies:
 
 .Recommend movies similar to those the user has already watched
 
