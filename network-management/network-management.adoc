@@ -130,6 +130,7 @@ You can see very well how the graph representation in the match pattern resemble
 [source,cypher]
 ----
 MATCH (r:Router)-[:ROUTES]->(ri:Interface)-[:CONNECTS]->(nr:Network)
+WHERE r.zone IS NOT NULL
 RETURN nr.ip as network_ip, ri.ip as router_if_ip, r.name as router, r.zone as zone;
 ----
 
