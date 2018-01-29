@@ -499,7 +499,7 @@ Security related and other upgrades have to be rolled out across the infrastruct
 In the past these CMDBs were mostly used for network, hardware and OS level configuration.
 
 Today more and more application level (micro-) services need similar information to get access to internal and external services they depend on.
-Those mostly use databases like ZooKepper, Konsul, Eureka, Zipkin? and ?? (HashiCorp?, Pivotal?)
+Those mostly use databases like ZooKeeper, Konsul, Eureka, and others.
 
 Several of the managed variables are related, especially if they manage (transitive dependencies).
 Version conflicts of used dependencies are critical to detect early on.
