@@ -83,7 +83,7 @@ image::{images}/network-software-arrows.jpg[float=right]
 image::{images}/network-hardware-arrows.jpg[]
 ////
 
-Usually we would get this kind of information from a configuration management database (CMDB), network managment tools or agents installed on the machines.
+Usually we would get this kind of information from a configuration management database (CMDB), network management tools or agents installed on the machines.
 
 == Network Exploration: DataCenter and Zones
 
