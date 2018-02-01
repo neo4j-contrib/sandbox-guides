@@ -25,7 +25,7 @@ A team at NBC News including link:https://twitter.com/bpopken[Ben Popken] and li
 This guide will show:
 
 * an overview of the datamodel
-* how to explore the data
+* how to explore the data using Cypher, the query language for graphs
 * some of the investigative queries used to make sense of the the dataset
 
 ++++
@@ -120,6 +120,16 @@ We use the Cypher query language to access data in Neo4j. Cypher is all about pa
 ----
 MATCH (u:User {screen_name: "LeroyLovesUSA"})-[:POSTED]->(t:Tweet)-[:HAS_TAG]->(ht:Hashtag {tag: "thanksobama"})
 RETURN *
+----
+
+.Find tweets posted by Troll accounts that contain the word fraud
+
+[source,cypher]
+----
+MATCH (t:Troll)-[:POSTED]->(tw:Tweet) 
+WHERE tw.text CONTAINS "fraud"
+OPTIONAL MATCH p=(tw)-[:HAS_TAG|HAS_LINK|MENTIONS|IN_REPLY_TO]-(a)
+RETURN * LIMIT 50
 ----
 
 ++++

@@ -71,7 +71,7 @@
 <p>an overview of the datamodel</p>
 </li>
 <li>
-<p>how to explore the data</p>
+<p>how to explore the data using Cypher, the query language for graphs</p>
 </li>
 <li>
 <p>some of the investigative queries used to make sense of the the dataset</p>
@@ -80,7 +80,7 @@
 </div>
 </div>
 <div class="col-lg-5">
-<img src="http://guides.neo4j.com/sandbox/twitter-trolls/img/article.png" class="img-responsive">
+<img src="//localhost:8001/img/article.png" class="img-responsive">
 <div class="paragraph">
 <p>Read the NBC News story about the data <a href="https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176">here</a></p>
 </div>
@@ -156,7 +156,7 @@
 </div>
 </div>
 <div class="col-lg-5">
-<img src="http://guides.neo4j.com/sandbox/twitter-trolls/img/datamodel.png" class="img-responsive">
+<img src="//localhost:8001/img/datamodel.png" class="img-responsive">
 </div>
 	</div>
   </div>
@@ -183,9 +183,18 @@
 RETURN *<!--/code--></pre>
 </div>
 </div>
+<div class="listingblock">
+<div class="title">Find tweets posted by Troll accounts that contain the word fraud</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t:Troll)-[:POSTED]-&gt;(tw:Tweet)
+WHERE tw.text CONTAINS "fraud"
+OPTIONAL MATCH p=(tw)-[:HAS_TAG|HAS_LINK|MENTIONS|IN_REPLY_TO]-(a)
+RETURN * LIMIT 50<!--/code--></pre>
+</div>
+</div>
 </div>
 <div class="col-lg-5">
-<img src="http://guides.neo4j.com/sandbox/twitter-trolls/img/exampletweet1.png" class="img-responsive">
+<img src="//localhost:8001/img/exampletweet1.png" class="img-responsive">
 </div>
 	</div>
   </div>
@@ -199,7 +208,7 @@ RETURN *<!--/code--></pre>
     <br/>
     <div>
       <div class="col-lg-3">
-<img src="http://guides.neo4j.com/sandbox/twitter-trolls/img/volume.png" height="380">
+<img src="//localhost:8001/img/volume.png" height="380">
 </div>
 <div class="col-lg-9">
 <div class="paragraph">
@@ -316,7 +325,7 @@ RETURN p LIMIT 1<!--/code--></pre>
 </div>
 </div>
 <div class="col-lg-3">
-<img src="http://guides.neo4j.com/sandbox/twitter-trolls/img/amplified.png" class="img-responsive">
+<img src="//localhost:8001/img/amplified.png" class="img-responsive">
 </div>
 	</div>
   </div>
@@ -452,7 +461,7 @@ RETURN ht.tag, COUNT(*) AS num ORDER BY num DESC LIMIT 25<!--/code--></pre>
 </div>
 </div>
 <div class="col-lg-3">
-<img src="http://guides.neo4j.com/sandbox/twitter-trolls/img/viz.png" class="img-responsive">
+<img src="//localhost:8001/img/viz.png" class="img-responsive">
 </div>
 	</div>
   </div>
