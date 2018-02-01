@@ -143,7 +143,32 @@ RETURN *
 == Tweet Volume 
 
 ++++
-<div class="col-lg-6">
+<div class="col-lg-3">
+++++
+
+[subs=attributes]
+++++
+<img src="{img}/volume.png" height="380">
+++++
+
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-9">
+++++
+
+This chart from the link:https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176[NBC News article] shows that Russian Twitter troll tweet volume spiked during key election related events.
+
+
+++++
+<p></p>
+++++
+
+++++
+<p></p>
 ++++
 
 .Query for tweet volume by day
@@ -155,21 +180,18 @@ RETURN substring(t.created_str,0,10) AS day,
   COUNT(*) AS num ORDER BY day DESC LIMIT 10
 ----
 
+.Query for tweet volume by month
 
-++++
-</div>
-++++
+[source,cypher]
+----
+MATCH (:Troll)-[:POSTED]->(t:Tweet)
+RETURN substring(t.created_str,0,7) AS month,
+  COUNT(*) AS num ORDER BY month DESC LIMIT 25
+----
 
-++++
-<div class="col-lg-6">
-++++
+We can see that much of the tweet volume occurs leading up to and immediately following the 2016 US Election.
 
-[subs=attributes]
-++++
-<img src="{img}/volume.png" class="img-responsive">
-++++
 
-This chart from the link:https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176[NBC News article] shows that Russian Twitter troll tweet volume spiked during key election related events.
 
 ++++
 </div>

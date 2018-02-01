@@ -198,7 +198,15 @@ RETURN *<!--/code--></pre>
     <h3>Tweet Volume</h3>
     <br/>
     <div>
-      <div class="col-lg-6">
+      <div class="col-lg-3">
+<img src="http://guides.neo4j.com/sandbox/twitter-trolls/img/volume.png" height="380">
+</div>
+<div class="col-lg-9">
+<div class="paragraph">
+<p>This chart from the <a href="https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176">NBC News article</a> shows that Russian Twitter troll tweet volume spiked during key election related events.</p>
+</div>
+<p></p>
+<p></p>
 <div class="listingblock">
 <div class="title">Query for tweet volume by day</div>
 <div class="content">
@@ -207,11 +215,16 @@ RETURN substring(t.created_str,0,10) AS day,
   COUNT(*) AS num ORDER BY day DESC LIMIT 10<!--/code--></pre>
 </div>
 </div>
+<div class="listingblock">
+<div class="title">Query for tweet volume by month</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (:Troll)-[:POSTED]-&gt;(t:Tweet)
+RETURN substring(t.created_str,0,7) AS month,
+  COUNT(*) AS num ORDER BY month DESC LIMIT 25<!--/code--></pre>
 </div>
-<div class="col-lg-6">
-<img src="http://guides.neo4j.com/sandbox/twitter-trolls/img/volume.png" class="img-responsive">
+</div>
 <div class="paragraph">
-<p>This chart from the <a href="https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176">NBC News article</a> shows that Russian Twitter troll tweet volume spiked during key election related events.</p>
+<p>We can see that much of the tweet volume occurs leading up to and immediately following the 2016 US Election.</p>
 </div>
 </div>
 	</div>
