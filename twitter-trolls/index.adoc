@@ -10,9 +10,9 @@
 <div class="col-lg-4">
 ++++
 
-As part of the House Intelligence Committee investigation into how Russia may have influenced the 2016 US Election, Twitter released the screen names of almost 3000 Twitter accounts believed to be connected to Russia's Internet Research Agency, a company known for operating social media troll accounts. Twitter immediately suspended these accounts, deleting their data from Twitter.com and the Twitter API. 
+As part of the House Intelligence Committee investigation into *how Russia may have influenced the 2016 US Election*, Twitter released the screen names of almost 3000 Twitter accounts believed to be connected to Russia's Internet Research Agency, a company known for operating *social media troll accounts*. Twitter immediately suspended these accounts, deleting their data from Twitter.com and the Twitter API. 
 
-A team at NBC News including link:https://twitter.com/bpopken[Ben Popken] and link:https://twitter.com/mrejfoxwas[EJ Fox] was able to reconstruct a dataset of the deleted data for their investigation link:https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176[showing how these troll accounts went on attack during key election moments.] NBC open-sourced the reconstructed dataset and released it as this Neo4j database.
+A team at NBC News including link:https://twitter.com/bpopken[Ben Popken^] and link:https://twitter.com/mrejfoxwas[EJ Fox^] was able to reconstruct a dataset consisting of  a subset of the deleted data for their investigation link:https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176[showing how these troll accounts went on attack during key election moments.^] *NBC News open-sourced the reconstructed dataset* and released it as this Neo4j database.
 
 ++++
 </div>
@@ -22,11 +22,18 @@ A team at NBC News including link:https://twitter.com/bpopken[Ben Popken] and li
 <div class="col-lg-3">
 ++++
 
+[subs=attributes]
+++++
+<img src="{img}/datamodel2.png" class="img-responsive">
+++++
+
 This guide will show:
 
 * an overview of the datamodel
 * how to explore the data using Cypher, the query language for graphs
 * some of the investigative queries used to make sense of the the dataset
+
+
 
 ++++
 </div>
@@ -42,7 +49,11 @@ This guide will show:
 ++++
 
 
-Read the NBC News story about the data link:https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176[here]
+
+
+Read the NBC News story about the data link:https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176[here^]
+
+_NOTE: Much of this content is offensive and explicit. Query with caution._
 
 
 ++++
@@ -59,9 +70,9 @@ Neo4j uses the labeled property graph datamodel to represent data.
 
 === Nodes
 
-* *Tweet* - The Tweet object
+* *Tweet* - The Tweet
 * *User* - A Twitter user
-* *Troll* - An optional node label to identify users that are on the list of Russian troll accounts
+* *Troll* - An optional node label to identify users that are on the House list of Russian troll accounts
 * *Hashtag* - Any hashtags used in the tweet
 * *Source* - The Twitter application used to post the tweet
 * *URL* - A link embedded in a tweet
@@ -95,14 +106,53 @@ Neo4j uses the labeled property graph datamodel to represent data.
 <img src="{img}/datamodel.png" class="img-responsive">
 ++++
 
+.Inspect the datamodel
+[source,cypher]
+----
+CALL db.schema()
+----
+
 ++++
 </div>
 ++++
 
+== Querying The Graph - Overview
+
+[source, cypher]
+----
+MATCH (t) 
+RETURN LABELS(t), COUNT(*) AS count
+ORDER BY count DESC
+----
 
 
 
-== Querying The Graph
+== Querying The Graph - Users
+
+Explain the User Node
+
+Explain multiple labels (Troll)
+
+* Troll with the most followers?
+* Troll who list certain locations in their bio
+
+[source,cypher]
+----
+MATCH (u:Troll) 
+RETURN u.location, COUNT(u) AS num 
+ORDER BY num DESC LIMIT 100
+----
+
+== Querying The Graph - Trolls
+
+Three examples
+
+* typical citizen
+* typical local news publication
+* typical local political party
+
+
+== Querying The Graph - Tweets
 
 
 ++++
@@ -118,7 +168,8 @@ We use the Cypher query language to access data in Neo4j. Cypher is all about pa
 
 [source,cypher]
 ----
-MATCH (u:User {screen_name: "LeroyLovesUSA"})-[:POSTED]->(t:Tweet)-[:HAS_TAG]->(ht:Hashtag {tag: "thanksobama"})
+MATCH (u:User)-[:POSTED]->(t:Tweet)-[:HAS_TAG]->(ht:Hashtag {tag: "thanksobama"})
+WHERE u.screen_name = "LeroyLovesUSA"
 RETURN *
 ----
 
@@ -158,7 +209,7 @@ RETURN * LIMIT 50
 
 [subs=attributes]
 ++++
-<img src="{img}/volume.png" height="380">
+<img src="{img}/volume.png" style="max-height: 380px;" class="img-responsive">
 ++++
 
 
@@ -170,7 +221,7 @@ RETURN * LIMIT 50
 <div class="col-lg-9">
 ++++
 
-This chart from the link:https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176[NBC News article] shows that Russian Twitter troll tweet volume spiked during key election related events.
+This chart from the link:https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176[NBC News article^] shows that Russian Twitter troll tweet volume spiked during key election related events.
 
 
 ++++
@@ -185,9 +236,9 @@ This chart from the link:https://www.nbcnews.com/tech/social-media/russian-troll
 
 [source,cypher]
 ----
-MATCH (:Troll)-[:POSTED]->(t:Tweet)
-RETURN substring(t.created_str,0,10) AS day, 
-  COUNT(*) AS num ORDER BY day DESC LIMIT 10
+MATCH (:Troll)-[:POSTED]->(t:Tweet) WHERE t.created_str > "2016-10-01"
+RETURN substring(t.created_str,0,10) AS day,
+  COUNT(t) AS num ORDER BY day LIMIT 60
 ----
 
 .Query for tweet volume by month
@@ -196,7 +247,7 @@ RETURN substring(t.created_str,0,10) AS day,
 ----
 MATCH (:Troll)-[:POSTED]->(t:Tweet)
 RETURN substring(t.created_str,0,7) AS month,
-  COUNT(*) AS num ORDER BY month DESC LIMIT 25
+  COUNT(t) AS num ORDER BY month DESC LIMIT 25
 ----
 
 We can see that much of the tweet volume occurs leading up to and immediately following the 2016 US Election.
@@ -215,22 +266,42 @@ Hashtags were used by the trolls to insert themselves into conversations and gai
 [source,cypher]
 ----
 MATCH (ht:Hashtag)<-[:HAS_TAG]-(tw:Tweet)<-[:POSTED]-(:Troll)
-WITH ht, COUNT(*) AS num ORDER BY num DESC
+WITH ht, COUNT(tw) AS num ORDER BY num DESC
 RETURN ht.tag AS hashtag, num LIMIT 10
 ----
 
+.Most popular hashtags used by Trolls by day
+[source,cypher]
+----
+MATCH (:Troll)-[:POSTED]->(t:Tweet) 
+WHERE t.created_str > "2016-10-01" AND t.created_str < "2016-11-30"
+WITH t,substring(t.created_str,0,10) AS day, [(t)-[:HAS_TAG]->(ht:Hashtag) | ht.tag] AS tags
+UNWIND tags AS tag
+WITH day, tag, COUNT(t) AS num ORDER BY num DESC
+RETURN day, COLLECT(tag)[..5] AS toptags ORDER BY day
+----
 
+== Hashtags
 
+=== `RejectedDebateTopics`
+
+[source,cypher]
+----
+MATCH (u:Troll {screen_name: "WorldOfHashtags"})-[:POSTED]->(t:Tweet)-[:HAS_TAG]->(:Hashtag {tag: "rejecteddebatetopics"})
+WHERE t.created_str > "2016-10-01"
+RETURN t.text, t.created_str
+ORDER BY t.created_at LIMIT 50
+----
 
 == Tweet Sources Used
 
 
-.What are the common sources used for posting tweets
+.What are the common sources used for posting tweets?
 
 [source,cypher]
 ----
 MATCH (:Troll)-[:POSTED]->(tw:Tweet)-[:POSTED_VIA]->(s:Source)
-RETURN DISTINCT s.name AS source, COUNT(tw) AS tweets
+RETURN s.name AS source, COUNT(tw) AS tweets
 ORDER BY tweets DESC 
 ----
 
@@ -238,12 +309,14 @@ ORDER BY tweets DESC
 
 Tweets can be retweets of other tweets or replies to existing tweets. Replying to popular users is another way to gain visibility.
 
+TODO: more explanation
+
 .Find original content tweets posted by user @TEN_GOP
 
 [source,cypher]
 ----
 MATCH p=(t:Troll {user_key: "ten_gop"})-[:POSTED]->(tw:Tweet)
-WHERE NOT EXISTS((tw)-[:RETWEETED]->(:Tweet)) AND NOT EXISTS((tw)-[:IN_REPLY_TO]->(:Tweet))
+WHERE NOT EXISTS((tw)-[:RETWEETED|IN_REPLY_TO]->(:Tweet))
 OPTIONAL MATCH (ht:Hashtag)<-[:HAS_TAG]-(tw)
 OPTIONAL MATCH (u:User)<-[:MENTIONS]-(tw)
 RETURN p,ht,u LIMIT 25
@@ -283,13 +356,13 @@ RETURN p LIMIT 1
 
 == Graph Algorithms
 
-link:https://neo4j.com/graph-analytics/[Graph algorithms] are a way to apply analytics to the entire graph to further enhance our understanding of the data. They 
+link:https://neo4j.com/graph-analytics/[Graph algorithms^] are a way to apply analytics to the entire graph to further enhance our understanding of the data. They 
 
 * **Centrality** - What are the most important nodes in the network? _PageRank, Betweenness Centrality, Closeness Centrality_
 * **Community detection** - How can the graph be partitioned? _Union Find, Louvain, Label Propagation, Connected Components_
 * **Pathfinding** - What are the shortest paths or best routes available given cost? _Minimum Weight Spanning Tree, All Pairs- and Single Source- Shortest Path, Dijkstra_
 
-We can run these algorithms in Neo4j with Cypher using the link:https://github.com/neo4j-contrib/neo4j-graph-algorithms[Neo4j Graph Algorithms] procedures.
+We can run these algorithms in Neo4j with Cypher using the link:https://github.com/neo4j-contrib/neo4j-graph-algorithms[Neo4j Graph Algorithms^] procedures.
 
 == Centrality
 
@@ -314,7 +387,7 @@ RETURN t.screen_name AS troll, t.pagerank AS pagerank ORDER BY pagerank DESC LIM
 MATCH (t:Troll) WHERE EXISTS(t.pagerank)
 WITH t ORDER BY t.pagerank LIMIT 25
 MATCH (t)-[:POSTED]->(tw:Tweet)-[:HAS_TAG]-(ht:Hashtag)
-RETURN ht.tag, COUNT(*) AS num ORDER BY num DESC LIMIT 25
+RETURN ht.tag, COUNT(tw) AS num ORDER BY num DESC LIMIT 25
 ----
 
 
@@ -360,12 +433,12 @@ We've only just begun to explore the data. Here are some ideas for further data 
 
 === Resources
 
-* Web link:https://neo4j.com/docs/cypher-refcard/current/?ref=browser-guide[Cypher Refcard]
-* Web link:https://neo4j.com/docs/?ref=browser-guide[Neo4j Documentation]
-* Book (free download) link:http://graphdatabases.com/?ref=browser-guide[Graph Databases]
-* Blog link:https://medium.com/@david.allen_3172/using-nlp-in-neo4j-ac40bc92196f[Using NLP In Neo4j]
-* Blog link:http://www.lyonwj.com/2017/11/15/entity-extraction-russian-troll-tweets-neo4j/[NLP And Entity Extraction]
-* Article link:https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176[NBC News Article]
+* Web link:https://neo4j.com/docs/cypher-refcard/current/?ref=browser-guide[Cypher Refcard^]
+* Web link:https://neo4j.com/docs/?ref=browser-guide[Neo4j Documentation^]
+* Book (free download) link:http://graphdatabases.com/?ref=browser-guide[Graph Databases^]
+* Blog link:https://medium.com/@david.allen_3172/using-nlp-in-neo4j-ac40bc92196f[Using NLP In Neo4j^]
+* Blog link:http://www.lyonwj.com/2017/11/15/entity-extraction-russian-troll-tweets-neo4j/[NLP And Entity Extraction^]
+* Article link:https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176[NBC News Article^]
 
 ++++
 </div>

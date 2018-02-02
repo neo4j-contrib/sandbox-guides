@@ -55,13 +55,14 @@
     <div>
       <div class="col-lg-4">
 <div class="paragraph">
-<p>As part of the House Intelligence Committee investigation into how Russia may have influenced the 2016 US Election, Twitter released the screen names of almost 3000 Twitter accounts believed to be connected to Russia&#8217;s Internet Research Agency, a company known for operating social media troll accounts. Twitter immediately suspended these accounts, deleting their data from Twitter.com and the Twitter API.</p>
+<p>As part of the House Intelligence Committee investigation into <strong>how Russia may have influenced the 2016 US Election</strong>, Twitter released the screen names of almost 3000 Twitter accounts believed to be connected to Russia&#8217;s Internet Research Agency, a company known for operating <strong>social media troll accounts</strong>. Twitter immediately suspended these accounts, deleting their data from Twitter.com and the Twitter API.</p>
 </div>
 <div class="paragraph">
-<p>A team at NBC News including <a href="https://twitter.com/bpopken">Ben Popken</a> and <a href="https://twitter.com/mrejfoxwas">EJ Fox</a> was able to reconstruct a dataset of the deleted data for their investigation <a href="https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176">showing how these troll accounts went on attack during key election moments.</a> NBC open-sourced the reconstructed dataset and released it as this Neo4j database.</p>
+<p>A team at NBC News including <a href="https://twitter.com/bpopken" target="_blank">Ben Popken</a> and <a href="https://twitter.com/mrejfoxwas" target="_blank">EJ Fox</a> was able to reconstruct a dataset consisting of  a subset of the deleted data for their investigation <a href="https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176" target="_blank">showing how these troll accounts went on attack during key election moments.</a> <strong>NBC News open-sourced the reconstructed dataset</strong> and released it as this Neo4j database.</p>
 </div>
 </div>
 <div class="col-lg-3">
+<img src="//localhost:8001/img/datamodel2.png" class="img-responsive">
 <div class="paragraph">
 <p>This guide will show:</p>
 </div>
@@ -82,7 +83,10 @@
 <div class="col-lg-5">
 <img src="//localhost:8001/img/article.png" class="img-responsive">
 <div class="paragraph">
-<p>Read the NBC News story about the data <a href="https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176">here</a></p>
+<p>Read the NBC News story about the data <a href="https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176" target="_blank">here</a></p>
+</div>
+<div class="paragraph">
+<p><em>NOTE: Much of this content is offensive and explicit. Query with caution.</em></p>
 </div>
 </div>
 	</div>
@@ -157,6 +161,12 @@
 </div>
 <div class="col-lg-5">
 <img src="//localhost:8001/img/datamodel.png" class="img-responsive">
+<div class="listingblock">
+<div class="title">Inspect the datamodel</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL db.schema()<!--/code--></pre>
+</div>
+</div>
 </div>
 	</div>
   </div>
@@ -166,7 +176,68 @@
 
 <slide class="row-fluid">
   <div class="col-sm-12">
-    <h3>Querying The Graph</h3>
+    <h3>Querying The Graph - Users</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Explain the User Node</p>
+</div>
+<div class="paragraph">
+<p>Explain multiple labels (Troll)</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Troll with the most followers?</p>
+</li>
+<li>
+<p>Troll who list certain locations in their bio</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (u:Troll)
+RETURN u.location, COUNT(u) AS num
+ORDER BY num DESC LIMIT 100<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Querying The Graph - Trolls</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Three examples</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>typical citizen</p>
+</li>
+<li>
+<p>typical local news publication</p>
+</li>
+<li>
+<p>typical local political party</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Querying The Graph - Tweets</h3>
     <br/>
     <div>
       <div class="col-lg-7">
@@ -208,20 +279,20 @@ RETURN * LIMIT 50<!--/code--></pre>
     <br/>
     <div>
       <div class="col-lg-3">
-<img src="//localhost:8001/img/volume.png" height="380">
+<img src="//localhost:8001/img/volume.png" style="max-height: 380px;" class="img-responsive">
 </div>
 <div class="col-lg-9">
 <div class="paragraph">
-<p>This chart from the <a href="https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176">NBC News article</a> shows that Russian Twitter troll tweet volume spiked during key election related events.</p>
+<p>This chart from the <a href="https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176" target="_blank">NBC News article</a> shows that Russian Twitter troll tweet volume spiked during key election related events.</p>
 </div>
 <p></p>
 <p></p>
 <div class="listingblock">
 <div class="title">Query for tweet volume by day</div>
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (:Troll)-[:POSTED]-&gt;(t:Tweet)
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (:Troll)-[:POSTED]-&gt;(t:Tweet) WHERE t.created_str &gt; "2016-10-01"
 RETURN substring(t.created_str,0,10) AS day,
-  COUNT(*) AS num ORDER BY day DESC LIMIT 10<!--/code--></pre>
+  COUNT(*) AS num ORDER BY day LIMIT 60<!--/code--></pre>
 </div>
 </div>
 <div class="listingblock">
@@ -258,6 +329,40 @@ WITH ht, COUNT(*) AS num ORDER BY num DESC
 RETURN ht.tag AS hashtag, num LIMIT 10<!--/code--></pre>
 </div>
 </div>
+<div class="listingblock">
+<div class="title">Most popular hashtags used by Trolls by day</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (:Troll)-[:POSTED]-&gt;(t:Tweet)
+WHERE t.created_str &gt; "2016-10-01" AND t.created_str &lt; "2016-11-30"
+WITH t,substring(t.created_str,0,10) AS day, [(t)-[:HAS_TAG]-&gt;(ht:Hashtag) | ht.tag] AS tags
+UNWIND tags AS tag
+WITH day, tag, COUNT(*) AS num ORDER BY num DESC
+RETURN day, COLLECT(tag)[..5] AS toptags ORDER BY day<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Hashtags</h3>
+    <br/>
+    <div>
+      
+
+
+   <h4><code>RejectedDebateTopics</code></h4>
+   <div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (u:Troll {screen_name: "WorldOfHashtags"})-[:POSTED]-&gt;(t:Tweet)-[:HAS_TAG]-&gt;(:Hashtag {tag: "rejecteddebatetopics"})
+WHERE t.created_str &gt; "2016-10-01"
+RETURN t.text, t.created_str
+ORDER BY t.created_at LIMIT 50<!--/code--></pre>
+</div>
+</div>
 	</div>
   </div>
 </slide>
@@ -270,7 +375,7 @@ RETURN ht.tag AS hashtag, num LIMIT 10<!--/code--></pre>
     <br/>
     <div>
       <div class="listingblock">
-<div class="title">What are the common sources used for posting tweets</div>
+<div class="title">What are the common sources used for posting tweets?</div>
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (:Troll)-[:POSTED]-&gt;(tw:Tweet)-[:POSTED_VIA]-&gt;(s:Source)
 RETURN DISTINCT s.name AS source, COUNT(tw) AS tweets
@@ -339,7 +444,7 @@ RETURN p LIMIT 1<!--/code--></pre>
     <br/>
     <div>
       <div class="paragraph">
-<p><a href="https://neo4j.com/graph-analytics/">Graph algorithms</a> are a way to apply analytics to the entire graph to further enhance our understanding of the data. They</p>
+<p><a href="https://neo4j.com/graph-analytics/" target="_blank">Graph algorithms</a> are a way to apply analytics to the entire graph to further enhance our understanding of the data. They</p>
 </div>
 <div class="ulist">
 <ul>
@@ -355,7 +460,7 @@ RETURN p LIMIT 1<!--/code--></pre>
 </ul>
 </div>
 <div class="paragraph">
-<p>We can run these algorithms in Neo4j with Cypher using the <a href="https://github.com/neo4j-contrib/neo4j-graph-algorithms">Neo4j Graph Algorithms</a> procedures.</p>
+<p>We can run these algorithms in Neo4j with Cypher using the <a href="https://github.com/neo4j-contrib/neo4j-graph-algorithms" target="_blank">Neo4j Graph Algorithms</a> procedures.</p>
 </div>
 	</div>
   </div>
@@ -440,22 +545,22 @@ RETURN ht.tag, COUNT(*) AS num ORDER BY num DESC LIMIT 25<!--/code--></pre>
    <div class="ulist">
 <ul>
 <li>
-<p>Web <a href="https://neo4j.com/docs/cypher-refcard/current/?ref=browser-guide">Cypher Refcard</a></p>
+<p>Web <a href="https://neo4j.com/docs/cypher-refcard/current/?ref=browser-guide" target="_blank">Cypher Refcard</a></p>
 </li>
 <li>
-<p>Web <a href="https://neo4j.com/docs/?ref=browser-guide">Neo4j Documentation</a></p>
+<p>Web <a href="https://neo4j.com/docs/?ref=browser-guide" target="_blank">Neo4j Documentation</a></p>
 </li>
 <li>
-<p>Book (free download) <a href="http://graphdatabases.com/?ref=browser-guide">Graph Databases</a></p>
+<p>Book (free download) <a href="http://graphdatabases.com/?ref=browser-guide" target="_blank">Graph Databases</a></p>
 </li>
 <li>
-<p>Blog <a href="https://medium.com/@david.allen_3172/using-nlp-in-neo4j-ac40bc92196f">Using NLP In Neo4j</a></p>
+<p>Blog <a href="https://medium.com/@david.allen_3172/using-nlp-in-neo4j-ac40bc92196f" target="_blank">Using NLP In Neo4j</a></p>
 </li>
 <li>
-<p>Blog <a href="http://www.lyonwj.com/2017/11/15/entity-extraction-russian-troll-tweets-neo4j/">NLP And Entity Extraction</a></p>
+<p>Blog <a href="http://www.lyonwj.com/2017/11/15/entity-extraction-russian-troll-tweets-neo4j/" target="_blank">NLP And Entity Extraction</a></p>
 </li>
 <li>
-<p>Article <a href="https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176">NBC News Article</a></p>
+<p>Article <a href="https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176" target="_blank">NBC News Article</a></p>
 </li>
 </ul>
 </div>
