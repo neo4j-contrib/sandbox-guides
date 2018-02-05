@@ -12,7 +12,7 @@
 
 As part of the House Intelligence Committee investigation into *how Russia may have influenced the 2016 US Election*, Twitter released the screen names of almost 3000 Twitter accounts believed to be connected to Russia's Internet Research Agency, a company known for operating *social media troll accounts*. Twitter immediately suspended these accounts, deleting their data from Twitter.com and the Twitter API. 
 
-A team at NBC News including link:https://twitter.com/bpopken[Ben Popken^] and link:https://twitter.com/mrejfoxwas[EJ Fox^] was able to reconstruct a dataset consisting of  a subset of the deleted data for their investigation link:https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176[showing how these troll accounts went on attack during key election moments.^] *NBC News open-sourced the reconstructed dataset* and released it as this Neo4j database.
+A team at NBC News including link:https://twitter.com/bpopken[Ben Popken^] and link:https://twitter.com/mrejfoxwas[EJ Fox^] was able to reconstruct a dataset consisting of  a subset of the deleted data for their investigation and using Neo4j were able to link:https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176[show how these troll accounts went on attack during key election moments.^] *NBC News open-sourced the reconstructed dataset* and released it as this Neo4j database.
 
 ++++
 </div>
@@ -27,7 +27,7 @@ A team at NBC News including link:https://twitter.com/bpopken[Ben Popken^] and l
 <img src="{img}/datamodel2.png" class="img-responsive">
 ++++
 
-This guide will show:
+This interactive Neo4j Browser guide will help you to explore the dataset of Russian Troll tweets by guidng you through:
 
 * an overview of the datamodel
 * how to explore the data using Cypher, the query language for graphs
@@ -70,6 +70,8 @@ Neo4j uses the labeled property graph datamodel to represent data.
 
 === Nodes
 
+Nodes can have one or more *node labels* to describe the "type" of the node.
+
 * *Tweet* - The Tweet
 * *User* - A Twitter user
 * *Troll* - An optional node label to identify users that are on the House list of Russian troll accounts
@@ -86,12 +88,14 @@ Neo4j uses the labeled property graph datamodel to represent data.
 ++++
 === Relationships
 
-* *POSTED* - Connects the Tweet with the User who posted it
-* *MENTIONS* - Connects any Users mentioned in the tweet
-* *HAS_TAG* - Connect a Tweet to any Hashtags included in the tweet
-* *POSTED_VIA* - Connects a Tweet to its source application node
-* *RETWEETED* - Did this tweet retweet another tweet?
-* *IN_REPLY_TO* - Is this tweet a reply to another tweet?
+Relationships have a single *relationship type*.
+
+* *POSTED* - Connects the `Tweet` with the User who posted it
+* *MENTIONS* - Connects any Users that are `@-mentioned` to the `Tweet`
+* *HAS_TAG* - Connect a `Tweet` to any `Hashtag` nodes included in the tweet
+* *POSTED_VIA* - Connects a `Tweet` to its `Source` application node
+* *RETWEETED* - Connects a `Tweet` that retweets another `Tweet`
+* *IN_REPLY_TO* - Connects a `Tweet` that is a reply to another `Tweet`
 
 ++++
 </div>
@@ -106,7 +110,10 @@ Neo4j uses the labeled property graph datamodel to represent data.
 <img src="{img}/datamodel.png" class="img-responsive">
 ++++
 
-.Inspect the datamodel
+Nodes and relationships can store arbitrary key-value pair *properties*. This image shows the properties and data type used in this database.
+
+
+.Execute this query to inspect the datamodel in the database:
 [source,cypher]
 ----
 CALL db.schema()
@@ -116,8 +123,104 @@ CALL db.schema()
 </div>
 ++++
 
+== Introduction To Cypher
+
+++++
+<div class="col-lg-5">
+++++
+
+In order to work with our labeled property graph, we need a query language for graphs. 
+
+=== Graph Patterns
+
+Cypher is the query language for graphs and is centered around *graph patterns*. Graph patterns are expressed in Cypher using ASCII-art like syntax.
+
+*Nodes* are defined within parentheses `()`. Optionally, we can specify node label(s): `(:User)`
+
+*Relationships* are defined within square brackets `[]`. Optionally we can specify type and direction:
+
+`(:Tweet)**+<-[:POSTED]-+**(:User)`
+
+Graph elements can be bound to *aliases* that can be referred to later in the query:
+
+`(**t**:Tweet)+<-+[**r**:POSTED]-(**u**:User)`
+
+=== Predicates
+
+Filters can be applied to these graph patterns to limit the matching paths. Boolean logic operators, regular expressions and string comparison operators can be used here.
+
+Be sure to use the link:https://neo4j.com/docs/cypher-refcard/current/?ref=browser-guide[Cypher Refcard] as a reference for learning Cypher syntax.
+
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-7">
+++++
+
+=== Dissecting a Cypher Statement
+Let's look at a Cypher query that answers the question "For Users with over 1000 followers, how many tweets did they post?". Don't worry if this seems complex, we'll build up our understanding of Cypher as we move along. 
+
+.Click on the block to put the query in the top-most window on the query editor. Hit the triangular icon:play-circle[] button or press kbd:[Ctrl+Enter] to run it and see the resulting visualization.
+
+[source,cypher]
+----
+MATCH (u:User)-[r1:POSTED]->(t:Tweet)
+WHERE u.followers_count > 1000
+WITH COUNT(t) AS num
+RETURN num
+----
+
+[width=100,cols="1,3,2"]
+|===
+| find      | `+MATCH (u:User)-[:POSTED]->(t:Tweet)+`        | Search for an existing graph pattern
+| filter    | `WHERE u.followers_count > 1000`               | Filter matching paths to only those matching a predicate
+| aggregate | `WITH COUNT(t) AS num`                         | Count number of paths matched
+| return    | `RETURN num`                                   | Specify columns to be returned by the statement
+|===
+
+
+
+++++
+</div>
+++++
+
 == Querying The Graph - Overview
 
+
+++++
+<div class="col-lg-6">
+++++
+
+Neo4j Browser is an interactive query workbench tool for executing Cypher queries in Neo4j and working with the results in both graph visualization and tabular forms.
+
+=== Graph Results
+
+If our Cypher query returns graph objects (Nodes, Relationships, Paths) then Neo4j Browser will render a graph visualization for us to explore.
+
+=== Tabular Results
+
+Oftentimes the answer to our question however is tabular data. For example maybe the result of running an aggregation. We can also return rows of scalar values in Cypher. In that case Neo4j Browser will render a table of rows.
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-6">
+++++
+
+
+.Find tweets with the hashtag `thanksobama`
+[source,cypher]
+----
+MATCH (u:User)-[:POSTED]->(t:Tweet)-[:HAS_TAG]->(ht:Hashtag {tag: "thanksobama"})
+RETURN * LIMIT 50
+----
+
+.Overview query. What are the node labels in the graphs and how many of each?
 [source, cypher]
 ----
 MATCH (t) 
@@ -125,16 +228,24 @@ RETURN LABELS(t), COUNT(*) AS count
 ORDER BY count DESC
 ----
 
-
+++++
+</div>
+++++
 
 == Querying The Graph - Users
 
-Explain the User Node
+A simple type of query we can run is one that matches on a single node label. In this database we've added the node label `Troll` to any users that show up on the House list of Russian Twitter Trolls. 
 
-Explain multiple labels (Troll)
+We can search for the Trolls with the most followers:
 
-* Troll with the most followers?
-* Troll who list certain locations in their bio
+[source,cypher]
+----
+MATCH (u:Troll) WHERE EXISTS(u.followers_count)
+RETURN u.screen_name AS screen_name, u.followers_count AS followers
+ORDER BY followers DESC LIMIT 50
+----
+
+Or use an aggregation function like `COUNT()` to see the most popular locations that Troll users list in their profiles:
 
 [source,cypher]
 ----
@@ -143,29 +254,25 @@ RETURN u.location, COUNT(u) AS num
 ORDER BY num DESC LIMIT 100
 ----
 
-== Querying The Graph - Trolls
+Or use a predicate filter to search for a specific Troll by screen name:
 
-Three examples
-
-* typical citizen
-* typical local news publication
-* typical local political party
+[source,cypher]
+----
+MATCH (u:Troll)
+WHERE u.screen_name = "LeroyLovesUSA"
+RETURN u
+----
 
 
 == Querying The Graph - Tweets
 
+We can specify more complex graph patterns using Cypher to search for users plus the tweets they've posted, and even the hashtags that those tweets contain.
 
 ++++
 <div class="col-lg-7">
 ++++
 
-We use the Cypher query language to access data in Neo4j. Cypher is all about pattern matching. We simply define a graph pattern using Cypher and Neo4j will traverse the graph where that pattern exists, rendering the results for us to inspect. 
-
-*Click on this query to load it into the query editor:*
-
-
 .Tweets posted by the user LeroyLovesUSA with the hashtag thanksobama
-
 [source,cypher]
 ----
 MATCH (u:User)-[:POSTED]->(t:Tweet)-[:HAS_TAG]->(ht:Hashtag {tag: "thanksobama"})
@@ -173,8 +280,9 @@ WHERE u.screen_name = "LeroyLovesUSA"
 RETURN *
 ----
 
-.Find tweets posted by Troll accounts that contain the word fraud
+We can include predicates to filter for paths matching the pattern and our predicates:
 
+.Find tweets posted by Troll accounts that contain the word fraud
 [source,cypher]
 ----
 MATCH (t:Troll)-[:POSTED]->(tw:Tweet) 
@@ -260,6 +368,10 @@ We can see that much of the tweet volume occurs leading up to and immediately fo
 
 == Hashtags
 
+++++
+<div class="col-lg-9">
+++++
+
 Hashtags were used by the trolls to insert themselves into conversations and gain visibility.
 
 .What are the most common hashtags used by the trolls?
@@ -281,10 +393,33 @@ WITH day, tag, COUNT(t) AS num ORDER BY num DESC
 RETURN day, COLLECT(tag)[..5] AS toptags ORDER BY day
 ----
 
-== Hashtags
+++++
+</div>
+++++
 
-=== `RejectedDebateTopics`
+++++
+<div class="col-lg-3">
+++++
 
+[subs=attributes]
+++++
+<img src="{img}/hashtags.png" class="img-responsive" style="max-height: 380px;">
+++++
+
+This streamgraph from the link:https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176[NBC News article^] shows hashtag volume by category.
+
+++++
+</div>
+++++
+
+
+== Hashtags - `#RejectedDebateTopics`
+
+=== `@WordOfHashtags`
+
+One of the hashtags used by the Trolls was `#RejectedDebateTopics`. The Troll account `@WorldOfHashtags` used it as a way to annouce a "hashtag game" to encourage others to use the same hashtag. Hundreds of non-troll accounts ended up interacting with this acocount by using the `#RejectedDebateTopics` hashtag.
+
+.What are the tweets posted by `@WorldOfHashtags` with the hashtag `#RejectedDebateTopics` ?
 [source,cypher]
 ----
 MATCH (u:Troll {screen_name: "WorldOfHashtags"})-[:POSTED]->(t:Tweet)-[:HAS_TAG]->(:Hashtag {tag: "rejecteddebatetopics"})
@@ -295,6 +430,7 @@ ORDER BY t.created_at LIMIT 50
 
 == Tweet Sources Used
 
+A variety of applications were used by the Troll accounts for posting tweets.
 
 .What are the common sources used for posting tweets?
 
@@ -307,9 +443,7 @@ ORDER BY tweets DESC
 
 == Original Content vs Replies and Retweets
 
-Tweets can be retweets of other tweets or replies to existing tweets. Replying to popular users is another way to gain visibility.
-
-TODO: more explanation
+Tweets can be retweets of other tweets or "original content" tweets that do not reference other tweets. Many of the Troll tweets consits of retweets and replies. We can filter out these retweets and replies and search only for "original content" tweets.
 
 .Find original content tweets posted by user @TEN_GOP
 
@@ -328,7 +462,7 @@ RETURN p,ht,u LIMIT 25
 <div class="col-lg-9">
 ++++
 
-Inferred relationships are important in graphs. For example, when a troll account retweets another troll's tweet we could say the trolls have an inferred "AMPLIFIED" relationship: one troll is amplifying the message of the other.
+Inferred relationships are important in graphs. For example, when a Troll account retweets another Troll's tweet we could say the trolls have an inferred *"AMPLIFIED"* relationship: one troll is amplifying the message of the other.
 
 .Inferred AMPLIFIED relationships exist when a troll account retweets another troll
 [source,cypher]
@@ -356,6 +490,10 @@ RETURN p LIMIT 1
 
 == Graph Algorithms
 
+++++
+<div class="col-lg-9">
+++++
+
 link:https://neo4j.com/graph-analytics/[Graph algorithms^] are a way to apply analytics to the entire graph to further enhance our understanding of the data. They 
 
 * **Centrality** - What are the most important nodes in the network? _PageRank, Betweenness Centrality, Closeness Centrality_
@@ -364,8 +502,33 @@ link:https://neo4j.com/graph-analytics/[Graph algorithms^] are a way to apply an
 
 We can run these algorithms in Neo4j with Cypher using the link:https://github.com/neo4j-contrib/neo4j-graph-algorithms[Neo4j Graph Algorithms^] procedures.
 
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-3">
+++++
+
+.See what procedures are available in the algo package
+[source,cypher]
+----
+CALL dbms.procedures() 
+YIELD name, signature, description
+WITH * WHERE name STARTS WITH "algo"
+RETURN *
+----
+
+
+++++
+</div>
+++++
+
 == Centrality
 
+++++
+<div class="col-lg-9">
+++++
 Let's run PageRank over this inferred AMPLIFIED graph to find the most influential trolls
 
 .Run PageRank over the inferred troll amplification graph. This will write the results back to a pagerank property on the nodes
@@ -390,19 +553,79 @@ MATCH (t)-[:POSTED]->(tw:Tweet)-[:HAS_TAG]-(ht:Hashtag)
 RETURN ht.tag, COUNT(tw) AS num ORDER BY num DESC LIMIT 25
 ----
 
+++++
+</div>
+++++
 
-//== Community Detection
-//
-//We can also run community detection over this inferred AMPLIFIED graph to see how the graph is partitioned
-//
-//[source,cypher]
-//----
-//CALL algo.labelPropagation("MATCH (t:Troll) RETURN id(t) AS id","MATCH (r1:Troll)-[:POSTED]->(t:Tweet)<-[:RETWEETED]-(:Tweet)<-[:POSTED]-(r2:Troll) RETURN id(r2) AS source, id(r1) AS target, COUNT(t) AS weight","OUTGOING",   {graph:'cypher', write: true, iterations: 2000})
-//
-//----
-//
-//If we look at the most common hashtags for each community we can see 
-//
+++++
+<div class="col-lg-3">
+++++
+
+[subs=attributes]
+++++
+<img src="{img}/pagerank.png" class="img-responsive">
+++++
+
+PageRank is a recursive graph algorithm that defines the importance of a node proportional to the importance and number of connected nodes in the graph.
+
+++++
+</div>
+++++
+
+== Community Detection
+
+++++
+<div class="col-lg-9">
+++++
+
+We can also run community detection over this inferred AMPLIFIED graph to see how the graph is partitioned
+
+.Partition the graph into communities using the Label Propagation algorithm. An additional property `community` is added to each node specifying the community it has been assgined to by the algorithm.
+[source,cypher]
+----
+CALL algo.labelPropagation("MATCH (t:Troll) RETURN id(t) AS id","MATCH (r1:Troll)-[:POSTED]->(t:Tweet)<-[:RETWEETED]-(:Tweet)<-[:POSTED]-(r2:Troll) RETURN id(r2) AS source, id(r1) AS target, COUNT(t) AS weight","OUTGOING",   {graph:'cypher', write: true, iterations: 200})
+----
+
+We can then see which Trolls were assigned to each community:
+
+[source,cypher]
+----
+MATCH (t:Troll) WHERE EXISTS(t.partition)
+RETURN COLLECT(t.screen_name) AS members, t.partition AS community
+ORDER BY SIZE(members) DESC LIMIT 10
+----
+
+And finally, we can see if there are certain themes that each community was focused on, by inspecting the most common hashtags used by each community:
+
+[source,cypher]
+----
+MATCH (t:Troll) WHERE EXISTS(t.partition)
+WITH COLLECT(t) AS members, t.partition AS community
+ORDER BY SIZE(members) DESC LIMIT 10
+UNWIND members AS t
+MATCH (t)-[:POSTED]->(tw:Tweet)-[:HAS_TAG]->(ht:Hashtag)
+WITH community, ht.tag AS tag, COUNT(tw) AS num ORDER BY num DESC
+RETURN community, COLLECT(tag)[..10] AS toptags
+LIMIT 10
+----
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-3">
+++++
+
+[subs=attributes]
+++++
+<img src="{img}/community.png" class="img-responsive">
+++++
+
+++++
+</div>
+++++
+
 //== Visualization
 
 
