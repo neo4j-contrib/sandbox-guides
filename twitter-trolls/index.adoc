@@ -202,7 +202,7 @@ If our Cypher query returns graph objects (Nodes, Relationships, Paths) then Neo
 
 === Tabular Results
 
-Oftentimes the answer to our question however is tabular data. For example maybe the result of running an aggregation. We can also return rows of scalar values in Cypher. In that case Neo4j Browser will render a table of rows.
+Often the answer to our question however is tabular data - for example, the result of running an aggregation. We can also return rows of scalar values in Cypher. In that case Neo4j Browser will render a table of rows.
 
 ++++
 </div>
@@ -443,7 +443,7 @@ ORDER BY tweets DESC
 
 == Original Content vs Replies and Retweets
 
-Tweets can be retweets of other tweets or "original content" tweets that do not reference other tweets. Many of the Troll tweets consits of retweets and replies. We can filter out these retweets and replies and search only for "original content" tweets.
+Tweets can be retweets of other tweets or "original content" tweets that do not reference other tweets. Many of the Troll tweets are retweets and replies. We can filter out these retweets and replies and search only for "original content" tweets.
 
 .Find original content tweets posted by user @TEN_GOP
 
@@ -494,7 +494,7 @@ RETURN p LIMIT 1
 <div class="col-lg-9">
 ++++
 
-link:https://neo4j.com/graph-analytics/[Graph algorithms^] are a way to apply analytics to the entire graph to further enhance our understanding of the data. They 
+link:https://neo4j.com/graph-analytics/[Graph algorithms^] are a way to apply analytics to the entire graph to further enhance our understanding of the data. These algorithms fall into three categories: 
 
 * **Centrality** - What are the most important nodes in the network? _PageRank, Betweenness Centrality, Closeness Centrality_
 * **Community detection** - How can the graph be partitioned? _Union Find, Louvain, Label Propagation, Connected Components_
@@ -537,7 +537,7 @@ Let's run PageRank over this inferred AMPLIFIED graph to find the most influenti
 CALL algo.pageRank("MATCH (t:Troll) RETURN id(t) AS id","MATCH (r1:Troll)-[:POSTED]->(:Tweet)<-[:RETWEETED]-(:Tweet)<-[:POSTED]-(r2:Troll) RETURN id(r2) as source, id(r1) as target", {graph:'cypher'})
 ----
 
-.Lookup Trolls with highest PageRank score
+.Find Trolls with highest PageRank score
 [source,cypher]
 ----
 MATCH (t:Troll) WHERE EXISTS(t.pagerank)

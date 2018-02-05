@@ -62,7 +62,7 @@
 </div>
 </div>
 <div class="col-lg-3">
-<img src="//localhost:8001/img/datamodel2.png" class="img-responsive">
+<img src="http://guides.neo4j.com/sandbox/twitter-trolls/img/datamodel2.png" class="img-responsive">
 <div class="paragraph">
 <p>This interactive Neo4j Browser guide will help you to explore the dataset of Russian Troll tweets by guidng you through:</p>
 </div>
@@ -81,7 +81,7 @@
 </div>
 </div>
 <div class="col-lg-5">
-<img src="//localhost:8001/img/article.png" class="img-responsive">
+<img src="http://guides.neo4j.com/sandbox/twitter-trolls/img/article.png" class="img-responsive">
 <div class="paragraph">
 <p>Read the NBC News story about the data <a href="https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176" target="_blank">here</a></p>
 </div>
@@ -166,7 +166,7 @@
 </div>
 </div>
 <div class="col-lg-5">
-<img src="//localhost:8001/img/datamodel.png" class="img-responsive">
+<img src="http://guides.neo4j.com/sandbox/twitter-trolls/img/datamodel.png" class="img-responsive">
 <div class="paragraph">
 <p>Nodes and relationships can store arbitrary key-value pair <strong>properties</strong>. This image shows the properties and data type used in this database.</p>
 </div>
@@ -299,7 +299,7 @@ RETURN num<!--/code--></pre>
 
    <h4>Tabular Results</h4>
    <div class="paragraph">
-<p>Oftentimes the answer to our question however is tabular data. For example maybe the result of running an aggregation. We can also return rows of scalar values in Cypher. In that case Neo4j Browser will render a table of rows.</p>
+<p>Often the answer to our question however is tabular data - for example, the result of running an aggregation. We can also return rows of scalar values in Cypher. In that case Neo4j Browser will render a table of rows.</p>
 </div>
 </div>
 <div class="col-lg-6">
@@ -400,7 +400,7 @@ RETURN * LIMIT 50<!--/code--></pre>
 </div>
 </div>
 <div class="col-lg-5">
-<img src="//localhost:8001/img/exampletweet1.png" class="img-responsive">
+<img src="http://guides.neo4j.com/sandbox/twitter-trolls/img/exampletweet1.png" class="img-responsive">
 </div>
 	</div>
   </div>
@@ -414,7 +414,7 @@ RETURN * LIMIT 50<!--/code--></pre>
     <br/>
     <div>
       <div class="col-lg-3">
-<img src="//localhost:8001/img/volume.png" style="max-height: 380px;" class="img-responsive">
+<img src="http://guides.neo4j.com/sandbox/twitter-trolls/img/volume.png" style="max-height: 380px;" class="img-responsive">
 </div>
 <div class="col-lg-9">
 <div class="paragraph">
@@ -478,7 +478,7 @@ RETURN day, COLLECT(tag)[..5] AS toptags ORDER BY day<!--/code--></pre>
 </div>
 </div>
 <div class="col-lg-3">
-<img src="//localhost:8001/img/hashtags.png" class="img-responsive" style="max-height: 380px;">
+<img src="http://guides.neo4j.com/sandbox/twitter-trolls/img/hashtags.png" class="img-responsive" style="max-height: 380px;">
 <div class="paragraph">
 <p>This streamgraph from the <a href="https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176" target="_blank">NBC News article</a> shows hashtag volume by category.</p>
 </div>
@@ -544,7 +544,7 @@ ORDER BY tweets DESC<!--/code--></pre>
     <br/>
     <div>
       <div class="paragraph">
-<p>Tweets can be retweets of other tweets or "original content" tweets that do not reference other tweets. Many of the Troll tweets consits of retweets and replies. We can filter out these retweets and replies and search only for "original content" tweets.</p>
+<p>Tweets can be retweets of other tweets or "original content" tweets that do not reference other tweets. Many of the Troll tweets are retweets and replies. We can filter out these retweets and replies and search only for "original content" tweets.</p>
 </div>
 <div class="listingblock">
 <div class="title">Find original content tweets posted by user @TEN_GOP</div>
@@ -580,7 +580,7 @@ RETURN p LIMIT 1<!--/code--></pre>
 </div>
 </div>
 <div class="col-lg-3">
-<img src="//localhost:8001/img/amplified.png" class="img-responsive">
+<img src="http://guides.neo4j.com/sandbox/twitter-trolls/img/amplified.png" class="img-responsive">
 </div>
 	</div>
   </div>
@@ -595,7 +595,7 @@ RETURN p LIMIT 1<!--/code--></pre>
     <div>
       <div class="col-lg-9">
 <div class="paragraph">
-<p><a href="https://neo4j.com/graph-analytics/" target="_blank">Graph algorithms</a> are a way to apply analytics to the entire graph to further enhance our understanding of the data. They</p>
+<p><a href="https://neo4j.com/graph-analytics/" target="_blank">Graph algorithms</a> are a way to apply analytics to the entire graph to further enhance our understanding of the data. These algorithms fall into three categories:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -647,7 +647,7 @@ RETURN *<!--/code--></pre>
 </div>
 </div>
 <div class="listingblock">
-<div class="title">Lookup Trolls with highest PageRank score</div>
+<div class="title">Find Trolls with highest PageRank score</div>
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t:Troll) WHERE EXISTS(t.pagerank)
 RETURN t.screen_name AS troll, t.pagerank AS pagerank ORDER BY pagerank DESC LIMIT 25<!--/code--></pre>
@@ -664,7 +664,7 @@ RETURN ht.tag, COUNT(tw) AS num ORDER BY num DESC LIMIT 25<!--/code--></pre>
 </div>
 </div>
 <div class="col-lg-3">
-<img src="//localhost:8001/img/pagerank.png" class="img-responsive">
+<img src="http://guides.neo4j.com/sandbox/twitter-trolls/img/pagerank.png" class="img-responsive">
 <div class="paragraph">
 <p>PageRank is a recursive graph algorithm that defines the importance of a node proportional to the importance and number of connected nodes in the graph.</p>
 </div>
@@ -717,7 +717,7 @@ LIMIT 10<!--/code--></pre>
 </div>
 </div>
 <div class="col-lg-3">
-<img src="//localhost:8001/img/community.png" class="img-responsive">
+<img src="http://guides.neo4j.com/sandbox/twitter-trolls/img/community.png" class="img-responsive">
 </div>
 	</div>
   </div>
@@ -787,7 +787,7 @@ LIMIT 10<!--/code--></pre>
 </div>
 </div>
 <div class="col-lg-3">
-<img src="//localhost:8001/img/viz.png" class="img-responsive">
+<img src="http://guides.neo4j.com/sandbox/twitter-trolls/img/viz.png" class="img-responsive">
 </div>
 	</div>
   </div>
