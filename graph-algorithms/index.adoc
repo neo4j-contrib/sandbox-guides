@@ -1,0 +1,421 @@
+= Graph Algorithms
+:icons: font
+
+== Graph Algorithms
+
+image::https://upload.wikimedia.org/wikipedia/en/2/24/AStormOfSwords.jpg[float=right]
+
+In this guide we'll learn how to use the Neo4j Graph Algorithms package using a Game of Thrones dataset.
+
+The dataset used in this guide is based on work done by Dr. Andrew Beveridge, based on his https://networkofthrones.wordpress.com/[Network of Thrones^] research.
+
+Article: https://www.macalester.edu/~abeverid/index.html[Beveridge, Andrew, Shan, Jie. Network of Thrones. Math Horizons Magazine, Vol. 23, No. 4 (2016) pp. 18-22.^]
+
+== Graph of Character Interactions
+
+Andrew built a graph where nodes are characters in the books and relationships represent character interactions.
+
+Characters have a relationship for each time their names (or nicknames) *appear within 15 words of one another*.
+Each link corresponds to an interaction between the two characters. Note that this interaction could be direct or indirect. Here are some of the types of interactions that our method picks up.
+
+* Two characters appearing together in the same location
+
+* Two characters in conversation
+
+* One character talking about another character
+
+* One character listening to a third character talk about a second character
+
+* A third character talking about two other characters
+
+The data extraction process is described in detail here: https://networkofthrones.wordpress.com/from-book-to-network/
+
+== The data model
+
+Run the following query to see the schema of our graph:
+
+[source,cypher]
+----
+CALL db.schema()
+----
+
+== Summary statistics
+
+Let's do some simple exploration of the dataset before running some more complex algorithms.
+
+[source,cypher]
+----
+MATCH (c:Character)-->()
+WITH c, count(*) AS num
+RETURN min(num) AS min, max(num) AS max, avg(num) AS avg_characters, stdev(num) AS stdev
+----
+
+We can calculate these grouped by book as well:
+
+[source,cypher]
+----
+MATCH (c:Character)-[r]->()
+WITH r.book as book, c, count(*) AS num
+RETURN book, min(num) AS min, max(num) AS max, avg(num) AS avg_characters, stdev(num) AS stdev
+ORDER BY book
+----
+
+== Diameter of the network
+
+The diameter (or geodesic) of a network is defined as the longest shortest path in the network.
+
+We can write the following query to find it in our graph for the 2nd book:
+
+[source,cypher]
+----
+// Find maximum diameter of network
+// maximum shortest path between two nodes
+MATCH (a:Character), (b:Character) WHERE id(a) > id(b)
+MATCH p = shortestPath((a)-[:INTERACTS2*]-(b))
+
+WITH length(p) AS len, p
+ORDER BY len DESC
+LIMIT 5
+RETURN nodes(p) AS path, len
+----
+
+This query creates a cartesian product combining all characters so we need to be careful when running this on larger graphs or we'll get an `OutOfMemoryException`.
+
+== Pivotal nodes
+
+A node is said to be pivotal if it lies on all shortest paths between two other nodes in the network. We can find all pivotal nodes in the network.
+
+The following query will find all the pivotal nodes in the network for the first book:
+
+[source,cypher]
+----
+MATCH (a:Character), (b:Character) WHERE id(a) > id(b)
+MATCH p = allShortestPaths((a)-[:INTERACTS1*]-(b))
+
+WITH collect(p) AS paths, a, b
+UNWIND nodes(head(paths)) as c // first path
+
+WITH *
+WHERE NOT c IN [a,b]
+AND all(path IN tail(paths) WHERE c IN nodes(path))
+
+RETURN a.name, b.name, c.name AS PivotalNode, length(head(paths)) AS pathLength, length(paths) AS pathCount
+SKIP 490
+LIMIT 10
+----
+
+== Betweenness Centrality
+
+Betweenness centrality identifies nodes that are strategically positioned in the network, meaning that information will often travel through that person.
+Such an intermediary position gives that person power and influence.
+
+Betweenness centrality is a raw count of the number of short paths that go through a given node.
+For example, if a node is located on a bottleneck between two large communities, then it will have high betweenness.
+
+image::http://guides.neo4j.com/got/img/betweenness-centrality.png[]
+
+The red nodes have a high betweenness centrality and are connectors of clusters.
+
+== Betweenness Centrality
+
+We'll start by calculating the betweenness centrality for the characters who interacted in the first book.
+We can do this by calling the `algo.betweenness.stream` procedure with the label `Character` and relationship type `INTERACTS1`.
+
+Run the following query to learn who the most influential characters are:
+
+[source,cypher]
+----
+CALL algo.betweenness.stream("Character", "INTERACTS1", {direction: "BOTH"})
+YIELD nodeId, centrality
+MATCH (c:Character) WHERE ID(c) = nodeId
+RETURN c.name, centrality
+ORDER BY centrality DESC
+LIMIT 10
+----
+
+If you've read the books or watched the TV series hopefully the results aren't too surprising!
+
+== Betweenness Centrality vs Biggest Communicators
+
+We can add to our query and see how the betweenness scores compare to the total interactions a character had:
+
+[source,cypher]
+----
+CALL algo.betweenness.stream("Character", "INTERACTS1", {direction: "BOTH"})
+YIELD nodeId, centrality
+MATCH (c:Character) WHERE ID(c) = nodeId
+WITH c, centrality, [(c)-[r:INTERACTS1]-(other) | {character: other.name, weight: r.weight}] AS interactions
+RETURN c.name, centrality,
+       apoc.coll.sum([i in interactions | i.weight]) AS totalInteractions,
+       [i in apoc.coll.reverse(apoc.coll.sortMaps(interactions, 'weight'))[..5] | i.character] as charactersInteractedWith
+ORDER BY centrality DESC
+LIMIT 10
+----
+
+From this query we can see that it's not necessarily the most talkative characters that have the most influence on the network.
+
+Try changing the query to order by `totalInteractions` instead of `centrality` to see this more clearly.
+
+== Storing Betweenness Centrality
+
+Although the betweenness centrality algorithm runs very quickly on this dataset we wouldn't usually be running this types of algorithms in the normal request/response flow of a web/mobile app.
+Instead of that we can store the result of the calculation as a property on the node and then refer to it in future queries.
+
+Each of the algorithms has a variant that saves its output to the database rather than returning a stream.
+Let's run the betweenness centrality algorithm and store the result as a property named `book1BetweennessCentrality`:
+
+[source,cypher]
+----
+CALL algo.betweenness("Character", "INTERACTS1", {direction: "BOTH", writeProperty: "book1BetweennessCentrality"})
+----
+
+== Querying Betweenness Centrality
+
+We can write the following query to find the most influential characters:
+
+[source,cypher]
+----
+MATCH (c:Character)
+RETURN c.name, c.book1BetweennessCentrality AS centrality
+ORDER BY centrality DESC
+LIMIT 10
+----
+
+== Exercise: Betweenness Centrality for books 2-5
+
+Now we want to calculate the betweenness centrality for the other books in the series and store the results in the database.
+
+* Write queries that call `algo.betweenness` for the `INTERACTS2`, `INTERACTS3`, and `INTERACTS45` relationship types.
+
+After you've done that see if you can write queries to answer the following questions:
+
+* Which character had the biggest increase in influence from book 1 to 5?
+* Which character had the biggest decrease?
+
+Bonus question:
+
+* Which characters who were in the top 10 influencers in book 1 are also in the top 10 influencers in book 5?
+
+== Answer: Betweenness Centrality for books 2-5
+
+[source,cypher]
+----
+CALL algo.betweenness("Character", "INTERACTS2", {direction: "BOTH", writeProperty: "book2BetweennessCentrality"})
+----
+
+[source,cypher]
+----
+CALL algo.betweenness("Character", "INTERACTS3", {direction: "BOTH", writeProperty: "book3BetweennessCentrality"})
+----
+
+[source,cypher]
+----
+CALL algo.betweenness("Character", "INTERACTS45", {direction: "BOTH", writeProperty: "book45BetweennessCentrality"})
+----
+
+== Answer: Increase in influence
+
+[source, cypher]
+----
+match (c:Character)
+return c.name, c.book1BetweennessCentrality, c.book45BetweennessCentrality, c.book45BetweennessCentrality - c.book1BetweennessCentrality AS difference
+ORDER BY difference DESC
+LIMIT 10
+----
+
+== Answer: Decrease in influence
+
+[source, cypher]
+----
+match (c:Character)
+return c.name, c.book1BetweennessCentrality, c.book45BetweennessCentrality, c.book45BetweennessCentrality - c.book1BetweennessCentrality AS difference
+ORDER BY difference
+LIMIT 10
+----
+
+== Answer: Consistent influencers
+
+[source,cypher]
+----
+MATCH (c:Character)
+
+WITH c
+ORDER BY c.book1BetweennessCentrality DESC
+LIMIT 10
+
+WITH collect(c.name) AS characters
+MATCH (c:Character)
+
+WITH c, c.book45BetweennessCentrality AS book45BetweennessCentrality, characters
+ORDER BY book45BetweennessCentrality DESC
+LIMIT 10
+
+WITH c WHERE c.name IN characters
+RETURN c.name, c.book1BetweennessCentrality, c.book45BetweennessCentrality
+LIMIT 10
+----
+
+== Page Rank
+
+This is another version of weighted degree centrality with a feedback loop. This time, you only get your “fair share” of your neighbor’s importance.
+
+i.e. your neighbor’s importance is split between their neighbors, proportional to the number of interactions with that neighbor.
+
+Intuitively, PageRank captures how effectively you are taking advantage of your network contacts.
+In our context, PageRank centrality nicely captures narrative tension. Indeed, major developments occur when two important characters interact.
+
+image::https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/PageRanks-Example.svg/758px-PageRanks-Example.svg.png[]
+
+== Calculating Page Rank
+
+This time lets skip straight to the version of this procedure that stores results straight into the database.
+
+Run the following queries to calculate page rank scores for each of the books:
+
+[source,cypher]
+----
+CALL algo.pageRank("Character", "INTERACTS1", {direction: "BOTH", writeProperty:'book1PageRank'})
+----
+
+[source,cypher]
+----
+CALL algo.pageRank("Character", "INTERACTS2", {direction: "BOTH", writeProperty:'book2PageRank'})
+----
+
+[source,cypher]
+----
+CALL algo.pageRank("Character", "INTERACTS3", {direction: "BOTH", writeProperty:'book3PageRank'})
+----
+
+[source,cypher]
+----
+CALL algo.pageRank("Character", "INTERACTS45", {direction: "BOTH", writeProperty:'book45PageRank'})
+----
+
+== Querying Page Rank
+
+We can now write a query to see how influential the characters are across a variety of different metrics:
+
+[source,cypher]
+----
+MATCH (c:Character)
+WITH c, [(c)-[r:INTERACTS1]-(other) | {character: other.name, weight: r.weight}] AS interactions
+RETURN c.name, c.book1PageRank, c.book1BetweennessCentrality,
+       apoc.coll.sum([i in interactions | i.weight]) AS totalInteractions,
+       [i in apoc.coll.reverse(apoc.coll.sortMaps(interactions, 'weight'))[..5] | i.character] as charactersInteractedWith
+ORDER BY c.book1PageRank DESC
+LIMIT 10
+----
+
+You'll notice that there are some characters who have a high page rank but a very low betweenness centrality score.
+
+This suggests that they aren't necessarily influential in their own right, but are friends with important people.
+_Varys_ is a good example of a character that fits this profile.
+
+== Community Detection
+
+We can detect communities in our data by running an algorithm which traverses the graph structure to find highly connected subgraphs with fewer connections other other subgraphs.
+
+Run the following query to calculate the communities that exist based on interactions across all the books.
+
+[source,cypher]
+----
+CALL algo.labelPropagation(
+  'MATCH (c:Character) RETURN id(c) as id',
+  'MATCH (c:Character)-[rel]->(c2) RETURN id(c) as source, id(c2) as target, SUM(rel.weight) as weight',
+  'OUTGOING',
+  {graph:'cypher', partitionProperty: 'community'})
+----
+
+== Querying Communities
+
+We can then write a query to see what communities we have and how many members they have:
+
+[source,cypher]
+----
+MATCH (c:Character)
+WHERE exists(c.community)
+RETURN c.community, count(*) AS count
+ORDER BY count DESC
+----
+
+There seem to be 2 or 3 large clusters of people and then a lot of smaller ones.
+
+== Querying Communities
+
+It'd be good to know who are the influential people in each community.
+To do that we'll need to calculate a Page Rank score for each character across all the books:
+
+[source,cypher]
+----
+CALL algo.pageRank(
+  'MATCH (c:Character) RETURN id(c) as id',
+  'MATCH (c:Character)-[rel]->(c2) RETURN id(c) as source,id(c2) as target, SUM(rel.weight) as weight',
+  {graph:'cypher', writeProperty: 'pageRank'})
+----
+
+[source,cypher]
+----
+MATCH (c:Character)
+WHERE exists(c.community)
+WITH c ORDER BY c.pageRank DESC
+RETURN c.community as cluster, count(*) AS count, collect(c.name)[..10]
+ORDER BY count DESC
+----
+
+Most people are in a big community containing _Tyrion-Lannister_, but we also have smaller communities which contain _Daenerys-Targaryen_, and the Greyjoys who are other important characters.
+
+== Visualising Communities
+
+We can write the following community to see the interactions between people in one of the communities:
+
+[source,cypher]
+----
+MATCH (c:Character) WHERE EXISTS(c.community)
+WITH c.community AS community, COUNT(*) AS count
+ORDER BY count DESC
+SKIP 1 LIMIT 1
+MATCH path = (c:Character {community: community})--(c2:Character {community: community})
+return path
+----
+
+== Intra community Page Rank
+
+We can also calculate the Page Rank within communities.
+
+Run the following query to calculate the page rank for the 2nd largest community:
+
+[source,cypher]
+----
+MATCH (c:Character) WHERE EXISTS(c.community)
+WITH c.community AS communityId, COUNT(*) AS count
+ORDER BY count DESC
+SKIP 1 LIMIT 1
+CALL apoc.cypher.doIt(
+  "CALL algo.pageRank(
+    'MATCH (c:Character) WHERE c.community =" + communityId + " RETURN id(c) as id',
+    'MATCH (c:Character)-[rel]->(c2) WHERE c.community =" + communityId + " AND c2.community =" + communityId + " RETURN id(c) as source,id(c2) as target, sum(rel.weight) as weight',
+    {graph:'cypher', writeProperty: 'communityPageRank'}) YIELD nodes RETURN count(*)", {})
+YIELD value
+RETURN value
+----
+
+== Intra community Page Rank
+
+We can run the following query to find the most influential character within that cluster:
+
+[source,cypher]
+----
+MATCH (c:Character) WHERE EXISTS(c.community)
+WITH c.community AS communityId, COUNT(*) AS count
+ORDER BY count DESC
+SKIP 1 LIMIT 1
+MATCH (c:Character) WHERE c.community = communityId
+RETURN c.name, c.communityPageRank
+ORDER BY c.communityPageRank DESC
+LIMIT 10
+----
+
+== Learn more
+
+You can learn more about Neo4j Graph Algorithms by browsing the https://neo4j-contrib.github.io/neo4j-graph-algorithms/[User Guide^] or by https://www.youtube.com/watch?v=55uB_t0RKTE[watching the online meetup^] presented by Michael Hunger.
