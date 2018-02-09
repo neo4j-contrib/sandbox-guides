@@ -217,8 +217,8 @@ CALL algo.betweenness("Character", "INTERACTS45", {direction: "BOTH", writePrope
 
 [source, cypher]
 ----
-match (c:Character)
-return c.name, c.book1BetweennessCentrality, c.book45BetweennessCentrality, c.book45BetweennessCentrality - c.book1BetweennessCentrality AS difference
+MATCH (c:Character)
+RETURN c.name, c.book1BetweennessCentrality, c.book45BetweennessCentrality, c.book45BetweennessCentrality - c.book1BetweennessCentrality AS difference
 ORDER BY difference DESC
 LIMIT 10
 ----
@@ -227,8 +227,8 @@ LIMIT 10
 
 [source, cypher]
 ----
-match (c:Character)
-return c.name, c.book1BetweennessCentrality, c.book45BetweennessCentrality, c.book45BetweennessCentrality - c.book1BetweennessCentrality AS difference
+MATCH (c:Character)
+RETURN c.name, c.book1BetweennessCentrality, c.book45BetweennessCentrality, c.book45BetweennessCentrality - c.book1BetweennessCentrality AS difference
 ORDER BY difference
 LIMIT 10
 ----
@@ -255,7 +255,7 @@ RETURN c.name, c.book1BetweennessCentrality, c.book45BetweennessCentrality
 LIMIT 10
 ----
 
-== Page Rank
+== PageRank
 
 This is another version of weighted degree centrality with a feedback loop. This time, you only get your “fair share” of your neighbor’s importance.
 
@@ -266,7 +266,7 @@ In our context, PageRank centrality nicely captures narrative tension. Indeed, m
 
 image::https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/PageRanks-Example.svg/758px-PageRanks-Example.svg.png[]
 
-== Calculating Page Rank
+== Calculating PageRank
 
 This time lets skip straight to the version of this procedure that stores results straight into the database.
 
@@ -292,7 +292,7 @@ CALL algo.pageRank("Character", "INTERACTS3", {direction: "BOTH", writeProperty:
 CALL algo.pageRank("Character", "INTERACTS45", {direction: "BOTH", writeProperty:'book45PageRank'})
 ----
 
-== Querying Page Rank
+== Querying PageRank
 
 We can now write a query to see how influential the characters are across a variety of different metrics:
 
@@ -344,7 +344,7 @@ There seem to be 2 or 3 large clusters of people and then a lot of smaller ones.
 == Querying Communities
 
 It'd be good to know who are the influential people in each community.
-To do that we'll need to calculate a Page Rank score for each character across all the books:
+To do that we'll need to calculate a PageRank score for each character across all the books:
 
 [source,cypher]
 ----
@@ -376,12 +376,12 @@ WITH c.community AS community, COUNT(*) AS count
 ORDER BY count DESC
 SKIP 1 LIMIT 1
 MATCH path = (c:Character {community: community})--(c2:Character {community: community})
-return path
+RETURN path
 ----
 
-== Intra community Page Rank
+== Intra community PageRank
 
-We can also calculate the Page Rank within communities.
+We can also calculate the PageRank within communities.
 
 Run the following query to calculate the page rank for the 2nd largest community:
 
@@ -400,7 +400,7 @@ YIELD value
 RETURN value
 ----
 
-== Intra community Page Rank
+== Intra community PageRank
 
 We can run the following query to find the most influential character within that cluster:
 
