@@ -83,7 +83,7 @@ image::{images}/network-software-arrows.jpg[float=right]
 image::{images}/network-hardware-arrows.jpg[]
 ////
 
-Usually we would get this kind of information from a configuration management database (CMDB), network managment tools or agents installed on the machines.
+Usually we would get this kind of information from a configuration management database (CMDB), network management tools or agents installed on the machines.
 
 == Network Exploration: DataCenter and Zones
 
@@ -130,6 +130,7 @@ You can see very well how the graph representation in the match pattern resemble
 [source,cypher]
 ----
 MATCH (r:Router)-[:ROUTES]->(ri:Interface)-[:CONNECTS]->(nr:Network)
+WHERE r.zone IS NOT NULL
 RETURN nr.ip as network_ip, ri.ip as router_if_ip, r.name as router, r.zone as zone;
 ----
 
@@ -487,26 +488,11 @@ We could then
 
 == Configuration Management
 
-Proper IT infrastructures use a large number of configuration parameters to customize commodity hard- and software for the custom uses.
+Proper IT infrastructures use a large number of configuration parameters to customize commodity hardware and software.  To manage all of the variables, Configuration Management Databases (CMDBs) are used.  Systems require certain variables, and can report what is currently configured so that the CMDB can detect issues, and send necessary updates.
 
-To manage the volume of interdependent variables Configuration Management Databases (CMDBs) are used to configure and keep track of what is set where.
+In the past, CMDBs were mostly used for network, hardware and OS level configuration.  Today, their use has expanded into services to support modern architectures.  A number of related systems have popped up, such as ZooKeeper, Konsul, Eureka, and others.
 
-Systems require certain variables, they can report what is currently configured so that the CMDB software can detect eventual deltas and issue necessary updates.
-
-Security related and other upgrades have to be rolled out across the infrastructure in a coordinated fashion to make sure there is always a
-
-In the past these CMDBs were mostly used for network, hardware and OS level configuration.
-
-Today more and more application level (micro-) services need similar information to get access to internal and external services they depend on.
-Those mostly use databases like ZooKepper, Konsul, Eureka, Zipkin? and ?? (HashiCorp?, Pivotal?)
-
-Several of the managed variables are related, especially if they manage (transitive dependencies).
-Version conflicts of used dependencies are critical to detect early on.
-Although through isolation via containerization this is less of an issue nowadays.
-
-Partially systems like Ansible, Puppet and Chef are used to manage software installation, and update roll outs.
-
-Due to the variety of systems used for providing configuration to the infrastructure, it can be useful to create a unified, up to date view of the situation in your systems graph.
+Due to the variety of systems used for providing configuration to the infrastructure, it is very useful to create a unified, up to date view of the situation in your systems graph.
 
 === Upgrade OS Version and its Dependencies for a Version Range
 
@@ -589,7 +575,7 @@ Based on our existing model, those incoming messages and events can do the follo
 * Create new entries for Servers, Switches, Interfaces
 * Track running Services via used ports and traffic
 * Infer user and application activity and group by network segment, source, used service
-* Detect anormal operations like attacks or potential bottlenecks and issue warnings
+* Detect abnormal operations like attacks or potential bottlenecks and issue warnings
 * Track violations of rules, like isolation of the DMZ, certain firewall rules etc.
 
 Here is an example of a new connection coming in and the graph being updated accordingly.
