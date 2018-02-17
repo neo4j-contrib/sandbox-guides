@@ -12,7 +12,7 @@
 
 As part of the House Intelligence Committee investigation into *how Russia may have influenced the 2016 US Election*, Twitter released the screen names of almost 3000 Twitter accounts believed to be connected to Russia's Internet Research Agency, a company known for operating *social media troll accounts*. Twitter immediately suspended these accounts, deleting their data from Twitter.com and the Twitter API. 
 
-A team at NBC News including link:https://twitter.com/bpopken[Ben Popken^] and link:https://twitter.com/mrejfoxwas[EJ Fox^] was able to reconstruct a dataset consisting of  a subset of the deleted data for their investigation and using Neo4j were able to link:https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176[show how these troll accounts went on attack during key election moments.^] *NBC News open-sourced the reconstructed dataset* and released it as this Neo4j database.
+A team at NBC News including link:https://twitter.com/bpopken[Ben Popken^] and link:https://twitter.com/mrejfox[EJ Fox^] was able to reconstruct a dataset consisting of  a subset of the deleted data for their investigation and using Neo4j were able to link:https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176[show how these troll accounts went on attack during key election moments.^] *NBC News open-sourced the reconstructed dataset* and released it as this Neo4j database.
 
 ++++
 </div>
