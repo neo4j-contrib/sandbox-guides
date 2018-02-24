@@ -53,11 +53,17 @@ Here is an example of how to work with location data to build an Interactive Geo
 
 == Community Detection
 
+* One way of detecting communities of users is based on their interactions: retweets, replies, etc. 
+
+* Another way can be based on common interests. In what ways can you infer similarity between users? Maybe because there is a signifficant overlap in the hashtags that they use?
+
 
 
 == Natural Language Processing
 
 The content of a tweet can be analised using NLP techniques for entity extraction, sentiment analysis, etc.
+
+Here is a link to more ideas in this area: https://hackernoon.com/six-ways-to-explore-the-russian-twitter-trolls-database-in-neo4j-6e52394c38f1
 
 
 == Right / Left Wing Politics
