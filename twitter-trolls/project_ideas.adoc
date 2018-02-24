@@ -17,14 +17,58 @@
 
 == Exploring Locations
 
+There is geographical information in the Twitter Trolls graph: User accounts have obviously a location, even though it's not always accurate or even populated.
+
+[source,cypher]
+----
+MATCH (u:Troll) 
+RETURN u.location as location, count(u) AS c
+ORDER BY c DESC
+----
+
+The GeocodeOnce procedure can help standardizing addresses
+
+[source,cypher]
+----
+MATCH (u:User) where exists(u.location) 
+WITH DISTINCT u.location as loc
+CALL apoc.spatial.geocodeOnce(loc) YIELD latitude, longitude, description
+WITH loc, latitude, longitude, description
+MATCH (u:User) where u.location = loc
+SET u.latitude = latitude,u.longitude = longitude,u.location_desc = description
+----
+
+More interesting than the locations declared in the Troll's profiles is the locations mentioned in their tweets.
+- Some of the hashtags are actually locations
+- The text of the tweet can include location names
+
+Here is an example of how to work with location data to build an Interactive Geographical Data Visualization http://www.lyonwj.com/2017/11/28/geocoding-paradise-papers-neo4j-spatial-visualization/
+
+
 == Across Social Networks
+
+* Twitter accounts can have counterparts on other social networks. 
+* Tweets may also include links to content or users from other social networks. 
+
 
 == Community Detection
 
+
+
 == Natural Language Processing
+
+The content of a tweet can be analised using NLP techniques for entity extraction, sentiment analysis, etc.
+
 
 == Right / Left Wing Politics
 
+* Sentiment analysis? 
+* Analysis of hyperlinks in the tweet to right or left wing media sources?
+
 == Tweets Connected To Events
 
+* Is it possible to correlate tweets and events (like terrorist attacks, candidate's nominations, election day...). 
+* Is there any time based pattern (other than retweets) that can be extracted from the data?
+
 == Beyond US Politics
+
