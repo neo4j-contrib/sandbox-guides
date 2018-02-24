@@ -1,0 +1,31 @@
+= Using Tableau and WTFcsv to visualize data from the Twitter Trolls Graph
+
+Most data visualization tools (like Tableau, Qlik, WTFCSV, etc.) work on data frames. Data frames are tabular structures. In order to analyse the the Twitter Trols Graph in these tools, we'll have to write cypher queries that 'flatten' the graph into a data frame. Cypher can help us writing these queries. 
+
+== Exporting data as CSV
+
+One way of working is exporting your tabular data as CSV and importing it in your visualization tool. Let's give it a try:
+
+The following query returns information about the tweets by the most influential users (those with more than 15K followers). Specifically, we are extracting the year, time of day, number of words in the tweet, and number of hashtags.
+
+[source,cypher]
+----
+MATCH (t:Tweet)<-[:POSTED]-(u) WHERE exists(t.text) AND u.followers_count > 15000
+RETURN u.user_key as user, u.followers_count as followers, substring(t.created_str,0,4) as year, substring(t.created_str,11,2) as timeofday, size(split(t.text," ")) as wordcount, size((t)-[:HAS_TAG]->()) as hashtagcount
+----
+
+== Direct connection from Tableau (via WDC)
+
+Downlad this data frame directly from the browser (or the cypher shell if you ar CLI user), save it as CSV and then upload it to https://databasic.io/en/wtfcsv/
+
+A more detailed version of the same query includes also the date of the tweet and returns no only the top users but all of them
+
+[source,cypher]
+----
+MATCH (t:Tweet)<-[:POSTED]-(u) where exists(t.text) 
+RETURN u.user_key as user, u.followers_count as followers, u.location as location, u.lang as lang, t.created_str as date, substring(t.created_str,11,2) as timeofday, size(split(t.text," ")) as wordcount, size((t)-[:HAS_TAG]->()) as hashtagcount
+----
+
+You can import the data directly from Tableau by using the Web Data Connector. Point at this url https://neo4j-contrib.github.io/neo4j-tableau/website/Neo4jWdc2.html and enter your Neo4j DB details
+
+
