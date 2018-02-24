@@ -1,4 +1,6 @@
-= Using Tableau and WTFcsv to visualize data from the Twitter Trolls Graph
+= BI tool viz
+
+== Using Tableau and WTFcsv to visualize data from the Twitter Trolls Graph
 
 Most data visualization tools (like Tableau, Qlik, WTFCSV, etc.) work on data frames. Data frames are tabular structures. In order to analyse the the Twitter Trols Graph in these tools, we'll have to write cypher queries that 'flatten' the graph into a data frame. Cypher can help us writing these queries. 
 
@@ -14,9 +16,13 @@ MATCH (t:Tweet)<-[:POSTED]-(u) WHERE exists(t.text) AND u.followers_count > 1500
 RETURN u.user_key as user, u.followers_count as followers, substring(t.created_str,0,4) as year, substring(t.created_str,11,2) as timeofday, size(split(t.text," ")) as wordcount, size((t)-[:HAS_TAG]->()) as hashtagcount
 ----
 
-== Direct connection from Tableau (via WDC)
-
 Downlad this data frame directly from the browser (or the cypher shell if you ar CLI user), save it as CSV and then upload it to https://databasic.io/en/wtfcsv/
+The image shows the result when you upload this dataset. 
+
+image::{img}/wtfcsv.png[float=right]
+
+
+== Direct connection from Tableau (via WDC)
 
 A more detailed version of the same query includes also the date of the tweet and returns no only the top users but all of them
 
@@ -26,6 +32,12 @@ MATCH (t:Tweet)<-[:POSTED]-(u) where exists(t.text)
 RETURN u.user_key as user, u.followers_count as followers, u.location as location, u.lang as lang, t.created_str as date, substring(t.created_str,11,2) as timeofday, size(split(t.text," ")) as wordcount, size((t)-[:HAS_TAG]->()) as hashtagcount
 ----
 
-You can import the data directly from Tableau by using the Web Data Connector. Point at this url https://neo4j-contrib.github.io/neo4j-tableau/website/Neo4jWdc2.html and enter your Neo4j DB details
+You can import the data directly from Tableau by using the Web Data Connector. Point at this url https://neo4j-contrib.github.io/neo4j-tableau/website/Neo4jWdc2.html and enter your Neo4j DB details:
+
+image::{img}/wdc.png[float=right]
+
+Once your dataset is loade into Tableau you can build your dashboards as with any other dataset. Here is an example on the Russian Twitter Trolls Graph data:
+
+image::{img}/tableau.png[float=right]
 
 
