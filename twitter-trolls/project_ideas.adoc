@@ -1,0 +1,30 @@
+= Russian Twitter Trolls
+:experimental:
+:icon: font
+
+== Further Research Ideas
+
+* Explore Tweets from the Mueller indictment
+* Explore Locations - many accounts were tweeting
+* Look for possible trolls across other social networks
+* Looking at communities of troll retweet network
+* NLP - entity extraction and sentiment analysis of the Tweets
+* Quantify right/left wing political and the sentiment around those
+* Tweets connected to events, by following hashtags can you track tweets around certain events.
+* Beyond US politics - many of the tweets are about politics outside of the US (what were they tweeting about? Merkel, Italian example)
+
+== Mueller Indictment
+
+== Exploring Locations
+
+== Across Social Networks
+
+== Community Detection
+
+== Natural Language Processing
+
+== Right / Left Wing Politics
+
+== Tweets Connected To Events
+
+== Beyond US Politics

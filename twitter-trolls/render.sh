@@ -3,6 +3,11 @@ GUIDES=../neo4j-guides
 
 function render {
 $GUIDES/run.sh index.adoc index.html +1 "$@"
+$GUIDES/run.sh exercise_index.adoc exercise.html +1 "$@"
+$GUIDES/run.sh introguide.adoc intro.html +1 "$@"
+$GUIDES/run.sh questions.adoc questions.html +1 "$@"
+$GUIDES/run.sh project_ideas.adoc project_ideas.html +1 "$@"
+$GUIDES/run.sh graph_algorithms.adoc graph_algorithms.html +1 "$@"
 }
 
 if [ "$1" == "publish" ]; then
