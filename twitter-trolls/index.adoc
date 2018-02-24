@@ -663,6 +663,8 @@ We've only just begun to explore the data. Here are some ideas for further data 
 * Blog link:http://www.lyonwj.com/2017/11/15/entity-extraction-russian-troll-tweets-neo4j/[NLP And Entity Extraction^]
 * Article link:https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176[NBC News Article^]
 
+. pass:a[<a play-topic='{GUIDES}/exercise.html'>Hands On Exercise</a>]
+
 ++++
 </div>
 ++++

@@ -171,3 +171,34 @@ LIMIT 10
 ++++
 </div>
 ++++
+
+== Graph Visualization
+
+++++
+<div class="col-lg-6">
+++++
+
+Graph visualization is an important tool for interpreting the results of graph algorithms. Specifically:
+
+* *Node size* relative to *centrality*
+* Node color specific to community detection
+* Relationship thickness relative to weight
+
+Try using Neovis.js to visualize the results of the graph algorithms we just ran link:http://heuristic-mccarthy-6d9e00.netlify.com/examples/trolls.html[here.]
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-6">
+++++
+
+[subs=attributes]
+++++
+<img src="{img}/viz.png" class="img-responsive">
+++++
+
+++++
+</div>
+++++

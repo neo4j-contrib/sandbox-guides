@@ -8,11 +8,12 @@ $GUIDES/run.sh introguide.adoc intro.html +1 "$@"
 $GUIDES/run.sh questions.adoc questions.html +1 "$@"
 $GUIDES/run.sh project_ideas.adoc project_ideas.html +1 "$@"
 $GUIDES/run.sh graph_algorithms.adoc graph_algorithms.html +1 "$@"
+$GUIDES/run.sh tableauviz.adoc tabular_viz.html +1 "$@"
 }
 
 if [ "$1" == "publish" ]; then
 	URL=guides.neo4j.com/sandbox/twitter-trolls
-	render http://$URL -a csv-url=http://guides.neo4j.com/sandbox/twitter-trolls/data/ -a env-training
+	render https://$URL -a csv-url=http://guides.neo4j.com/sandbox/twitter-trolls/data/ -a env-training
 	s3cmd put --cf-invalidate --recursive -P *.html img s3://${URL}/
 	s3cmd put --cf-invalidate -P index.html s3://${URL}
 	echo "Publication Done"

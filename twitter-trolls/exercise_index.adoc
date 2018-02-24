@@ -11,7 +11,7 @@
 . pass:a[<a play-topic='{GUIDES}/intro.html'>Cypher Hands On</a>]
 . pass:a[<a play-topic='{GUIDES}/questions.html'>Translating Journalistic Questions To Cypher</a>]
 . pass:a[<a play-topic='{GUIDES}/tabular_viz.html'>Visualizing Tabular Data</a>]
-. pass:a[<a play-topic='{GUIDES}/graph_algorithsm.html'>Graph Algorithms</a>]
+. pass:a[<a play-topic='{GUIDES}/graph_algorithms.html'>Graph Algorithms</a>]
 . pass:a[<a play-topic='{GUIDES}/project_ideas.html'>Project Ideas</a>]
 
 ++++

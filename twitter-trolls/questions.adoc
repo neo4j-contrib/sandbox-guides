@@ -31,42 +31,12 @@ What troll tweets are the most popular?
 <div class="col-lg-8">
 ++++
 
-.Some description of the query
 [source,cypher]
 ----
 MATCH (:Troll)-[:POSTED]->(t:Tweet)
 WHERE EXISTS(t.retweet_count)
 RETURN t.text, t.retweet_count 
 ORDER BY t.retweet_count DESC LIMIT 100
-----
-
-++++
-</div>
-++++
-
-== Users
-
-++++
-<div class="col-lg-4">
-++++
-
-What users are the Trolls interacting with most frequently?
-
-++++
-</div>
-++++
-
-++++
-<div class="col-lg-8">
-++++
-
-.Some description of the query
-[source,cypher]
-----
-MATCH (tr:Troll)-[:POSTED]->(tw:Tweet)-[:IN_REPLY_TO]->(:Tweet)<-[:POSTED]-(u:User)
-RETURN distinct(u.screen_name), count(tw) as x
-ORDER BY x desc
-LIMIT 100;
 ----
 
 ++++
@@ -90,7 +60,6 @@ When were the Troll accounts created?
 <div class="col-lg-8">
 ++++
 
-.Some description of the query
 [source,cypher]
 ----
 MATCH (t:Troll) WHERE NOT t.created_at = ""
@@ -118,7 +87,6 @@ What applications were used by the Trolls to post the tweets?
 <div class="col-lg-8">
 ++++
 
-.Some description of the query
 [source,cypher]
 ----
 MATCH (:Troll)-[:POSTED]->(tw:Tweet)-[:POSTED_VIA]->(s:Source)
@@ -147,7 +115,6 @@ What hashtags were used most by the Trolls?
 <div class="col-lg-8">
 ++++
 
-.Some description of the query
 [source,cypher]
 ----
 MATCH (:Troll)-[:POSTED]->(:Tweet)-[:HAS_TAG]->(ht:Hashtag)
@@ -177,7 +144,6 @@ What hashtags used by the Trolls had the most impact?
 <div class="col-lg-8">
 ++++
 
-.Some description of the query
 [source,cypher]
 ----
 MATCH (h:Hashtag)<-[:HAS_TAG]-(t:Tweet)<-[:POSTED]-(:Troll)

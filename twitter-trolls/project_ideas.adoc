@@ -15,6 +15,13 @@
 
 == Mueller Indictment
 
+The link:https://www.justice.gov/file/1035477/download^[Mueller indictment] which named the Internet Research Agency (IRA) and 13 individuals connected to IRA also specifcally names two Troll Twitter accounts: `TEN_gop` and `March_For_Trump` as well as several hashtags used by the trolls, including: #Trump20l6, #TrumpTrain, 
+#IWontProtectHillary, #Hillary4Prison, #VoterFraud, #HillaryClintonIsNotMyPresident, #HillaryClintonForPrison2016, #NeverHillary, #HillaryForPrison, #Trump, #Trump4President
+
+What tweets do we have in the database relevant to the Mueller indictment? What else can we learn relevant to the indictment?
+
+
+
 == Exploring Locations
 
 There is geographical information in the Twitter Trolls graph: User accounts have obviously a location, even though it's not always accurate or even populated.
@@ -78,3 +85,4 @@ Here is a link to more ideas in this area: https://hackernoon.com/six-ways-to-ex
 
 == Beyond US Politics
 
+While most of the tweets captured were centered on the US election, many tweets were posted by the Trolls about world wide issues. For example, tweets about Merkel in Germany and hashtags related to Italian politics: #renzi #tizianorenzi #consip. What were the Trolls tweeting about outside of US politics?
