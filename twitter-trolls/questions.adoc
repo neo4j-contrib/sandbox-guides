@@ -6,11 +6,43 @@
 
 Let's explore how can construct Cypher queries to answer questions that we have of the data:
 
-1. What is the question?
+1. Start with a question.
 1. Define the graph pattern that we're interested in. *What piece of the graph do I have to traverse to answer this question?*
 1. Whiteboard this if it helps
 1. Write that pattern using Cypher's graph ASCII-art
-1. Add predicate filters
+1. Add predicate filters `WHERE.. CONTAINS, IN, =, ...`
+1. Add aggregations (`COUNT, SUM, AVG, ...`) as necessary
+1. Select data to `RETURN`
+
+
+== Most popular Troll Tweets
+
+++++
+<div class="col-lg-4">
+++++
+
+What troll tweets are the most popular?
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-8">
+++++
+
+.Some description of the query
+[source,cypher]
+----
+MATCH (:Troll)-[:POSTED]->(t:Tweet)
+WHERE EXISTS(t.retweet_count)
+RETURN t.text, t.retweet_count 
+ORDER BY t.retweet_count DESC LIMIT 100
+----
+
+++++
+</div>
+++++
 
 == Users
 
