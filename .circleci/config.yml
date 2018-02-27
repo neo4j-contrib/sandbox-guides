@@ -5,8 +5,7 @@ jobs:
       - image: circleci/ruby:2.4.1-node
      steps:
        - checkout
-       - git submodule sync
-       - git submodule update --init
+       - run: git submodule sync && git submodule update --init
        - run: pwd
        - run: ls
        - run: bundle install
