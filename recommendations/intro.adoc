@@ -28,7 +28,7 @@ Personalized product recommendations can increase conversions, improve sales rat
 ++++
 === Graph-Based Recommendations
 
-Generating personalized recommendations is one of the most common use cases for a graph database. Some of the main benefits of using graphs to generate recommendations include:
+Generating *personalized recommendations* is one of the most common use cases for a graph database. Some of the main benefits of using graphs to generate recommendations include:
 
 1. *Performance*. Index-free adjacency allows for **calculating recommendations in real time**, ensuring the recommendation is always relevant and reflecting up-to-date information.
 1. *Data model*. The labeled property graph model allows for easily combining datasets from multiple sources, allowing enterprises to **unlock value from previously separated data silos.**
