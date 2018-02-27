@@ -445,8 +445,8 @@ LIMIT 10<!--/code--></pre>
     <div>
       <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (c:Character)
-return c.name, c.book1BetweennessCentrality, c.book45BetweennessCentrality, c.book45BetweennessCentrality - c.book1BetweennessCentrality AS difference
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Character)
+RETURN c.name, c.book1BetweennessCentrality, c.book45BetweennessCentrality, c.book45BetweennessCentrality - c.book1BetweennessCentrality AS difference
 ORDER BY difference DESC
 LIMIT 10<!--/code--></pre>
 </div>
@@ -464,8 +464,8 @@ LIMIT 10<!--/code--></pre>
     <div>
       <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (c:Character)
-return c.name, c.book1BetweennessCentrality, c.book45BetweennessCentrality, c.book45BetweennessCentrality - c.book1BetweennessCentrality AS difference
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Character)
+RETURN c.name, c.book1BetweennessCentrality, c.book45BetweennessCentrality, c.book45BetweennessCentrality - c.book1BetweennessCentrality AS difference
 ORDER BY difference
 LIMIT 10<!--/code--></pre>
 </div>
@@ -509,7 +509,7 @@ LIMIT 10<!--/code--></pre>
 
 <slide class="row-fluid">
   <div class="col-sm-12">
-    <h3>Page Rank</h3>
+    <h3>PageRank</h3>
     <br/>
     <div>
       <div class="paragraph">
@@ -535,7 +535,7 @@ In our context, PageRank centrality nicely captures narrative tension. Indeed, m
 
 <slide class="row-fluid">
   <div class="col-sm-12">
-    <h3>Calculating Page Rank</h3>
+    <h3>Calculating PageRank</h3>
     <br/>
     <div>
       <div class="paragraph">
@@ -572,7 +572,7 @@ In our context, PageRank centrality nicely captures narrative tension. Indeed, m
 
 <slide class="row-fluid">
   <div class="col-sm-12">
-    <h3>Querying Page Rank</h3>
+    <h3>Querying PageRank</h3>
     <br/>
     <div>
       <div class="paragraph">
@@ -660,7 +660,7 @@ ORDER BY count DESC<!--/code--></pre>
     <div>
       <div class="paragraph">
 <p>It&#8217;d be good to know who are the influential people in each community.
-To do that we&#8217;ll need to calculate a Page Rank score for each character across all the books:</p>
+To do that we&#8217;ll need to calculate a PageRank score for each character across all the books:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -703,7 +703,7 @@ WITH c.community AS community, COUNT(*) AS count
 ORDER BY count DESC
 SKIP 1 LIMIT 1
 MATCH path = (c:Character {community: community})--(c2:Character {community: community})
-return path<!--/code--></pre>
+RETURN path<!--/code--></pre>
 </div>
 </div>
 	</div>
@@ -714,11 +714,11 @@ return path<!--/code--></pre>
 
 <slide class="row-fluid">
   <div class="col-sm-12">
-    <h3>Intra community Page Rank</h3>
+    <h3>Intra community PageRank</h3>
     <br/>
     <div>
       <div class="paragraph">
-<p>We can also calculate the Page Rank within communities.</p>
+<p>We can also calculate the PageRank within communities.</p>
 </div>
 <div class="paragraph">
 <p>Run the following query to calculate the page rank for the 2nd largest community:</p>
@@ -746,7 +746,7 @@ RETURN value<!--/code--></pre>
 
 <slide class="row-fluid">
   <div class="col-sm-12">
-    <h3>Intra community Page Rank</h3>
+    <h3>Intra community PageRank</h3>
     <br/>
     <div>
       <div class="paragraph">

@@ -58,7 +58,7 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "http://guides.neo4j.com/sandbox/legis-graph/data/cm.txt" AS row FIELDTERMINATOR "|"
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "{csv-url}cm.txt" AS row FIELDTERMINATOR "|"
 WITH row limit 10
 CREATE (s:State { code: row.CMTE_ST })<!--/code--></pre>
 </div>
@@ -91,7 +91,7 @@ Let&#8217;s delete the states we have created and start again</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "http://guides.neo4j.com/sandbox/legis-graph/data/cm.txt" AS row FIELDTERMINATOR "|"
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "{csv-url}cm.txt" AS row FIELDTERMINATOR "|"
 WITH row limit 10
 MERGE (s:State { code: row.CMTE_ST })<!--/code--></pre>
 </div>
@@ -102,7 +102,7 @@ Now let&#8217;s do the same with the cities in the sixth column. The same record
 </div>
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "http://guides.neo4j.com/sandbox/legis-graph/data/cm.txt" AS row FIELDTERMINATOR "|"
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "{csv-url}cm.txt" AS row FIELDTERMINATOR "|"
 WITH row limit 10
 MERGE (s:State { code: row.CMTE_ST })
 MERGE (c:City { name: row.CMTE_CITY })<!--/code--></pre>
@@ -113,7 +113,7 @@ MERGE (c:City { name: row.CMTE_CITY })<!--/code--></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "http://guides.neo4j.com/sandbox/legis-graph/data/cm.txt" AS row FIELDTERMINATOR "|"
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "{csv-url}cm.txt" AS row FIELDTERMINATOR "|"
 WITH row limit 10
 MERGE (s:State { code: row.CMTE_ST })
 MERGE (c:City { name: row.CMTE_CITY })
@@ -150,7 +150,7 @@ RETURN c,s LIMIT 15<!--/code--></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "http://guides.neo4j.com/sandbox/legis-graph/data/cm.txt" AS row FIELDTERMINATOR "|"
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "{csv-url}cm.txt" AS row FIELDTERMINATOR "|"
 WITH row limit 10
 RETURN row.CMTE_ID AS committeId, row.TRES_NM AS treasurerName<!--/code--></pre>
 </div>
@@ -164,7 +164,7 @@ RETURN row.CMTE_ID AS committeId, row.TRES_NM AS treasurerName<!--/code--></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "http://guides.neo4j.com/sandbox/legis-graph/data/cm.txt" AS row FIELDTERMINATOR "|"
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "{csv-url}cm.txt" AS row FIELDTERMINATOR "|"
 WITH row limit 10
 ...
 MERGE (c:Committee ...

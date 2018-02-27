@@ -26,6 +26,9 @@ if [ "$1" == "publish" ]; then
   	s3cmd put -P index.html s3://${URL}
   fi
   echo "Publication Done"
+elif [ "$1" == "render-only" ]; then
+  URL=guides.neo4j.com/sandbox/legis-graph
+  render http://$URL
 else
   URL=localhost:8001/sandbox/legis-graph
   render http://$URL -a csv-url=file:/// -a env-training

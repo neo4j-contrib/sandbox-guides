@@ -17,6 +17,9 @@ if [ "$1" == "publish" ]; then
 	s3cmd put --cf-invalidate --recursive -P *.html img s3://${URL}/
 	s3cmd put --cf-invalidate -P index.html s3://${URL}
 	echo "Publication Done"
+elif [ "$1" == "render-only" ]; then
+  URL=guides.neo4j.com/sandbox/twitter-trolls
+  render http://$URL
 else
 	URL=localhost:8001/sandbox/twitter-trolls
 	render http://$URL -a csv-url=file:/// -a img=//localhost:8001/img -a env-training

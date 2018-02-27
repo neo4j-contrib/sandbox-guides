@@ -18,6 +18,9 @@ if [ "$1" == "publish" ]; then
   fi
 
   echo "Publication Done"
+elif [ "$1" == "render-only" ]; then
+  URL=guides.neo4j.com/sandbox/us-elections-2016
+  render http://$URL
 else
   URL=localhost:8001/sandbox/us-elections-2016
   render http://$URL

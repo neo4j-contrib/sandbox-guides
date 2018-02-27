@@ -110,7 +110,7 @@ C00000729|AMERICAN DENTAL ASSOCIATION POLITICAL ACTION COMMITTEE|HARRISON, THOMA
 <div class="listingblock">
 <div class="title">Create <code>FECCommittee</code> nodes</div>
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "http://guides.neo4j.com/sandbox/legis-graph/data/cm.txt" AS row FIELDTERMINATOR "|"
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "file:///cm.txt" AS row FIELDTERMINATOR "|"
 CREATE (c:FECCommittee {committee_id: row.CMTE_ID})
 SET c.name = row.CMTE_NAME,
     c.designation = row.CMTE_DSGN,
@@ -156,7 +156,7 @@ H0AL05163|2016|2016|C00464149|H|P|201864</pre>
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// Link candidates to committees
 USING PERIODIC COMMIT
-LOAD CSV WITH HEADERS FROM "http://guides.neo4j.com/sandbox/legis-graph/data/ccl.txt" AS row FIELDTERMINATOR "|"
+LOAD CSV WITH HEADERS FROM "file:///ccl.txt" AS row FIELDTERMINATOR "|"
 MATCH (c:FECCommittee) WHERE c.committee_id = row.CMTE_ID
 MATCH (l:Legislator) WHERE l.fecIDs CONTAINS row.CAND_ID
 CREATE (c)-[:FUNDS]->(l);<!--/code--></pre>
@@ -204,7 +204,7 @@ C00411116|N|M4|P|15970337992|15|IND|SADHWANI, ANAND|HAWTHORNE|CA|902506844|SPACE
 <div class="listingblock">
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->USING PERIODIC COMMIT
-LOAD CSV WITH HEADERS FROM "http://guides.neo4j.com/sandbox/legis-graph/data/itcont_sm.txt" AS row FIELDTERMINATOR "|"
+LOAD CSV WITH HEADERS FROM "file:///itcont_sm.txt" AS row FIELDTERMINATOR "|"
 CREATE (con:Contribution)
     SET con.sub_id = row.SUB_ID,
         con.amount = toFloat(row.TRANSACTION_AMT),
@@ -236,7 +236,7 @@ CREATE (con)-[:MADE_TO]->(c)<!--/code--></pre>
 <div class="listingblock">
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->USING PERIODIC COMMIT
-LOAD CSV WITH HEADERS FROM "http://guides.neo4j.com/sandbox/legis-graph/data/itcont_sm.txt" AS row FIELDTERMINATOR "|"
+LOAD CSV WITH HEADERS FROM "file:///itcont_sm.txt" AS row FIELDTERMINATOR "|"
 WITH row WHERE row.NAME IS NOT NULL AND row.ZIP_CODE IS NOT NULL // only include rows where we have a contributor name and zip code
 MERGE (c:Contributor {namezip: row.NAME + row.ZIP_CODE})
 ON CREATE SET c.name = row.NAME,
@@ -260,7 +260,7 @@ ON CREATE SET c.name = row.NAME,
 <div class="listingblock">
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->USING PERIODIC COMMIT
-LOAD CSV WITH HEADERS FROM "http://guides.neo4j.com/sandbox/legis-graph/data/itcont_sm.txt" AS row FIELDTERMINATOR "|"
+LOAD CSV WITH HEADERS FROM "file:///itcont_sm.txt" AS row FIELDTERMINATOR "|"
 MATCH (con:Contributor) WHERE con.namezip = row.NAME + row.ZIP_CODE
 MATCH (c:Contribution) WHERE c.sub_id = row.SUB_ID
 CREATE (con)-[:MADE_CONTRIBUTION]->(c)<!--/code--></pre>
@@ -296,7 +296,7 @@ CREATE (con)-[:MADE_CONTRIBUTION]->(c)<!--/code--></pre>
 <div class="listingblock">
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->USING PERIODIC COMMIT
-LOAD CSV WITH HEADERS FROM "http://guides.neo4j.com/sandbox/legis-graph/data/itcont_sm.txt" AS row FIELDTERMINATOR "|"
+LOAD CSV WITH HEADERS FROM "file:///itcont_sm.txt" AS row FIELDTERMINATOR "|"
 WITH row WHERE row.OCCUPATION IS NOT NULL AND row.EMPLOYER IS NOT NULL // filter on rows that have an Employer and Occupation value
 MERGE (o:Occupation {name: row.OCCUPATION})
 MERGE (e:Employer {name: row.EMPLOYER})<!--/code--></pre>
@@ -308,7 +308,7 @@ MERGE (e:Employer {name: row.EMPLOYER})<!--/code--></pre>
 <div class="listingblock">
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->USING PERIODIC COMMIT
-LOAD CSV WITH HEADERS FROM "http://guides.neo4j.com/sandbox/legis-graph/data/itcont_sm.txt" AS row FIELDTERMINATOR "|"
+LOAD CSV WITH HEADERS FROM "file:///itcont_sm.txt" AS row FIELDTERMINATOR "|"
 MATCH (con:Contributor) WHERE con.namezip = row.NAME + row.ZIP_CODE
 MATCH (s:State) WHERE s.code = row.STATE
 MATCH (e:Employer) WHERE e.name = row.EMPLOYER

@@ -17,6 +17,9 @@ if [ "$1" == "publish" ]; then
     s3cmd put -P index.html s3://${URL}
   fi
   echo "Publication Done"
+elif [ "$1" == "render-only" ]; then
+  URL=guides.neo4j.com/sandbox/network-management
+  render http://$URL
 else
   URL=localhost:8001/
   render http://$URL

@@ -81,7 +81,7 @@
 <div class="listingblock">
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS
-FROM 'http://guides.neo4j.com/sandbox/legis-graph/data/legislators-current.csv' AS row
+FROM 'file:///legislators-current.csv' AS row
 RETURN row LIMIT 10;<!--/code--></pre>
 </div>
 </div>
@@ -207,7 +207,7 @@ RETURN row LIMIT 10;<!--/code--></pre>
 <div class="listingblock">
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS
-FROM 'http://guides.neo4j.com/sandbox/legis-graph/data/legislators-current.csv' AS row
+FROM 'file:///legislators-current.csv' AS row
 MERGE (l:Legislator {thomasID: row.thomasID})
 ON CREATE SET l = row<!--/code--></pre>
 </div>
@@ -226,7 +226,7 @@ ON CREATE SET l = row<!--/code--></pre>
 <div class="listingblock">
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS
-FROM 'http://guides.neo4j.com/sandbox/legis-graph/data/legislators-current.csv' AS row
+FROM 'file:///legislators-current.csv' AS row
 MATCH (l:Legislator {thomasID: row.thomasID})
 MERGE (s:State {code: row.state})
 CREATE UNIQUE (l)-[:REPRESENTS]->(s)
@@ -253,7 +253,7 @@ CREATE UNIQUE (l)-[:ELECTED_TO]->(b);<!--/code--></pre>
 <div class="listingblock">
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS
-FROM 'http://guides.neo4j.com/sandbox/legis-graph/data/bills.csv' AS row
+FROM 'file:///bills.csv' AS row
 RETURN row LIMIT 10<!--/code--></pre>
 </div>
 </div>
@@ -280,7 +280,7 @@ RETURN row LIMIT 10<!--/code--></pre>
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->USING PERIODIC COMMIT
 LOAD CSV WITH HEADERS
-FROM 'http://guides.neo4j.com/sandbox/legis-graph/data/bills.csv' AS row
+FROM 'file:///bills.csv' AS row
 MERGE (b:Bill {billID: row.billID})
 ON CREATE SET b = row<!--/code--></pre>
 </div>
@@ -313,7 +313,7 @@ ON CREATE SET b = row<!--/code--></pre>
 <div class="listingblock">
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS
-FROM 'http://guides.neo4j.com/sandbox/legis-graph/data/subjects.csv' AS row
+FROM 'file:///subjects.csv' AS row
 RETURN row LIMIT 10;<!--/code--></pre>
 </div>
 </div>
@@ -328,7 +328,7 @@ RETURN row LIMIT 10;<!--/code--></pre>
 <div class="listingblock">
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS
-FROM 'http://guides.neo4j.com/sandbox/legis-graph/data/subjects.csv' AS row
+FROM 'file:///subjects.csv' AS row
 MERGE (s:Subject {title: row.title})<!--/code--></pre>
 </div>
 </div>
@@ -355,7 +355,7 @@ MERGE (s:Subject {title: row.title})<!--/code--></pre>
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->USING PERIODIC COMMIT
 LOAD CSV WITH HEADERS
-FROM 'http://guides.neo4j.com/sandbox/legis-graph/data/bill_subjects.csv' AS row
+FROM 'file:///bill_subjects.csv' AS row
 MATCH (bill:Bill { billID: row.billID }), (subject:Subject { title: row.title })
 MERGE (bill)-[r:DEALS_WITH]->(subject);<!--/code--></pre>
 </div>
@@ -380,7 +380,7 @@ MERGE (bill)-[r:DEALS_WITH]->(subject);<!--/code--></pre>
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->USING PERIODIC COMMIT
 LOAD CSV WITH HEADERS
-FROM 'http://guides.neo4j.com/sandbox/legis-graph/data/sponsors.csv' AS row
+FROM 'file:///sponsors.csv' AS row
 MATCH (bill:Bill { billID: row.billID }), (legislator:Legislator { thomasID: row.thomasID })
 MERGE (bill)-[r:SPONSORED_BY]->(legislator)
     ON CREATE SET r.cosponsor = CASE WHEN row.cosponsor = "0" THEN False ELSE True END ;<!--/code--></pre>
@@ -417,7 +417,7 @@ MERGE (bill)-[r:SPONSORED_BY]->(legislator)
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// Create Committee nodes
 LOAD CSV WITH HEADERS
-FROM 'http://guides.neo4j.com/sandbox/legis-graph/data/committees-current.csv' AS row
+FROM 'file:///committees-current.csv' AS row
 MERGE (c:Committee {thomasID: row.thomasID})
   ON CREATE SET c = row;<!--/code--></pre>
 </div>
@@ -426,7 +426,7 @@ MERGE (c:Committee {thomasID: row.thomasID})
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cyper" lang="cyper"><!--code class="cyper language-cyper"-->// Connect bills to committees
 LOAD CSV WITH HEADERS
-FROM 'http://guides.neo4j.com/sandbox/legis-graph/data/bill_committees.csv' AS row
+FROM 'file:///bill_committees.csv' AS row
 MATCH (b:Bill {billID: row.billID})
 MATCH (c:Committee {thomasID: row.committeeID})
 MERGE (b)-[:REFERRED_TO]->(c);<!--/code--></pre>
@@ -436,7 +436,7 @@ MERGE (b)-[:REFERRED_TO]->(c);<!--/code--></pre>
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->// Load Committee Members
 LOAD CSV WITH HEADERS
-FROM 'http://guides.neo4j.com/sandbox/legis-graph/data/committee-members.csv' AS row
+FROM 'file:///committee-members.csv' AS row
 MATCH (c:Committee {thomasID: row.committeeID})
 MATCH (l:Legislator {thomasID: row.legislatorID})
 CREATE UNIQUE (l)-[r:SERVES_ON]->(c)

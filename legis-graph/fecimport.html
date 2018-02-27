@@ -132,7 +132,7 @@
    <h4>cm.txt</h4>
    <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "http://guides.neo4j.com/sandbox/legis-graph/data/cm.txt" AS row FIELDTERMINATOR "|"
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "file:///cm.txt" AS row FIELDTERMINATOR "|"
 WITH row limit 10
 RETURN row<!--/code--></pre>
 </div>
@@ -143,7 +143,7 @@ RETURN row<!--/code--></pre>
    <h4>ccl.txt</h4>
    <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "http://guides.neo4j.com/sandbox/legis-graph/data/ccl.txt" AS row FIELDTERMINATOR "|"
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "file:///ccl.txt" AS row FIELDTERMINATOR "|"
 WITH row limit 10
 RETURN row<!--/code--></pre>
 </div>
@@ -154,7 +154,7 @@ RETURN row<!--/code--></pre>
    <h4>itcont_sm.txt</h4>
    <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "http://guides.neo4j.com/sandbox/legis-graph/data/itcont_sm.txt" AS row FIELDTERMINATOR "|"
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "file:///itcont_sm.txt" AS row FIELDTERMINATOR "|"
 WITH row limit 10
 RETURN row<!--/code--></pre>
 </div>
@@ -211,7 +211,7 @@ RETURN row<!--/code--></pre>
 <div class="listingblock">
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->USING PERIODIC COMMIT
-LOAD CSV WITH HEADERS FROM "http://guides.neo4j.com/sandbox/legis-graph/data//cm.txt" AS row ... // remember how to set the field terminator?
+LOAD CSV WITH HEADERS FROM "file:////cm.txt" AS row ... // remember how to set the field terminator?
 WITH row
 MERGE (f:FECCommittee... // what property uniquely identifies the FEC Committee?
 ON CREATE SET ...
@@ -276,7 +276,7 @@ MERGE ... // Create a relationship connecting the Legislator and the FECCommitte
    <h4>The Individual Contributions File</h4>
    <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "http://guides.neo4j.com/sandbox/legis-graph/data/itcont_sm.txt" AS row FIELDTERMINATOR "|"
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->LOAD CSV WITH HEADERS FROM "file:///itcont_sm.txt" AS row FIELDTERMINATOR "|"
 WITH row limit 10
 RETURN row<!--/code--></pre>
 </div>
@@ -291,7 +291,7 @@ RETURN row<!--/code--></pre>
 <div class="listingblock">
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->USING PERIODIC COMMIT
-LOAD CSV WITH HEADERS FROM "http://guides.neo4j.com/sandbox/legis-graph/data/itcont_sm.txt" AS row FIELDTERMINATOR "|"
+LOAD CSV WITH HEADERS FROM "file:///itcont_sm.txt" AS row FIELDTERMINATOR "|"
 ...<!--/code--></pre>
 </div>
 </div>
