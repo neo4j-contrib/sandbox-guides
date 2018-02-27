@@ -1,5 +1,5 @@
 echo "Usage: sh render.sh [publish]"
-GUIDES=../../neo4j-guides
+GUIDES=../neo4j-guides
 
 if [ "$1" == "publish" ]; then
         URL=guides.neo4j.com/sandbox/icij-panama-papers
