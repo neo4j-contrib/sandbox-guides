@@ -1,6 +1,10 @@
 echo "Usage: sh render.sh [publish]"
 GUIDES=../neo4j-guides
 
+function render {
+$GUIDES/run.sh index.adoc index.html +1 "$@"
+}
+
 if [ "$1" == "publish" ]; then
         URL=guides.neo4j.com/sandbox/icij-panama-papers
         if hash aws 2>/dev/null; then
