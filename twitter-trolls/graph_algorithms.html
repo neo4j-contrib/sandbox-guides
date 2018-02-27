@@ -1,0 +1,247 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Russian Twitter Trolls</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+   <h4>Russian Twitter Trolls</h4>
+   
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Inferred Relationships</h3>
+    <br/>
+    <div>
+      <div class="col-lg-9">
+<div class="paragraph">
+<p>Inferred relationships are important in graphs. For example, when a Troll account retweets another Troll&#8217;s tweet we could say the trolls have an inferred <strong>"AMPLIFIED"</strong> relationship: one troll is amplifying the message of the other.</p>
+</div>
+<div class="listingblock">
+<div class="title">Inferred AMPLIFIED relationships exist when a troll account retweets another troll</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH p=(r1:Troll)-[:POSTED]-&gt;(:Tweet)&lt;-[:RETWEETED]-(:Tweet)&lt;-[:POSTED]-(r2:Troll)
+RETURN p LIMIT 1<!--/code--></pre>
+</div>
+</div>
+</div>
+<div class="col-lg-3">
+<img src="https://guides.neo4j.com/sandbox/twitter-trolls/img/amplified.png" class="img-responsive">
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Graph Algorithms</h3>
+    <br/>
+    <div>
+      <div class="col-lg-9">
+<div class="paragraph">
+<p><a href="https://neo4j.com/graph-analytics/" target="_blank">Graph algorithms</a> are a way to apply analytics to the entire graph to further enhance our understanding of the data. These algorithms fall into three categories:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Centrality</strong> - What are the most important nodes in the network? <em>PageRank, Betweenness Centrality, Closeness Centrality</em></p>
+</li>
+<li>
+<p><strong>Community detection</strong> - How can the graph be partitioned? <em>Union Find, Louvain, Label Propagation, Connected Components</em></p>
+</li>
+<li>
+<p><strong>Pathfinding</strong> - What are the shortest paths or best routes available given cost? <em>Minimum Weight Spanning Tree, All Pairs- and Single Source- Shortest Path, Dijkstra</em></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>We can run these algorithms in Neo4j with Cypher using the <a href="https://github.com/neo4j-contrib/neo4j-graph-algorithms" target="_blank">Neo4j Graph Algorithms</a> procedures.</p>
+</div>
+</div>
+<div class="col-lg-3">
+<div class="listingblock">
+<div class="title">See what procedures are available in the algo package</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL dbms.procedures()
+YIELD name, signature, description
+WITH * WHERE name STARTS WITH "algo"
+RETURN *<!--/code--></pre>
+</div>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Centrality</h3>
+    <br/>
+    <div>
+      <div class="col-lg-9">
+<div class="paragraph">
+<p>Let&#8217;s run PageRank over this inferred AMPLIFIED graph to find the most influential trolls</p>
+</div>
+<div class="listingblock">
+<div class="title">Run PageRank over the inferred troll amplification graph. This will write the results back to a pagerank property on the nodes</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL algo.pageRank("MATCH (t:Troll) RETURN id(t) AS id","MATCH (r1:Troll)-[:POSTED]-&gt;(:Tweet)&lt;-[:RETWEETED]-(:Tweet)&lt;-[:POSTED]-(r2:Troll) RETURN id(r2) as source, id(r1) as target", {graph:'cypher'})<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Find Trolls with highest PageRank score</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t:Troll) WHERE EXISTS(t.pagerank)
+RETURN t.screen_name AS troll, t.pagerank AS pagerank ORDER BY pagerank DESC LIMIT 25<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">What are the top trolls tweeting about?</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t:Troll) WHERE EXISTS(t.pagerank)
+WITH t ORDER BY t.pagerank LIMIT 25
+MATCH (t)-[:POSTED]-&gt;(tw:Tweet)-[:HAS_TAG]-(ht:Hashtag)
+RETURN ht.tag, COUNT(tw) AS num ORDER BY num DESC LIMIT 25<!--/code--></pre>
+</div>
+</div>
+</div>
+<div class="col-lg-3">
+<img src="https://guides.neo4j.com/sandbox/twitter-trolls/img/pagerank.png" class="img-responsive">
+<div class="paragraph">
+<p>PageRank is a recursive graph algorithm that defines the importance of a node proportional to the importance and number of connected nodes in the graph.</p>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Community Detection</h3>
+    <br/>
+    <div>
+      <div class="col-lg-9">
+<div class="paragraph">
+<p>We can also run community detection over this inferred AMPLIFIED graph to see how the graph is partitioned</p>
+</div>
+<div class="listingblock">
+<div class="title">Partition the graph into communities using the Label Propagation algorithm. An additional property <code>community</code> is added to each node specifying the community it has been assgined to by the algorithm.</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL algo.labelPropagation("MATCH (t:Troll) RETURN id(t) AS id","MATCH (r1:Troll)-[:POSTED]-&gt;(t:Tweet)&lt;-[:RETWEETED]-(:Tweet)&lt;-[:POSTED]-(r2:Troll) RETURN id(r2) AS source, id(r1) AS target, COUNT(t) AS weight","OUTGOING",   {graph:'cypher', write: true, iterations: 200})<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can then see which Trolls were assigned to each community:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t:Troll) WHERE EXISTS(t.partition)
+RETURN COLLECT(t.screen_name) AS members, t.partition AS community
+ORDER BY SIZE(members) DESC LIMIT 10<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And finally, we can see if there are certain themes that each community was focused on, by inspecting the most common hashtags used by each community:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t:Troll) WHERE EXISTS(t.partition)
+WITH COLLECT(t) AS members, t.partition AS community
+ORDER BY SIZE(members) DESC LIMIT 10
+UNWIND members AS t
+MATCH (t)-[:POSTED]-&gt;(tw:Tweet)-[:HAS_TAG]-&gt;(ht:Hashtag)
+WITH community, ht.tag AS tag, COUNT(tw) AS num ORDER BY num DESC
+RETURN community, COLLECT(tag)[..10] AS toptags
+LIMIT 10<!--/code--></pre>
+</div>
+</div>
+</div>
+<div class="col-lg-3">
+<img src="https://guides.neo4j.com/sandbox/twitter-trolls/img/community.png" class="img-responsive">
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Graph Visualization</h3>
+    <br/>
+    <div>
+      <div class="col-lg-6">
+<div class="paragraph">
+<p>Graph visualization is an important tool for interpreting the results of graph algorithms. Specifically:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Node size</strong> relative to <strong>centrality</strong></p>
+</li>
+<li>
+<p>Node color specific to community detection</p>
+</li>
+<li>
+<p>Relationship thickness relative to weight</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Try using Neovis.js to visualize the results of the graph algorithms we just ran <a href="http://heuristic-mccarthy-6d9e00.netlify.com/examples/trolls.html">here.</a></p>
+</div>
+</div>
+<div class="col-lg-6">
+<img src="https://guides.neo4j.com/sandbox/twitter-trolls/img/viz.png" class="img-responsive">
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>

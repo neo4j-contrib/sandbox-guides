@@ -1,0 +1,299 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Exploring the Russian Twitter Trolls Graph</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+   <h4>Exploring the Russian Twitter Trolls Graph</h4>
+   
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Exercises</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: right;">
+<div class="content">
+<img src="https://guides.neo4j.com/sandbox/twitter-trolls/img/datamodel.png" alt="datamodel">
+</div>
+</div>
+<div class="paragraph">
+<p>The following slides contain some questions to help guide us as we explore the dataset. Keep in mind the data model to the right as you write the graph patterns necessary to answer the questions.</p>
+</div>
+<div class="paragraph">
+<p>Consult the <a href="http://neo4j.com/docs/stable/cypher-refcard/">Cypher Reference Card</a> to help find the syntax / commands for constructing your query.</p>
+</div>
+<div class="paragraph">
+<p>The structure of a basic query in Cypher is:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH ...a graph pattern...
+WHERE ...filters on matched patterns...
+RETURN ...selection of values returned by the query...<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Getting familiar with the data: Basic lookups (I)</h3>
+    <br/>
+    <div>
+      
+
+
+   <h4>Node lookups: exact matches</h4>
+   <div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (h:Hashtag)
+WHERE h.tag = 'electionday'
+RETURN h<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>or a more compact version:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (h:Hashtag { tag : 'electionday' } )
+RETURN h<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Try it yourself:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Find the hashtag "politics"</p>
+</li>
+<li>
+<p>Find a user with name "CC Jack" (not screen name or user key but name)</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Getting familiar with the data: Basic lookups (II)</h3>
+    <br/>
+    <div>
+      
+
+
+   <h4>Node lookups: partial matches</h4>
+   <div class="paragraph">
+<p>Now let&#8217;s say we want to find a user but we don&#8217;t have the exact name, we just know that it starts with&#8230;&#8203;</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (n:User)
+WHERE n.name STARTS WITH "Jay"
+RETURN n<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Cypher offers some other approximate match functions: 'ENDS WITH', 'CONTAINS' and '~' for regular expression matches. Check the <a href="https://neo4j.com/docs/cypher-refcard/current/">Cypher refcard</a> for details and examples of how to use them.</p>
+</div>
+<div class="paragraph">
+<p>Also, filters can be combined logically with AND &amp; OR to build composite conditions.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (n:User)
+WHERE n.name CONTAINS "Jen" AND n.location CONTAINS "Chicago"
+RETURN n<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Try it yourself:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Find hashtags that contain both the words "fraud" and "vote", then try to find also those that contain one or the other.</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Get familiar with the data: Building graph patterns</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>You can build a complex pattern incrementally by piping basic queries (MATCH + WHERE blocks) and reusing variable names between them. Let&#8217;s say we want to find nodes by name as we did in the previous section but then we want to follow from these nodes a particular type of relationships to reach other nodes with a given name. This is what it would look like in cypher:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (h:Hashtag)
+WHERE h.tag = "electionnight"
+MATCH (t:Tweet)-[:HAS_TAG]-&gt;(h)
+WHERE t.text CONTAINS "Hillary"
+RETURN t.text<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Hashtag 'electionnight' used in a tweet containing the word "Hillary".</p>
+</div>
+<div class="paragraph">
+<p>The two steps can be compacted in one pattern followed by a single where filter with the intersection of all conditions. Something like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t:Tweet)-[:HAS_TAG]-&gt;(h:Hashtag)
+WHERE h.tag = "electionnight" AND t.text CONTAINS "Hillary"
+RETURN t.text<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Try it yourself:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Find the users located in New York that have mentioned Obama in their tweets.</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Aggregation, stats&#8230;&#8203;</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Sometimes we want to do aggregates on the result of a pattern match. Typical aggregate functions are count, sum, average, max, etc. <br>
+Let&#8217;s extend the previous query to find the number of times each of the users located in NY have mentioned Obama in their tweets. We&#8217;re not interested in each individual tweet but rather the total number tweets mentioning Obama. Here is the Cypher for this example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (n:User)-[:POSTED]-&gt;(t:Tweet)
+WHERE n.location CONTAINS "New York" AND t.text CONTAINS "Obama"
+RETURN  n.name, count(t)<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Try it yourself:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Find the number of times each hashtag containing the word 'fraud' was used</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>There are cases where we need to run aggregates on aggregates like in the nexte example. In such situations we&#8217;ll need to use the WITH clause to pipe your partial results to the next section of your query. WITH is like an intermediate RETURN. It separates query parts explicitly, allowing you to declare which variables to carry over to the next part.</p>
+</div>
+<div class="paragraph">
+<p>If we want to find what&#8217;s the average/max/min number of times a hashtag is used to, we&#8217;ll need to use WITH as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (h:Hashtag)&lt;-[:HAS_TAG]-(t:Tweet)
+WITH h.tag AS tag, count(t) AS count
+RETURN MAX(count), MIN(count), AVG(count), percentileCont(count,.9)<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Try it yourself:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Can you find hashtags that have been used more than a thousand times?</p>
+</li>
+<li>
+<p>Build similar queries with other types of relationships and using different limits and try to understand what the results mean</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Hashtag co-occurence</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Let&#8217;s analyse what are the hashtags most frequently used together.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (h1:Hashtag)&lt;-[:HAS_TAG]-(t:Tweet)-[:HAS_TAG]-&gt;(h2:Hashtag)
+WHERE h1.tag &lt; h2.tag
+RETURN h1.tag, h2.tag, count(t) AS ct
+ORDER BY ct DESC LIMIT 25<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>

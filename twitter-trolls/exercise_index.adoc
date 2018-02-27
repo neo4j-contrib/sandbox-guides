@@ -1,0 +1,41 @@
+= Twitter Trolls
+:csv-url: file:///
+:GUIDES: http://localhost:8001/
+
+== Twitter Trolls Exercise
+
+++++
+<div class="col-lg-9">
+++++
+
+. pass:a[<a play-topic='{GUIDES}/intro.html'>Cypher Hands On</a>]
+. pass:a[<a play-topic='{GUIDES}/questions.html'>Translating Journalistic Questions To Cypher</a>]
+. pass:a[<a play-topic='{GUIDES}/tabular_viz.html'>Visualizing Tabular Data</a>]
+. pass:a[<a play-topic='{GUIDES}/graph_algorithms.html'>Graph Algorithms</a>]
+. pass:a[<a play-topic='{GUIDES}/project_ideas.html'>Project Ideas</a>]
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-3">
+++++
+
+[subs=attributes]
+++++
+<img src="{img}/datamodel2.png" class="img-responsive" />
+++++
+
+++++
+</div>
+++++
+
+
+== Further Resources
+
+* http://neo4j.com/graphgists[Graph Gist Examples]
+* http://neo4j.com/docs/stable/cypher-refcard/[Cypher Reference Card]
+* http://neo4j.com/docs/developer-manual/current/#cypher-query-lang[Neo4j Developer Manual]
+* http://neo4j.com/developer/resources#_neo4j_cypher_resources[Cypher Resource Collection]
+* http://graphdatabases.com[e-book: Graph Databases (free)]

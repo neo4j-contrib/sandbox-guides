@@ -1,0 +1,146 @@
+= Exploring the Russian Twitter Trolls Graph
+
+== Exercises
+
+image::{img}/datamodel.png[float=right]
+
+The following slides contain some questions to help guide us as we explore the dataset. Keep in mind the data model to the right as you write the graph patterns necessary to answer the questions.
+
+Consult the http://neo4j.com/docs/stable/cypher-refcard/[Cypher Reference Card] to help find the syntax / commands for constructing your query.
+
+The structure of a basic query in Cypher is:
+
+[source,cypher]
+----
+MATCH ...a graph pattern...
+WHERE ...filters on matched patterns... 
+RETURN ...selection of values returned by the query...
+----
+
+== Getting familiar with the data: Basic lookups (I)
+
+=== Node lookups: exact matches
+
+[source,cypher]
+----
+MATCH (h:Hashtag) 
+WHERE h.tag = 'electionday' 
+RETURN h
+----
+
+or a more compact version:
+
+[source,cypher]
+----
+MATCH (h:Hashtag { tag : 'electionday' } ) 
+RETURN h
+----
+
+
+*Try it yourself:*
+
+* Find the hashtag "politics"
+* Find a user with name "CC Jack" (not screen name or user key but name)
+
+== Getting familiar with the data: Basic lookups (II)
+
+=== Node lookups: partial matches
+
+Now let's say we want to find a user but we don't have the exact name, we just know that it starts with...
+
+[source,cypher]
+----
+MATCH (n:User) 
+WHERE n.name STARTS WITH "Jay" 
+RETURN n 
+----
+
+Cypher offers some other approximate match functions: 'ENDS WITH', 'CONTAINS' and '~' for regular expression matches. Check the https://neo4j.com/docs/cypher-refcard/current/[Cypher refcard] for details and examples of how to use them.
+
+Also, filters can be combined logically with AND & OR to build composite conditions.
+
+[source,cypher]
+----
+MATCH (n:User) 
+WHERE n.name CONTAINS "Jen" AND n.location CONTAINS "Chicago" 
+RETURN n 
+----
+
+
+*Try it yourself:*
+
+* Find hashtags that contain both the words "fraud" and "vote", then try to find also those that contain one or the other.
+
+
+== Get familiar with the data: Building graph patterns 
+
+You can build a complex pattern incrementally by piping basic queries (MATCH + WHERE blocks) and reusing variable names between them. Let's say we want to find nodes by name as we did in the previous section but then we want to follow from these nodes a particular type of relationships to reach other nodes with a given name. This is what it would look like in cypher:
+
+[source,cypher]
+----
+MATCH (h:Hashtag) 
+WHERE h.tag = "electionnight"
+MATCH (t:Tweet)-[:HAS_TAG]->(h)
+WHERE t.text CONTAINS "Hillary"
+RETURN t.text
+----
+
+Hashtag 'electionnight' used in a tweet containing the word "Hillary".
+
+The two steps can be compacted in one pattern followed by a single where filter with the intersection of all conditions. Something like this:
+
+[source,cypher]
+----
+MATCH (t:Tweet)-[:HAS_TAG]->(h:Hashtag) 
+WHERE h.tag = "electionnight" AND t.text CONTAINS "Hillary"
+RETURN t.text
+----
+
+*Try it yourself:*
+
+* Find the users located in New York that have mentioned Obama in their tweets.
+
+
+== Aggregation, stats...
+
+Sometimes we want to do aggregates on the result of a pattern match. Typical aggregate functions are count, sum, average, max, etc.  +
+Let's extend the previous query to find the number of times each of the users located in NY have mentioned Obama in their tweets. We're not interested in each individual tweet but rather the total number tweets mentioning Obama. Here is the Cypher for this example:
+
+[source,cypher]
+----
+MATCH (n:User)-[:POSTED]->(t:Tweet) 
+WHERE n.location CONTAINS "New York" AND t.text CONTAINS "Obama"
+RETURN  n.name, count(t)
+----
+
+*Try it yourself:*
+
+* Find the number of times each hashtag containing the word 'fraud' was used
+
+There are cases where we need to run aggregates on aggregates like in the nexte example. In such situations we'll need to use the WITH clause to pipe your partial results to the next section of your query. WITH is like an intermediate RETURN. It separates query parts explicitly, allowing you to declare which variables to carry over to the next part.
+
+If we want to find what's the average/max/min number of times a hashtag is used to, we'll need to use WITH as follows:
+
+[source,cypher]
+----
+MATCH (h:Hashtag)<-[:HAS_TAG]-(t:Tweet) 
+WITH h.tag AS tag, count(t) AS count
+RETURN MAX(count), MIN(count), AVG(count), percentileCont(count,.9)
+----
+
+*Try it yourself:*
+
+* Can you find hashtags that have been used more than a thousand times?
+* Build similar queries with other types of relationships and using different limits and try to understand what the results mean
+
+== Hashtag co-occurence
+
+Let's analyse what are the hashtags most frequently used together.
+
+[source,cypher]
+----
+MATCH (h1:Hashtag)<-[:HAS_TAG]-(t:Tweet)-[:HAS_TAG]->(h2:Hashtag) 
+WHERE h1.tag < h2.tag
+RETURN h1.tag, h2.tag, count(t) AS ct
+ORDER BY ct DESC LIMIT 25
+----

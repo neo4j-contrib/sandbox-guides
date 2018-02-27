@@ -1,0 +1,216 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Russian Twitter Trolls</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+   <h4>Russian Twitter Trolls</h4>
+   
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Answering Questions With Cypher</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Let&#8217;s explore how can construct Cypher queries to answer questions that we have of the data:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Start with a question.</p>
+</li>
+<li>
+<p>Define the graph pattern that we&#8217;re interested in. <strong>What piece of the graph do I have to traverse to answer this question?</strong></p>
+</li>
+<li>
+<p>Whiteboard this if it helps</p>
+</li>
+<li>
+<p>Write that pattern using Cypher&#8217;s graph ASCII-art</p>
+</li>
+<li>
+<p>Add predicate filters <code>WHERE.. CONTAINS, IN, =, &#8230;&#8203;</code></p>
+</li>
+<li>
+<p>Add aggregations (<code>COUNT, SUM, AVG, &#8230;&#8203;</code>) as necessary</p>
+</li>
+<li>
+<p>Select data to <code>RETURN</code></p>
+</li>
+</ol>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Most popular Troll Tweets</h3>
+    <br/>
+    <div>
+      <div class="col-lg-4">
+<div class="paragraph">
+<p>What troll tweets are the most popular?</p>
+</div>
+</div>
+<div class="col-lg-8">
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (:Troll)-[:POSTED]-&gt;(t:Tweet)
+WHERE EXISTS(t.retweet_count)
+RETURN t.text, t.retweet_count
+ORDER BY t.retweet_count DESC LIMIT 100<!--/code--></pre>
+</div>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Account Age</h3>
+    <br/>
+    <div>
+      <div class="col-lg-4">
+<div class="paragraph">
+<p>When were the Troll accounts created?</p>
+</div>
+</div>
+<div class="col-lg-8">
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t:Troll) WHERE NOT t.created_at = ""
+RETURN substring(t.created_at, 26) AS year, COUNT(*) AS num
+ORDER BY year<!--/code--></pre>
+</div>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Source Application</h3>
+    <br/>
+    <div>
+      <div class="col-lg-4">
+<div class="paragraph">
+<p>What applications were used by the Trolls to post the tweets?</p>
+</div>
+</div>
+<div class="col-lg-8">
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (:Troll)-[:POSTED]-&gt;(tw:Tweet)-[:POSTED_VIA]-&gt;(s:Source)
+RETURN s.name AS source, COUNT(*) AS num
+ORDER BY num DESC<!--/code--></pre>
+</div>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Hashtags</h3>
+    <br/>
+    <div>
+      <div class="col-lg-4">
+<div class="paragraph">
+<p>What hashtags were used most by the Trolls?</p>
+</div>
+</div>
+<div class="col-lg-8">
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (:Troll)-[:POSTED]-&gt;(:Tweet)-[:HAS_TAG]-&gt;(ht:Hashtag)
+RETURN ht.tag AS hashtag, COUNT(*) AS num
+ORDER BY num DESC LIMIT 100;<!--/code--></pre>
+</div>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Hashtags</h3>
+    <br/>
+    <div>
+      <div class="col-lg-4">
+<div class="paragraph">
+<p>What hashtags used by the Trolls had the most impact?</p>
+</div>
+</div>
+<div class="col-lg-8">
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (h:Hashtag)&lt;-[:HAS_TAG]-(t:Tweet)&lt;-[:POSTED]-(:Troll)
+WHERE t.created_str &lt;&gt; ""
+WITH substring(t.created_str, 0, 10) as date, t.created_at as datetime, h.tag as tag, count(*) as count, t.retweet_count AS retweets
+RETURN tag, MIN(date), MAX(date), sum(count),sum(retweets), (max(datetime)-min(datetime))/(1000*3600*24) as lifespan
+ORDER BY lifespan DESC<!--/code--></pre>
+</div>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>

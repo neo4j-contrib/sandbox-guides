@@ -1,0 +1,158 @@
+= Russian Twitter Trolls
+:experimental:
+:icon: font
+
+== Answering Questions With Cypher
+
+Let's explore how can construct Cypher queries to answer questions that we have of the data:
+
+1. Start with a question.
+1. Define the graph pattern that we're interested in. *What piece of the graph do I have to traverse to answer this question?*
+1. Whiteboard this if it helps
+1. Write that pattern using Cypher's graph ASCII-art
+1. Add predicate filters `WHERE.. CONTAINS, IN, =, ...`
+1. Add aggregations (`COUNT, SUM, AVG, ...`) as necessary
+1. Select data to `RETURN`
+
+
+== Most popular Troll Tweets
+
+++++
+<div class="col-lg-4">
+++++
+
+What troll tweets are the most popular?
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-8">
+++++
+
+[source,cypher]
+----
+MATCH (:Troll)-[:POSTED]->(t:Tweet)
+WHERE EXISTS(t.retweet_count)
+RETURN t.text, t.retweet_count 
+ORDER BY t.retweet_count DESC LIMIT 100
+----
+
+++++
+</div>
+++++
+
+
+== Account Age
+
+++++
+<div class="col-lg-4">
+++++
+
+When were the Troll accounts created?
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-8">
+++++
+
+[source,cypher]
+----
+MATCH (t:Troll) WHERE NOT t.created_at = ""
+RETURN substring(t.created_at, 26) AS year, COUNT(*) AS num
+ORDER BY year
+----
+
+++++
+</div>
+++++
+
+== Source Application
+
+++++
+<div class="col-lg-4">
+++++
+
+What applications were used by the Trolls to post the tweets?
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-8">
+++++
+
+[source,cypher]
+----
+MATCH (:Troll)-[:POSTED]->(tw:Tweet)-[:POSTED_VIA]->(s:Source)
+RETURN s.name AS source, COUNT(*) AS num
+ORDER BY num DESC
+----
+
+++++
+</div>
+++++
+
+== Hashtags
+
+++++
+<div class="col-lg-4">
+++++
+
+What hashtags were used most by the Trolls?
+
+++++
+</div>
+++++
+
+
+++++
+<div class="col-lg-8">
+++++
+
+[source,cypher]
+----
+MATCH (:Troll)-[:POSTED]->(:Tweet)-[:HAS_TAG]->(ht:Hashtag)
+RETURN ht.tag AS hashtag, COUNT(*) AS num
+ORDER BY num DESC LIMIT 100;
+----
+
+++++
+</div>
+++++
+
+
+== Hashtags
+
+++++
+<div class="col-lg-4">
+++++
+
+What hashtags used by the Trolls had the most impact?
+
+++++
+</div>
+++++
+
+
+++++
+<div class="col-lg-8">
+++++
+
+[source,cypher]
+----
+MATCH (h:Hashtag)<-[:HAS_TAG]-(t:Tweet)<-[:POSTED]-(:Troll)
+WHERE t.created_str <> ""
+WITH substring(t.created_str, 0, 10) as date, t.created_at as datetime, h.tag as tag, count(*) as count, t.retweet_count AS retweets
+RETURN tag, MIN(date), MAX(date), sum(count),sum(retweets), (max(datetime)-min(datetime))/(1000*3600*24) as lifespan
+ORDER BY lifespan DESC
+----
+
+++++
+</div>
+++++

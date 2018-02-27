@@ -1,0 +1,803 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Russian Twitter Trolls</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+   <h4>Russian Twitter Trolls</h4>
+   
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Russian Twitter Trolls</h3>
+    <br/>
+    <div>
+      <div class="col-lg-4">
+<div class="paragraph">
+<p>As part of the House Intelligence Committee investigation into <strong>how Russia may have influenced the 2016 US Election</strong>, Twitter released the screen names of almost 3000 Twitter accounts believed to be connected to Russia&#8217;s Internet Research Agency, a company known for operating <strong>social media troll accounts</strong>. Twitter immediately suspended these accounts, deleting their data from Twitter.com and the Twitter API.</p>
+</div>
+<div class="paragraph">
+<p>A team at NBC News including <a href="https://twitter.com/bpopken" target="_blank">Ben Popken</a> and <a href="https://twitter.com/mrejfox" target="_blank">EJ Fox</a> was able to reconstruct a dataset consisting of  a subset of the deleted data for their investigation and using Neo4j were able to <a href="https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176" target="_blank">show how these troll accounts went on attack during key election moments.</a> <strong>NBC News open-sourced the reconstructed dataset</strong> and released it as this Neo4j database.</p>
+</div>
+</div>
+<div class="col-lg-3">
+<img src="https://guides.neo4j.com/sandbox/twitter-trolls/img/datamodel2.png" class="img-responsive">
+<div class="paragraph">
+<p>This interactive Neo4j Browser guide will help you to explore the dataset of Russian Troll tweets by guidng you through:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>an overview of the datamodel</p>
+</li>
+<li>
+<p>how to explore the data using Cypher, the query language for graphs</p>
+</li>
+<li>
+<p>some of the investigative queries used to make sense of the the dataset</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="col-lg-5">
+<img src="https://guides.neo4j.com/sandbox/twitter-trolls/img/article.png" class="img-responsive">
+<div class="paragraph">
+<p>Read the NBC News story about the data <a href="https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176" target="_blank">here</a></p>
+</div>
+<div class="paragraph">
+<p><em>NOTE: Much of this content is offensive and explicit. Query with caution.</em></p>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>The Datamodel</h3>
+    <br/>
+    <div>
+      <div class="col-lg-4">
+<div class="paragraph">
+<p>Neo4j uses the labeled property graph datamodel to represent data.</p>
+</div>
+
+
+
+   <h4>Nodes</h4>
+   <div class="paragraph">
+<p>Nodes can have one or more <strong>node labels</strong> to describe the "type" of the node.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Tweet</strong> - The Tweet</p>
+</li>
+<li>
+<p><strong>User</strong> - A Twitter user</p>
+</li>
+<li>
+<p><strong>Troll</strong> - An optional node label to identify users that are on the House list of Russian troll accounts</p>
+</li>
+<li>
+<p><strong>Hashtag</strong> - Any hashtags used in the tweet</p>
+</li>
+<li>
+<p><strong>Source</strong> - The Twitter application used to post the tweet</p>
+</li>
+<li>
+<p><strong>URL</strong> - A link embedded in a tweet</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="col-lg-3">
+
+
+
+   <h4>Relationships</h4>
+   <div class="paragraph">
+<p>Relationships have a single <strong>relationship type</strong>.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>POSTED</strong> - Connects the <code>Tweet</code> with the User who posted it</p>
+</li>
+<li>
+<p><strong>MENTIONS</strong> - Connects any Users that are <code>@-mentioned</code> to the <code>Tweet</code></p>
+</li>
+<li>
+<p><strong>HAS_TAG</strong> - Connect a <code>Tweet</code> to any <code>Hashtag</code> nodes included in the tweet</p>
+</li>
+<li>
+<p><strong>POSTED_VIA</strong> - Connects a <code>Tweet</code> to its <code>Source</code> application node</p>
+</li>
+<li>
+<p><strong>RETWEETED</strong> - Connects a <code>Tweet</code> that retweets another <code>Tweet</code></p>
+</li>
+<li>
+<p><strong>IN_REPLY_TO</strong> - Connects a <code>Tweet</code> that is a reply to another <code>Tweet</code></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="col-lg-5">
+<img src="https://guides.neo4j.com/sandbox/twitter-trolls/img/datamodel.png" class="img-responsive">
+<div class="paragraph">
+<p>Nodes and relationships can store arbitrary key-value pair <strong>properties</strong>. This image shows the properties and data type used in this database.</p>
+</div>
+<div class="listingblock">
+<div class="title">Execute this query to inspect the datamodel in the database:</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL db.schema()<!--/code--></pre>
+</div>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Introduction To Cypher</h3>
+    <br/>
+    <div>
+      <div class="col-lg-5">
+<div class="paragraph">
+<p>In order to work with our labeled property graph, we need a query language for graphs.</p>
+</div>
+
+
+
+   <h4>Graph Patterns</h4>
+   <div class="paragraph">
+<p>Cypher is the query language for graphs and is centered around <strong>graph patterns</strong>. Graph patterns are expressed in Cypher using ASCII-art like syntax.</p>
+</div>
+<div class="paragraph">
+<p><strong>Nodes</strong> are defined within parentheses <code>()</code>. Optionally, we can specify node label(s): <code>(:User)</code></p>
+</div>
+<div class="paragraph">
+<p><strong>Relationships</strong> are defined within square brackets <code>[]</code>. Optionally we can specify type and direction:</p>
+</div>
+<div class="paragraph">
+<p><code>(:Tweet)<strong>&lt;-[:POSTED]-</strong>(:User)</code></p>
+</div>
+<div class="paragraph">
+<p>Graph elements can be bound to <strong>aliases</strong> that can be referred to later in the query:</p>
+</div>
+<div class="paragraph">
+<p><code>(<strong>t</strong>:Tweet)&lt;-[<strong>r</strong>:POSTED]-(<strong>u</strong>:User)</code></p>
+</div>
+
+
+
+   <h4>Predicates</h4>
+   <div class="paragraph">
+<p>Filters can be applied to these graph patterns to limit the matching paths. Boolean logic operators, regular expressions and string comparison operators can be used here.</p>
+</div>
+<div class="paragraph">
+<p>Be sure to use the <a href="https://neo4j.com/docs/cypher-refcard/current/?ref=browser-guide">Cypher Refcard</a> as a reference for learning Cypher syntax.</p>
+</div>
+</div>
+<div class="col-lg-7">
+
+
+
+   <h4>Dissecting a Cypher Statement</h4>
+   <div class="paragraph">
+<p>Let&#8217;s look at a Cypher query that answers the question "For Users with over 1000 followers, how many tweets did they post?". Don&#8217;t worry if this seems complex, we&#8217;ll build up our understanding of Cypher as we move along.</p>
+</div>
+<div class="listingblock">
+<div class="title">Click on the block to put the query in the top-most window on the query editor. Hit the triangular <span class="icon"><i class="icon-play-circle"></i></span> button or press <kbd class="keyseq"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></kbd> to run it and see the resulting visualization.</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (u:User)-[r1:POSTED]-&gt;(t:Tweet)
+WHERE u.followers_count &gt; 1000
+WITH COUNT(t) AS num
+RETURN num<!--/code--></pre>
+</div>
+</div>
+<table class="table tableblock frame-all grid-all" style="width: 100%;">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 50%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">find</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>MATCH (u:User)-[:POSTED]-&gt;(t:Tweet)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Search for an existing graph pattern</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">filter</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>WHERE u.followers_count &gt; 1000</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter matching paths to only those matching a predicate</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">aggregate</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>WITH COUNT(t) AS num</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Count number of paths matched</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">return</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>RETURN num</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specify columns to be returned by the statement</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Querying The Graph - Overview</h3>
+    <br/>
+    <div>
+      <div class="col-lg-6">
+<div class="paragraph">
+<p>Neo4j Browser is an interactive query workbench tool for executing Cypher queries in Neo4j and working with the results in both graph visualization and tabular forms.</p>
+</div>
+
+
+
+   <h4>Graph Results</h4>
+   <div class="paragraph">
+<p>If our Cypher query returns graph objects (Nodes, Relationships, Paths) then Neo4j Browser will render a graph visualization for us to explore.</p>
+</div>
+
+
+
+   <h4>Tabular Results</h4>
+   <div class="paragraph">
+<p>Often the answer to our question however is tabular data - for example, the result of running an aggregation. We can also return rows of scalar values in Cypher. In that case Neo4j Browser will render a table of rows.</p>
+</div>
+</div>
+<div class="col-lg-6">
+<div class="listingblock">
+<div class="title">Find tweets with the hashtag <code>thanksobama</code></div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (u:User)-[:POSTED]-&gt;(t:Tweet)-[:HAS_TAG]-&gt;(ht:Hashtag {tag: "thanksobama"})
+RETURN * LIMIT 50<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Overview query. What are the node labels in the graphs and how many of each?</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t)
+RETURN LABELS(t), COUNT(*) AS count
+ORDER BY count DESC<!--/code--></pre>
+</div>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Querying The Graph - Users</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>A simple type of query we can run is one that matches on a single node label. In this database we&#8217;ve added the node label <code>Troll</code> to any users that show up on the House list of Russian Twitter Trolls.</p>
+</div>
+<div class="paragraph">
+<p>We can search for the Trolls with the most followers:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (u:Troll) WHERE EXISTS(u.followers_count)
+RETURN u.screen_name AS screen_name, u.followers_count AS followers
+ORDER BY followers DESC LIMIT 50<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Or use an aggregation function like <code>COUNT()</code> to see the most popular locations that Troll users list in their profiles:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (u:Troll)
+RETURN u.location, COUNT(u) AS num
+ORDER BY num DESC LIMIT 100<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Or use a predicate filter to search for a specific Troll by screen name:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (u:Troll)
+WHERE u.screen_name = "LeroyLovesUSA"
+RETURN u<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Querying The Graph - Tweets</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We can specify more complex graph patterns using Cypher to search for users plus the tweets they&#8217;ve posted, and even the hashtags that those tweets contain.</p>
+</div>
+<div class="col-lg-7">
+<div class="listingblock">
+<div class="title">Tweets posted by the user LeroyLovesUSA with the hashtag thanksobama</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (u:User)-[:POSTED]-&gt;(t:Tweet)-[:HAS_TAG]-&gt;(ht:Hashtag {tag: "thanksobama"})
+WHERE u.screen_name = "LeroyLovesUSA"
+RETURN *<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can include predicates to filter for paths matching the pattern and our predicates:</p>
+</div>
+<div class="listingblock">
+<div class="title">Find tweets posted by Troll accounts that contain the word fraud</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t:Troll)-[:POSTED]-&gt;(tw:Tweet)
+WHERE tw.text CONTAINS "fraud"
+OPTIONAL MATCH p=(tw)-[:HAS_TAG|HAS_LINK|MENTIONS|IN_REPLY_TO]-(a)
+RETURN * LIMIT 50<!--/code--></pre>
+</div>
+</div>
+</div>
+<div class="col-lg-5">
+<img src="https://guides.neo4j.com/sandbox/twitter-trolls/img/exampletweet1.png" class="img-responsive">
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Tweet Volume</h3>
+    <br/>
+    <div>
+      <div class="col-lg-3">
+<img src="https://guides.neo4j.com/sandbox/twitter-trolls/img/volume.png" style="max-height: 380px;" class="img-responsive">
+</div>
+<div class="col-lg-9">
+<div class="paragraph">
+<p>This chart from the <a href="https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176" target="_blank">NBC News article</a> shows that Russian Twitter troll tweet volume spiked during key election related events.</p>
+</div>
+<p></p>
+<p></p>
+<div class="listingblock">
+<div class="title">Query for tweet volume by day</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (:Troll)-[:POSTED]-&gt;(t:Tweet) WHERE t.created_str &gt; "2016-10-01"
+RETURN substring(t.created_str,0,10) AS day,
+  COUNT(t) AS num ORDER BY day LIMIT 60<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Query for tweet volume by month</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (:Troll)-[:POSTED]-&gt;(t:Tweet)
+RETURN substring(t.created_str,0,7) AS month,
+  COUNT(t) AS num ORDER BY month DESC LIMIT 25<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can see that much of the tweet volume occurs leading up to and immediately following the 2016 US Election.</p>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Hashtags</h3>
+    <br/>
+    <div>
+      <div class="col-lg-9">
+<div class="paragraph">
+<p>Hashtags were used by the trolls to insert themselves into conversations and gain visibility.</p>
+</div>
+<div class="listingblock">
+<div class="title">What are the most common hashtags used by the trolls?</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (ht:Hashtag)&lt;-[:HAS_TAG]-(tw:Tweet)&lt;-[:POSTED]-(:Troll)
+WITH ht, COUNT(tw) AS num ORDER BY num DESC
+RETURN ht.tag AS hashtag, num LIMIT 10<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Most popular hashtags used by Trolls by day</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (:Troll)-[:POSTED]-&gt;(t:Tweet)
+WHERE t.created_str &gt; "2016-10-01" AND t.created_str &lt; "2016-11-30"
+WITH t,substring(t.created_str,0,10) AS day, [(t)-[:HAS_TAG]-&gt;(ht:Hashtag) | ht.tag] AS tags
+UNWIND tags AS tag
+WITH day, tag, COUNT(t) AS num ORDER BY num DESC
+RETURN day, COLLECT(tag)[..5] AS toptags ORDER BY day<!--/code--></pre>
+</div>
+</div>
+</div>
+<div class="col-lg-3">
+<img src="https://guides.neo4j.com/sandbox/twitter-trolls/img/hashtags.png" class="img-responsive" style="max-height: 380px;">
+<div class="paragraph">
+<p>This streamgraph from the <a href="https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176" target="_blank">NBC News article</a> shows hashtag volume by category.</p>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Hashtags - <code>#RejectedDebateTopics</code></h3>
+    <br/>
+    <div>
+      
+
+
+   <h4><code>@WordOfHashtags</code></h4>
+   <div class="paragraph">
+<p>One of the hashtags used by the Trolls was <code>#RejectedDebateTopics</code>. The Troll account <code>@WorldOfHashtags</code> used it as a way to annouce a "hashtag game" to encourage others to use the same hashtag. Hundreds of non-troll accounts ended up interacting with this acocount by using the <code>#RejectedDebateTopics</code> hashtag.</p>
+</div>
+<div class="listingblock">
+<div class="title">What are the tweets posted by <code>@WorldOfHashtags</code> with the hashtag <code>#RejectedDebateTopics</code> ?</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (u:Troll {screen_name: "WorldOfHashtags"})-[:POSTED]-&gt;(t:Tweet)-[:HAS_TAG]-&gt;(:Hashtag {tag: "rejecteddebatetopics"})
+WHERE t.created_str &gt; "2016-10-01"
+RETURN t.text, t.created_str
+ORDER BY t.created_at LIMIT 50<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Tweet Sources Used</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>A variety of applications were used by the Troll accounts for posting tweets.</p>
+</div>
+<div class="listingblock">
+<div class="title">What are the common sources used for posting tweets?</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (:Troll)-[:POSTED]-&gt;(tw:Tweet)-[:POSTED_VIA]-&gt;(s:Source)
+RETURN s.name AS source, COUNT(tw) AS tweets
+ORDER BY tweets DESC<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Original Content vs Replies and Retweets</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Tweets can be retweets of other tweets or "original content" tweets that do not reference other tweets. Many of the Troll tweets are retweets and replies. We can filter out these retweets and replies and search only for "original content" tweets.</p>
+</div>
+<div class="listingblock">
+<div class="title">Find original content tweets posted by user @TEN_GOP</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH p=(t:Troll {user_key: "ten_gop"})-[:POSTED]-&gt;(tw:Tweet)
+WHERE NOT EXISTS((tw)-[:RETWEETED|IN_REPLY_TO]-&gt;(:Tweet))
+OPTIONAL MATCH (ht:Hashtag)&lt;-[:HAS_TAG]-(tw)
+OPTIONAL MATCH (u:User)&lt;-[:MENTIONS]-(tw)
+RETURN p,ht,u LIMIT 25<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Inferred Relationships</h3>
+    <br/>
+    <div>
+      <div class="col-lg-9">
+<div class="paragraph">
+<p>Inferred relationships are important in graphs. For example, when a Troll account retweets another Troll&#8217;s tweet we could say the trolls have an inferred <strong>"AMPLIFIED"</strong> relationship: one troll is amplifying the message of the other.</p>
+</div>
+<div class="listingblock">
+<div class="title">Inferred AMPLIFIED relationships exist when a troll account retweets another troll</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH p=(r1:Troll)-[:POSTED]-&gt;(:Tweet)&lt;-[:RETWEETED]-(:Tweet)&lt;-[:POSTED]-(r2:Troll)
+RETURN p LIMIT 1<!--/code--></pre>
+</div>
+</div>
+</div>
+<div class="col-lg-3">
+<img src="https://guides.neo4j.com/sandbox/twitter-trolls/img/amplified.png" class="img-responsive">
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Graph Algorithms</h3>
+    <br/>
+    <div>
+      <div class="col-lg-9">
+<div class="paragraph">
+<p><a href="https://neo4j.com/graph-analytics/" target="_blank">Graph algorithms</a> are a way to apply analytics to the entire graph to further enhance our understanding of the data. These algorithms fall into three categories:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Centrality</strong> - What are the most important nodes in the network? <em>PageRank, Betweenness Centrality, Closeness Centrality</em></p>
+</li>
+<li>
+<p><strong>Community detection</strong> - How can the graph be partitioned? <em>Union Find, Louvain, Label Propagation, Connected Components</em></p>
+</li>
+<li>
+<p><strong>Pathfinding</strong> - What are the shortest paths or best routes available given cost? <em>Minimum Weight Spanning Tree, All Pairs- and Single Source- Shortest Path, Dijkstra</em></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>We can run these algorithms in Neo4j with Cypher using the <a href="https://github.com/neo4j-contrib/neo4j-graph-algorithms" target="_blank">Neo4j Graph Algorithms</a> procedures.</p>
+</div>
+</div>
+<div class="col-lg-3">
+<div class="listingblock">
+<div class="title">See what procedures are available in the algo package</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL dbms.procedures()
+YIELD name, signature, description
+WITH * WHERE name STARTS WITH "algo"
+RETURN *<!--/code--></pre>
+</div>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Centrality</h3>
+    <br/>
+    <div>
+      <div class="col-lg-9">
+<div class="paragraph">
+<p>Let&#8217;s run PageRank over this inferred AMPLIFIED graph to find the most influential trolls</p>
+</div>
+<div class="listingblock">
+<div class="title">Run PageRank over the inferred troll amplification graph. This will write the results back to a pagerank property on the nodes</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL algo.pageRank("MATCH (t:Troll) RETURN id(t) AS id","MATCH (r1:Troll)-[:POSTED]-&gt;(:Tweet)&lt;-[:RETWEETED]-(:Tweet)&lt;-[:POSTED]-(r2:Troll) RETURN id(r2) as source, id(r1) as target", {graph:'cypher'})<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Find Trolls with highest PageRank score</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t:Troll) WHERE EXISTS(t.pagerank)
+RETURN t.screen_name AS troll, t.pagerank AS pagerank ORDER BY pagerank DESC LIMIT 25<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">What are the top trolls tweeting about?</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t:Troll) WHERE EXISTS(t.pagerank)
+WITH t ORDER BY t.pagerank LIMIT 25
+MATCH (t)-[:POSTED]-&gt;(tw:Tweet)-[:HAS_TAG]-(ht:Hashtag)
+RETURN ht.tag, COUNT(tw) AS num ORDER BY num DESC LIMIT 25<!--/code--></pre>
+</div>
+</div>
+</div>
+<div class="col-lg-3">
+<img src="https://guides.neo4j.com/sandbox/twitter-trolls/img/pagerank.png" class="img-responsive">
+<div class="paragraph">
+<p>PageRank is a recursive graph algorithm that defines the importance of a node proportional to the importance and number of connected nodes in the graph.</p>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Community Detection</h3>
+    <br/>
+    <div>
+      <div class="col-lg-9">
+<div class="paragraph">
+<p>We can also run community detection over this inferred AMPLIFIED graph to see how the graph is partitioned</p>
+</div>
+<div class="listingblock">
+<div class="title">Partition the graph into communities using the Label Propagation algorithm. An additional property <code>community</code> is added to each node specifying the community it has been assgined to by the algorithm.</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL algo.labelPropagation("MATCH (t:Troll) RETURN id(t) AS id","MATCH (r1:Troll)-[:POSTED]-&gt;(t:Tweet)&lt;-[:RETWEETED]-(:Tweet)&lt;-[:POSTED]-(r2:Troll) RETURN id(r2) AS source, id(r1) AS target, COUNT(t) AS weight","OUTGOING",   {graph:'cypher', write: true, iterations: 200})<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can then see which Trolls were assigned to each community:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t:Troll) WHERE EXISTS(t.partition)
+RETURN COLLECT(t.screen_name) AS members, t.partition AS community
+ORDER BY SIZE(members) DESC LIMIT 10<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And finally, we can see if there are certain themes that each community was focused on, by inspecting the most common hashtags used by each community:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t:Troll) WHERE EXISTS(t.partition)
+WITH COLLECT(t) AS members, t.partition AS community
+ORDER BY SIZE(members) DESC LIMIT 10
+UNWIND members AS t
+MATCH (t)-[:POSTED]-&gt;(tw:Tweet)-[:HAS_TAG]-&gt;(ht:Hashtag)
+WITH community, ht.tag AS tag, COUNT(tw) AS num ORDER BY num DESC
+RETURN community, COLLECT(tag)[..10] AS toptags
+LIMIT 10<!--/code--></pre>
+</div>
+</div>
+</div>
+<div class="col-lg-3">
+<img src="https://guides.neo4j.com/sandbox/twitter-trolls/img/community.png" class="img-responsive">
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Further exploration</h3>
+    <br/>
+    <div>
+      <div class="col-lg-4">
+
+
+
+   <h4>Ideas</h4>
+   <div class="paragraph">
+<p>We&#8217;ve only just begun to explore the data. Here are some ideas for further data analysis:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Location</p>
+</li>
+<li>
+<p>Entity extraction</p>
+</li>
+<li>
+<p>Temporal data analysis (are tweets posted at a certain time of day?)</p>
+</li>
+<li>
+<p>Clustering the graph</p>
+</li>
+<li>
+<p>Exploring most co-mentioned users and hashtags</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="col-lg-5">
+
+
+
+   <h4>Resources</h4>
+   <div class="ulist">
+<ul>
+<li>
+<p>Web <a href="https://neo4j.com/docs/cypher-refcard/current/?ref=browser-guide" target="_blank">Cypher Refcard</a></p>
+</li>
+<li>
+<p>Web <a href="https://neo4j.com/docs/?ref=browser-guide" target="_blank">Neo4j Documentation</a></p>
+</li>
+<li>
+<p>Book (free download) <a href="http://graphdatabases.com/?ref=browser-guide" target="_blank">Graph Databases</a></p>
+</li>
+<li>
+<p>Blog <a href="https://medium.com/@david.allen_3172/using-nlp-in-neo4j-ac40bc92196f" target="_blank">Using NLP In Neo4j</a></p>
+</li>
+<li>
+<p>Blog <a href="http://www.lyonwj.com/2017/11/15/entity-extraction-russian-troll-tweets-neo4j/" target="_blank">NLP And Entity Extraction</a></p>
+</li>
+<li>
+<p>Article <a href="https://www.nbcnews.com/tech/social-media/russian-trolls-went-attack-during-key-election-moments-n827176" target="_blank">NBC News Article</a></p>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><a play-topic='https://guides.neo4j.com/sandbox/twitter-trolls/exercise.html'>Hands On Exercise</a></p>
+</li>
+</ol>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="col-lg-3">
+<img src="https://guides.neo4j.com/sandbox/twitter-trolls/img/viz.png" class="img-responsive">
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>

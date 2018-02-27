@@ -1,0 +1,133 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>BI tool viz</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+   <h4>BI tool viz</h4>
+   
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Using Tableau and WTFcsv to visualize data from the Twitter Trolls Graph</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Most data visualization tools (like Tableau, Qlik, WTFCSV, etc.) work on data frames. Data frames are tabular structures. In order to analyse the the Twitter Trols Graph in these tools, we&#8217;ll have to write cypher queries that 'flatten' the graph into a data frame. Cypher can help us writing these queries.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Exporting data as CSV</h3>
+    <br/>
+    <div>
+      <div class="col-lg-8">
+<div class="paragraph">
+<p>One way of working is exporting your tabular data as CSV and importing it in your visualization tool. Let&#8217;s give it a try:</p>
+</div>
+<div class="paragraph">
+<p>The following query returns information about the tweets by the most influential users (those with more than 15K followers). Specifically, we are extracting the year, time of day, number of words in the tweet, and number of hashtags.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t:Tweet)&lt;-[:POSTED]-(u) WHERE exists(t.text) AND u.followers_count &gt; 15000
+RETURN u.user_key as user, u.followers_count as followers,
+       substring(t.created_str,0,4) as year, substring(t.created_str,11,2) as timeofday,
+       size(split(t.text," ")) as wordcount, size((t)-[:HAS_TAG]-&gt;()) as hashtagcount<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Downlad this data frame directly from the browser (or the cypher shell if you ar CLI user), save it as CSV and then upload it to <a href="https://databasic.io/en/wtfcsv/" class="bare">https://databasic.io/en/wtfcsv/</a>
+The image shows the result when you upload this dataset.</p>
+</div>
+</div>
+<div class="col-lg-4">
+<img src="https://guides.neo4j.com/sandbox/twitter-trolls/img/wtfcsv.png" class="img-responsive">
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Direct connection from Tableau (via WDC)</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>A more detailed version of the same query includes also the date of the tweet and returns no only the top users but all of them</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t:Tweet)&lt;-[:POSTED]-(u) where exists(t.text)
+RETURN u.user_key as user, u.followers_count as followers, u.location as location, u.lang as lang, t.created_str as date, substring(t.created_str,11,2) as timeofday, size(split(t.text," ")) as wordcount, size((t)-[:HAS_TAG]-&gt;()) as hashtagcount<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can import the data directly from Tableau by using the Web Data Connector. Point at this url <a href="https://neo4j-contrib.github.io/neo4j-tableau/website/Neo4jWdc2.html" class="bare">https://neo4j-contrib.github.io/neo4j-tableau/website/Neo4jWdc2.html</a> and enter your Neo4j DB details:</p>
+</div>
+<div class="paragraph">
+<p>Once your dataset is loade into Tableau you can build your dashboards as with any other dataset. Here is an example on the Russian Twitter Trolls Graph data:</p>
+</div>
+<div class="imageblock" style="float: left;">
+<div class="content">
+<img src="https://guides.neo4j.com/sandbox/twitter-trolls/img/wdc.png" alt="wdc">
+</div>
+</div>
+<div class="imageblock" style="float: right;">
+<div class="content">
+<img src="https://guides.neo4j.com/sandbox/twitter-trolls/img/tableau.png" alt="tableau">
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>

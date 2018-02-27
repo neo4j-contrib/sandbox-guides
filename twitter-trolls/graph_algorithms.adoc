@@ -1,0 +1,204 @@
+= Russian Twitter Trolls
+:experimental:
+:icon: font
+
+== Inferred Relationships
+
+++++
+<div class="col-lg-9">
+++++
+
+Inferred relationships are important in graphs. For example, when a Troll account retweets another Troll's tweet we could say the trolls have an inferred *"AMPLIFIED"* relationship: one troll is amplifying the message of the other.
+
+.Inferred AMPLIFIED relationships exist when a troll account retweets another troll
+[source,cypher]
+----
+MATCH p=(r1:Troll)-[:POSTED]->(:Tweet)<-[:RETWEETED]-(:Tweet)<-[:POSTED]-(r2:Troll)
+RETURN p LIMIT 1
+----
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-3">
+++++
+
+[subs=attributes]
+++++
+<img src="{img}/amplified.png" class="img-responsive">
+++++
+
+++++
+</div>
+++++
+
+== Graph Algorithms
+
+++++
+<div class="col-lg-9">
+++++
+
+link:https://neo4j.com/graph-analytics/[Graph algorithms^] are a way to apply analytics to the entire graph to further enhance our understanding of the data. These algorithms fall into three categories: 
+
+* **Centrality** - What are the most important nodes in the network? _PageRank, Betweenness Centrality, Closeness Centrality_
+* **Community detection** - How can the graph be partitioned? _Union Find, Louvain, Label Propagation, Connected Components_
+* **Pathfinding** - What are the shortest paths or best routes available given cost? _Minimum Weight Spanning Tree, All Pairs- and Single Source- Shortest Path, Dijkstra_
+
+We can run these algorithms in Neo4j with Cypher using the link:https://github.com/neo4j-contrib/neo4j-graph-algorithms[Neo4j Graph Algorithms^] procedures.
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-3">
+++++
+
+.See what procedures are available in the algo package
+[source,cypher]
+----
+CALL dbms.procedures() 
+YIELD name, signature, description
+WITH * WHERE name STARTS WITH "algo"
+RETURN *
+----
+
+
+++++
+</div>
+++++
+
+== Centrality
+
+++++
+<div class="col-lg-9">
+++++
+Let's run PageRank over this inferred AMPLIFIED graph to find the most influential trolls
+
+.Run PageRank over the inferred troll amplification graph. This will write the results back to a pagerank property on the nodes
+[source,cypher]
+----
+CALL algo.pageRank("MATCH (t:Troll) RETURN id(t) AS id","MATCH (r1:Troll)-[:POSTED]->(:Tweet)<-[:RETWEETED]-(:Tweet)<-[:POSTED]-(r2:Troll) RETURN id(r2) as source, id(r1) as target", {graph:'cypher'})
+----
+
+.Find Trolls with highest PageRank score
+[source,cypher]
+----
+MATCH (t:Troll) WHERE EXISTS(t.pagerank)
+RETURN t.screen_name AS troll, t.pagerank AS pagerank ORDER BY pagerank DESC LIMIT 25
+----
+
+.What are the top trolls tweeting about?
+[source,cypher]
+----
+MATCH (t:Troll) WHERE EXISTS(t.pagerank)
+WITH t ORDER BY t.pagerank LIMIT 25
+MATCH (t)-[:POSTED]->(tw:Tweet)-[:HAS_TAG]-(ht:Hashtag)
+RETURN ht.tag, COUNT(tw) AS num ORDER BY num DESC LIMIT 25
+----
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-3">
+++++
+
+[subs=attributes]
+++++
+<img src="{img}/pagerank.png" class="img-responsive">
+++++
+
+PageRank is a recursive graph algorithm that defines the importance of a node proportional to the importance and number of connected nodes in the graph.
+
+++++
+</div>
+++++
+
+== Community Detection
+
+++++
+<div class="col-lg-9">
+++++
+
+We can also run community detection over this inferred AMPLIFIED graph to see how the graph is partitioned
+
+.Partition the graph into communities using the Label Propagation algorithm. An additional property `community` is added to each node specifying the community it has been assgined to by the algorithm.
+[source,cypher]
+----
+CALL algo.labelPropagation("MATCH (t:Troll) RETURN id(t) AS id","MATCH (r1:Troll)-[:POSTED]->(t:Tweet)<-[:RETWEETED]-(:Tweet)<-[:POSTED]-(r2:Troll) RETURN id(r2) AS source, id(r1) AS target, COUNT(t) AS weight","OUTGOING",   {graph:'cypher', write: true, iterations: 200})
+----
+
+We can then see which Trolls were assigned to each community:
+
+[source,cypher]
+----
+MATCH (t:Troll) WHERE EXISTS(t.partition)
+RETURN COLLECT(t.screen_name) AS members, t.partition AS community
+ORDER BY SIZE(members) DESC LIMIT 10
+----
+
+And finally, we can see if there are certain themes that each community was focused on, by inspecting the most common hashtags used by each community:
+
+[source,cypher]
+----
+MATCH (t:Troll) WHERE EXISTS(t.partition)
+WITH COLLECT(t) AS members, t.partition AS community
+ORDER BY SIZE(members) DESC LIMIT 10
+UNWIND members AS t
+MATCH (t)-[:POSTED]->(tw:Tweet)-[:HAS_TAG]->(ht:Hashtag)
+WITH community, ht.tag AS tag, COUNT(tw) AS num ORDER BY num DESC
+RETURN community, COLLECT(tag)[..10] AS toptags
+LIMIT 10
+----
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-3">
+++++
+
+[subs=attributes]
+++++
+<img src="{img}/community.png" class="img-responsive">
+++++
+
+++++
+</div>
+++++
+
+== Graph Visualization
+
+++++
+<div class="col-lg-6">
+++++
+
+Graph visualization is an important tool for interpreting the results of graph algorithms. Specifically:
+
+* *Node size* relative to *centrality*
+* Node color specific to community detection
+* Relationship thickness relative to weight
+
+Try using Neovis.js to visualize the results of the graph algorithms we just ran link:http://heuristic-mccarthy-6d9e00.netlify.com/examples/trolls.html[here.]
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-6">
+++++
+
+[subs=attributes]
+++++
+<img src="{img}/viz.png" class="img-responsive">
+++++
+
+++++
+</div>
+++++

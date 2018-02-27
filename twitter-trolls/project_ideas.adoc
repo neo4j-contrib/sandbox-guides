@@ -1,0 +1,88 @@
+= Russian Twitter Trolls
+:experimental:
+:icon: font
+
+== Further Research Ideas
+
+* Explore Tweets from the Mueller indictment
+* Explore Locations - many accounts were tweeting
+* Look for possible trolls across other social networks
+* Looking at communities of troll retweet network
+* NLP - entity extraction and sentiment analysis of the Tweets
+* Quantify right/left wing political and the sentiment around those
+* Tweets connected to events, by following hashtags can you track tweets around certain events.
+* Beyond US politics - many of the tweets are about politics outside of the US (what were they tweeting about? Merkel, Italian example)
+
+== Mueller Indictment
+
+The link:https://www.justice.gov/file/1035477/download^[Mueller indictment] which named the Internet Research Agency (IRA) and 13 individuals connected to IRA also specifcally names two Troll Twitter accounts: `TEN_gop` and `March_For_Trump` as well as several hashtags used by the trolls, including: #Trump20l6, #TrumpTrain, 
+#IWontProtectHillary, #Hillary4Prison, #VoterFraud, #HillaryClintonIsNotMyPresident, #HillaryClintonForPrison2016, #NeverHillary, #HillaryForPrison, #Trump, #Trump4President
+
+What tweets do we have in the database relevant to the Mueller indictment? What else can we learn relevant to the indictment?
+
+
+
+== Exploring Locations
+
+There is geographical information in the Twitter Trolls graph: User accounts have obviously a location, even though it's not always accurate or even populated.
+
+[source,cypher]
+----
+MATCH (u:Troll) 
+RETURN u.location as location, count(u) AS c
+ORDER BY c DESC
+----
+
+The GeocodeOnce procedure can help standardizing addresses
+
+[source,cypher]
+----
+MATCH (u:User) where exists(u.location) 
+WITH DISTINCT u.location as loc
+CALL apoc.spatial.geocodeOnce(loc) YIELD latitude, longitude, description
+WITH loc, latitude, longitude, description
+MATCH (u:User) where u.location = loc
+SET u.latitude = latitude,u.longitude = longitude,u.location_desc = description
+----
+
+More interesting than the locations declared in the Troll's profiles is the locations mentioned in their tweets.
+- Some of the hashtags are actually locations
+- The text of the tweet can include location names
+
+Here is an example of how to work with location data to build an Interactive Geographical Data Visualization http://www.lyonwj.com/2017/11/28/geocoding-paradise-papers-neo4j-spatial-visualization/
+
+
+== Across Social Networks
+
+* Twitter accounts can have counterparts on other social networks. 
+* Tweets may also include links to content or users from other social networks. 
+
+
+== Community Detection
+
+* One way of detecting communities of users is based on their interactions: retweets, replies, etc. 
+
+* Another way can be based on common interests. In what ways can you infer similarity between users? Maybe because there is a signifficant overlap in the hashtags that they use?
+
+
+
+== Natural Language Processing
+
+The content of a tweet can be analised using NLP techniques for entity extraction, sentiment analysis, etc.
+
+Here is a link to more ideas in this area: https://hackernoon.com/six-ways-to-explore-the-russian-twitter-trolls-database-in-neo4j-6e52394c38f1
+
+
+== Right / Left Wing Politics
+
+* Sentiment analysis? 
+* Analysis of hyperlinks in the tweet to right or left wing media sources?
+
+== Tweets Connected To Events
+
+* Is it possible to correlate tweets and events (like terrorist attacks, candidate's nominations, election day...). 
+* Is there any time based pattern (other than retweets) that can be extracted from the data?
+
+== Beyond US Politics
+
+While most of the tweets captured were centered on the US election, many tweets were posted by the Trolls about world wide issues. For example, tweets about Merkel in Germany and hashtags related to Italian politics: #renzi #tizianorenzi #consip. What were the Trolls tweeting about outside of US politics?
