@@ -12,5 +12,5 @@ jobs:
        - run: sudo bundle install
        - run: sudo apt-get -y -qq update
        - run: sudo apt-get -y -qq install python-pip python-dev awscli
-       - run: find . -name 'render.sh' -print0 | xargs -0 -I{} -n1 -P4 /bin/bash -c 'cd "$(dirname {})"; bash "$(basename {})" render-only' 
+       - run: find . -name 'render.sh' -print0 | xargs -0 -I{} -n1 -P4 /bin/bash -c 'cd "$(dirname {})"; bash "$(basename {})" render-only' || true
        - run: aws s3 cp . s3://guides.neo4j.com/sandbox  --acl public-read --recursive --exclude "*" --include "*.html" --include "*.png" --include "*.jpg" --include "*.gif" --include "*.csv"
