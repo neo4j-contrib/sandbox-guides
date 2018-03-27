@@ -285,7 +285,7 @@ LIMIT 5;
 | aggregate | `WITH m.title AS movie, COUNT(*) AS reviews`   | Count number of paths matched for each movie
 | return    | `RETURN movie, reviews`                        | Specify columns to be returned by the statement
 | order     | `ORDER BY reviews DESC`                        | Order by number of reviews, in descending order
-| limit     | `LIMIT 5;`                                     | Only return first four records
+| limit     | `LIMIT 5;`                                     | Only return first five records
 |===
 
 

@@ -99,7 +99,7 @@ RETURN network;
 
 image::{images}/network-zones.jpg[float=right]
 
-The datacenter consists of 4 zones, each of which has it's own separate `Network` `10.zone.*/16`, and it's own `Router`.
+The datacenter consists of 4 zones, each of which has its own separate `Network` `10.zone.*/16`, and it's own `Router`.
 
 We can draw out that verbal description in a query with patterns matching the network parts.
 
@@ -115,7 +115,7 @@ MATCH (dc)-[:CONTAINS]->(r:Router)-[:ROUTES]->(ri:Interface)-[:CONNECTS]->(nr)
 RETURN *;
 ----
 
-To visualize the DataCenter and it's components so far, we can also start at the center and then go 3 hops out.
+To visualize the DataCenter and its components so far, we can also start at the center and then go 3 hops out.
 
 [source,cypher]
 ----
@@ -723,7 +723,7 @@ To model the resource graph of such a system is interesting to look at and reaso
 // * Orange SFR
 * http://assimilationsystems.com/[Assimilation Systems] https://neo4j.com/blog/solve-network-management-problems-with-neo4j/[Interview with Founder Alan Robertson]
 * https://neo4j.com/graphgists/?category=network-and-it-operations[Network Management GraphGists]
-* Lending Club Engineering created a number of network managment projects using Neo4j
+* Lending Club Engineering created a number of network management projects using Neo4j
 ** https://neo4j.com/blog/managing-microservices-neo4j/[Presentation], https://www.slideshare.net/robschoening/managing-microservices-with-neo4j-53389282[Slides]
 ** MacGyver: DevOps Multi-Tool https://github.com/LendingClub?q=macgyver[Repositories] https://www.slideshare.net/neo4j/neo4j-for-cloud-management-at-scale[Slides]
 ** Mercator: produce graph model projections of infrastructure https://github.com/LendingClub/mercator[Repository]
