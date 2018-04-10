@@ -48,9 +48,6 @@ Generating *personalized recommendations* is one of the most common use cases fo
 ++++
 <div class="col-lg-4 ng-scope">
 ++++
-++++
-<img src="images/click-next.png" style="position:relative;right:-23px;top:-56px;" class="pull-right">
-++++
 
 
 [subs=attributes]
