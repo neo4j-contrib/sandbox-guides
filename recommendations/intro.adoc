@@ -465,7 +465,7 @@ We can calculate the Jaccard index for sets of movie genres to determine how sim
 <div class="col-lg-9 ng-scope">
 ++++
 
-.What movies are most similar to The Matrix based on Jaccard similarity of genres?
+.What movies are most similar to Inception based on Jaccard similarity of genres?
 
 [source,cypher]
 ----
