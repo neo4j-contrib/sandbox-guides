@@ -7,7 +7,7 @@
 <slide class="row-fluid">
   <div class="row">
     <div class="col-sm-12">
-      <img class="img-responsive img-thumbnail" src="https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/img/paradise-header.jpg">
+      <img class="img-responsive img-thumbnail" src="https://guides.neo4j.com/sandbox/icij-panama-papers/img/paradise-header.jpg">
     </div>
   </div>
   <div class="row">
@@ -97,7 +97,7 @@
           <p>For example, let's say we want to discover the shortest paths between two entity officers through a set of <code>Entity</code> or <code>Address</code> nodes.  This is quite easy with Cypher, Neo4j's graph query language.</p>
         </div>
         <pre mode="cypher"  class="highlight pre-scrollable code runnable standalone-example ng-binding"><code class="cypher language-cypher">MATCH (a:Officer),(b:Officer)
-WHERE a.name CONTAINS 'Ross, Jr' 
+WHERE a.name CONTAINS 'Smith' 
   AND b.name CONTAINS 'Grant'
 MATCH p=allShortestPaths((a)-[:OFFICER_OF|:INTERMEDIARY_OF|:REGISTERED_ADDRESS*..10]-(b))
 RETURN p
@@ -175,7 +175,7 @@ LIMIT 50</code></pre>
       <div class="title">Jurisdiction distribution of intermediaries in the ICIJ offshore leaks DB</div>
       <div class="content">
       <pre mode="cypher"  class="highlight pre-scrollable code runnable standalone-example ng-binding"><code class="cypher language-cypher">MATCH (intermediary:Intermediary)-[:INTERMEDIARY_OF]-&gt;(e:Entity)
-WHERE intermediary.name CONTAINS 'Appleby'
+WHERE intermediary.name CONTAINS 'MOSSFON'
 RETURN e.jurisdiction AS country, COUNT(*) AS frequency
 ORDER BY frequency DESC LIMIT 20;</code></pre>
       </div>
@@ -221,8 +221,6 @@ ORDER BY frequency DESC LIMIT 20;</code></pre>
             </ul>
           </div>
         </div>
-        <div class="box-max"><img class="img-responsive img-thumbnail" src="https://panamapapers.icij.org/assets/logo_icij_complete.png" width="300">
-      </div>
       
     <br/>
       </div>
@@ -279,13 +277,13 @@ ORDER BY frequency DESC LIMIT 20;</code></pre>
 
   <footer class="panama">
     <ul class="list-inline">
-      <li><a click-to-code="':play https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/index.html'" class="sl sl-house"><pre mode="cypher"  class="highlight pre-scrollable code runnable standalone-example ng-binding"><code class="cypher language-cypher"></code></pre>
+      <li><a click-to-code="':play https://guides.neo4j.com/sandbox/icij-panama-papers/index.html'" class="sl sl-house"><pre mode="cypher"  class="highlight pre-scrollable code runnable standalone-example ng-binding"><code class="cypher language-cypher"></code></pre>
 
           Introduction</a></li>
-      <li><a click-to-code="':play https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/examples.html'" class="sl sl-show">
+      <li><a click-to-code="':play https://guides.neo4j.com/sandbox/icij-panama-papers/examples.html'" class="sl sl-show">
 
           Investigative queries</a></li>
-      <li><a click-to-code="':play https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/datashape.html'" class="sl sl-network">
+      <li><a click-to-code="':play https://guides.neo4j.com/sandbox/icij-panama-papers/datashape.html'" class="sl sl-network">
 
           Shape of the data</a></li>
     </ul>
