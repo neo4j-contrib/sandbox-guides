@@ -85,7 +85,7 @@
                                 <div class="col-lg-6">
                                     <pre mode="cypher"
                                          class="highlight pre-scrollable code runnable standalone-example ng-binding"><code
-                                            class="cypher language-cypher">CALL apoc.meta.graphSample()</code></pre>
+                                            class="cypher language-cypher">CALL db.schema()</code></pre>
                                 </div>
                                 <div class="col-lg-6">
                                     <div class="paragraph">
@@ -133,7 +133,7 @@ ORDER BY count DESC LIMIT 20</code></pre>
                     <div class="listingblock">
                         <div class="content">
     <pre mode="cypher" class="highlight pre-scrollable code runnable standalone-example ng-binding"><code
-            class="cypher language-cypher">MATCH (i:Intermediary) WHERE i.sourceID = "Paradise Papers - Appleby" AND size( (i)--() ) &gt; 100
+            class="cypher language-cypher">MATCH (i:Intermediary) WHERE i.sourceID = "Panama Papers" AND size( (i)--() ) &gt; 100
 MATCH (i)-[connection]-(entity)
 RETURN i.name as intermediary, type(connection) as relationship, head(labels(entity)) as type, count(*) as count
 ORDER BY count DESC LIMIT 20</code></pre>
@@ -171,8 +171,8 @@ ORDER BY count DESC LIMIT 20</code></pre>
                     <div class="row">
                         <div class="col-lg-6">
     <pre mode="cypher" class="highlight pre-scrollable code runnable standalone-example ng-binding"><code
-            class="cypher language-cypher">MATCH (i:Intermediary)-[r:CONNECTED_TO]-&gt;(e:Entity)
-WHERE i.name CONTAINS "Appleby"
+            class="cypher language-cypher">MATCH (i:Intermediary)-[r:INTERMEDIARY_OF]-&gt;(e:Entity)
+WHERE i.name CONTAINS "MOSSACK"
 RETURN i, r, e LIMIT 100</code></pre>
                         </div>
                         <div class="col-lg-6">
@@ -468,7 +468,7 @@ LIMIT 100</code></pre>
                     <form>
                         <div class="node">
                             <div class="form-group">
-                                <label>Name of the intermediary:</label> <input value-for="intermediary" value="Appleby"
+                                <label>Name of the intermediary:</label> <input value-for="intermediary" value="MOSSACK"
                                                                                 class="form-control">
                             </div>
                         </div>
@@ -477,7 +477,7 @@ LIMIT 100</code></pre>
                         <div class="content">
 <pre mode="cypher" class="highlight pre-scrollable code runnable standalone-example ng-binding"><code
         class="cypher language-cypher">MATCH (i:Intermediary)-[:INTERMEDIARY_OF]->(e:Entity)
-WHERE i.name CONTAINS '<span value-key="intermediary">Appleby</span>'
+WHERE i.name CONTAINS '<span value-key="intermediary">MOSSACK</span>'
 RETURN e.jurisdiction_description AS jurisdiction, count(*) AS number
 ORDER BY number DESC LIMIT 10</code></pre>
                         </div>
@@ -509,7 +509,7 @@ ORDER BY number DESC LIMIT 10</code></pre>
                         <div class="content">
 <pre mode="cypher" class="highlight pre-scrollable code runnable standalone-example ng-binding"><code
         class="cypher language-cypher">MATCH (o:Officer)-->(e:Entity)<-[:INTERMEDIARY_OF]-(i:Intermediary)
-WHERE o.country_codes CONTAINS '<span value-key="countryCode">USA</span>' and i.sourceID = 'Paradise Papers'
+WHERE o.country_codes CONTAINS '<span value-key="countryCode">USA</span>' and i.sourceID = 'Panama Papers'
 RETURN e.jurisdiction_description AS jurisdiction, count(*) AS number
 ORDER BY number DESC LIMIT 10</code></pre>
                         </div>
@@ -687,7 +687,7 @@ ORDER BY number DESC LIMIT 10</code></pre>
                                 <label>Attribute to search for:</label> <input value-for="property"
                                                                                value="service_provider"
                                                                                class="form-control">
-                                <label>Word to search for:</label> <input value-for="search" value="Appleby"
+                                <label>Word to search for:</label> <input value-for="search" value="Mossack Fonseca"
                                                                           class="form-control">
                             </div>
                         </div>
@@ -698,7 +698,7 @@ ORDER BY number DESC LIMIT 10</code></pre>
                                  class="highlight pre-scrollable code runnable standalone-example ng-binding"><code
                                     class="cypher language-cypher">CALL apoc.index.search("offshore", "<span
                                     value-key="label">Entity</span>.<span
-                                    value-key="property">service_provider</span>:<span value-key="search">Appleby</span>")</code></pre>
+                                    value-key="property">service_provider</span>:<span value-key="search">Mossack Fonseca</span>")</code></pre>
                         </div>
                     </div>
                     <div class="paragraph">
@@ -860,8 +860,6 @@ ORDER BY count DESC</code></pre>
             </ul>
           </div>
         </div>
-        <div class="box-max"><img class="img-responsive img-thumbnail" src="https://panamapapers.icij.org/assets/logo_icij_complete.png" width="300">
-      </div>
       
     <br/>
       </div>
@@ -880,7 +878,7 @@ ORDER BY count DESC</code></pre>
             </ul>
             <div class="clearfix"></div>
           </div>
-          <a play-topic="https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/examples.html"><button click-to-code="':play https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/examples.html'" class="btn btn-cta" style="background: #B3490E;padding:1em;color:#fff;">Run Queries</button></a>
+          <a play-topic="https://guides.neo4j.com/sandbox/icij-panama-papers/examples.html"><button click-to-code="':play https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/examples.html'" class="btn btn-cta" style="background: #B3490E;padding:1em;color:#fff;">Run Queries</button></a>
         </div>
         <div class="teaser teaser-3">
           <h3>Shape of the Data</h3>
@@ -894,7 +892,7 @@ ORDER BY count DESC</code></pre>
             </ul>
             <div class="clearfix"></div>
           </div>
-          <a play-topic="https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/datashape.html"><button click-to-code="':play https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/datashape.html'" class="btn btn-cta" style="background: #B3490E;padding:1em;color:#fff;">Start Learning</button></a>
+          <a play-topic="https://guides.neo4j.com/sandbox/icij-panama-papers/datashape.html"><button click-to-code="':play https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/datashape.html'" class="btn btn-cta" style="background: #B3490E;padding:1em;color:#fff;">Start Learning</button></a>
         </div>
         <div class="teaser teaser-3">
           <h3>Send ICIJ a tip</h3>
