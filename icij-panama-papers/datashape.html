@@ -104,7 +104,7 @@
     <div class="row">
         <div class="col-lg-6">
           <pre mode="cypher" class="highlight pre-scrollable code runnable standalone-example ng-binding"><code class="cypher language-cypher">MATCH (intermediary:Intermediary)-[:INTERMEDIARY_OF]-&gt;(e:Entity)
-WHERE intermediary.name CONTAINS 'Appleby'
+WHERE intermediary.name CONTAINS 'MOSSACK'
 RETURN e.jurisdiction AS country, COUNT(*) AS frequency
 ORDER BY frequency DESC LIMIT 20;</code></pre>
         </div>
@@ -627,8 +627,6 @@ RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pr
             </ul>
           </div>
         </div>
-        <div class="box-max"><img class="img-responsive img-thumbnail" src="https://panamapapers.icij.org/assets/logo_icij_complete.png" width="300">
-      </div>
       
     <br/>
       </div>
@@ -647,7 +645,7 @@ RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pr
             </ul>
             <div class="clearfix"></div>
           </div>
-          <a play-topic="https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/examples.html"><button click-to-code="':play https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/examples.html'" class="btn btn-cta" style="background: #B3490E;padding:1em;color:#fff;">Run Queries</button></a>
+          <a play-topic="https://guides.neo4j.com/sandbox/icij-panama-papers/examples.html"><button click-to-code="':play https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/examples.html'" class="btn btn-cta" style="background: #B3490E;padding:1em;color:#fff;">Run Queries</button></a>
         </div>
         <div class="teaser teaser-3">
           <h3>Shape of the Data</h3>
@@ -661,7 +659,7 @@ RETURN fromLabel, relType,toLabels,frequency ORDER BY frequency DESC;</code></pr
             </ul>
             <div class="clearfix"></div>
           </div>
-          <a play-topic="https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/datashape.html"><button click-to-code="':play https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/datashape.html'" class="btn btn-cta" style="background: #B3490E;padding:1em;color:#fff;">Start Learning</button></a>
+          <a play-topic="https://guides.neo4j.com/sandbox/icij-panama-papers/datashape.html"><button click-to-code="':play https://offshoreleaks-data.icij.org/offshoreleaks/neo4j/guide/datashape.html'" class="btn btn-cta" style="background: #B3490E;padding:1em;color:#fff;">Start Learning</button></a>
         </div>
         <div class="teaser teaser-3">
           <h3>Send ICIJ a tip</h3>
