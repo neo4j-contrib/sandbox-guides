@@ -1,0 +1,205 @@
+= 3.4 Sandbox
+
+:img: https://guides.neo4j.com/sandbox/3.4/img
+
+== Welcome to Neo4j 3.4!
+
+Neo4j 3.4 sees the introduction of geospatial and temporal data types and this sandbox we'll get some practice using them.
+
+== Temporal data type
+
+Let's start with the temporal data type.
+Neo4j now has support for the following temporal value types and supported components:
+
+image::{img}/datetypes.png[]
+
+`Date`, `Time`, `LocalTime`, `DateTime` and `LocalDateTime` are temporal instant types. A temporal instant value expresses a point in time — an instant — with varying degrees of precision.
+
+By contrast, `Duration` is not a temporal instant type. A Duration represents a temporal amount, capturing the difference in time between two instants, and can be negative.
+
+== Hands on with the Temporal data type
+
+We'll start by creating some of the actors from The Matrix along with their date of birth.
+
+Run the following query:
+
+[source, cypher]
+----
+MERGE (keanu:Person {name: "Keanu Reeves"}) ON CREATE SET keanu.born = date("1964-09-02")
+MERGE (hugo:Person {name: "Hugo Weaving"}) ON CREATE SET hugo.born = date("1960-04-04")
+MERGE (laurence:Person {name: "Laurence Fishburne"}) ON CREATE SET laurence.born = date("1961-07-30")
+MERGE (carrie:Person {name: "Carrie-Anne Moss"}) ON CREATE SET carrie.born = date("1967-08-21")
+
+MERGE (theMatrix:Movie {title: "The Matrix"})
+
+MERGE (keanu)-[:ACTED_IN]->(theMatrix)
+MERGE (hugo)-[:ACTED_IN]->(theMatrix)
+MERGE (laurence)-[:ACTED_IN]->(theMatrix)
+MERGE (carrie)-[:ACTED_IN]->(theMatrix)
+----
+
+For each of the actors we set a `born` property, which uses the new `Date` data type.
+
+== Calculating age differences (Part 1)
+
+We can now write a query that uses the `duration.between` function to find the difference in age between two of our characters:
+
+[source, cypher]
+----
+MATCH (keanu:Person {name: "Keanu Reeves"})
+MATCH (carrie:Person {name: "Carrie-Anne Moss"})
+WITH duration.between(keanu.born, carrie.born) AS ageDifference, keanu, carrie
+RETURN keanu.born, carrie.born, ageDifference.years, ageDifference.monthsOfYear, ageDifference.days
+----
+
+The result from this query tells us that Carrie is just under 3 years younger than Keanu.
+
+== Calculating age differences (Part 2)
+
+If instead of calculating the age difference in terms of years, months, and days, we just wanted one of those components we can do that as well.
+For example, the following query calculates the age difference in terms of days:
+
+[source, cypher]
+----
+MATCH (keanu:Person {name: "Keanu Reeves"})
+MATCH (carrie:Person {name: "Carrie-Anne Moss"})
+WITH duration.inDays(keanu.born, carrie.born) AS ageDifference, keanu, carrie
+RETURN keanu.born, carrie.born, ageDifference.days
+----
+
+We could also find the difference in months using `duration.inMonths` or in seconds using `duration.inSeconds`.
+
+== Comparing dates (Part 1)
+
+We can compare dates against each other.
+For example, the following query will tell us if Keanu Reeves is born earlier than Laurence Fishburne
+
+[source,cypher]
+----
+MATCH (keanu:Person {name: "Keanu Reeves"})
+MATCH (laurence:Person {name: "Laurence Fishburne"})
+RETURN keanu.born, laurence.born, keanu.born < laurence.born AS keanuBornEarlier
+----
+
+As expected we learn that Keanu was not born earlier than Laurence.
+
+== Comparing dates (Part 2)
+
+What about if we want to find all the people who are more than 2 years younger than Hugo Weaving?
+We can add to a Date using the `duration` function.
+
+Run the following query:
+
+[source, cypher]
+----
+MATCH (hugo:Person {name: "Hugo Weaving"})
+MATCH (p:Person)
+WHERE p.born > (hugo.born + duration({years: 2}))
+RETURN p.name AS name, hugo.born, p.born
+----
+
+== Geospatial data type
+
+Now let's take a look at the geospatial data type.
+
+Cypher has built-in support for handling spatial values (points), and the underlying database supports storing these point values as properties on nodes and relationships.
+Four Coordinate Reference Systems (CRS) are supported, each of which falls within one of two types: `geographic coordinates` modeling points on the earth, or `cartesian coordinates` modeling points in euclidean space:
+
+* Geographic coordinate reference systems - WGS-84: longitude, latitude (x, y) and WGS-84-3D: longitude, latitude, height (x, y, z)
+* Cartesian coordinate reference systems - Cartesian: x, y and Cartesian 3D: x, y, z
+
+== Hands on with the Geospatial data type
+
+Let's update our Matrix graph to store some geospatial points.
+We'll add (lat, long) coordinates for the place of birth of each of our actors:
+
+[source, cypher]
+----
+UNWIND [
+  {name: "Keanu Reeves", latitude: 33.888630, longitude: 35.495480},
+  {name: "Hugo Weaving", latitude: 7.401962, longitude: 3.917313},
+  {name: "Laurence Fishburne", latitude: 33.420696, longitude: -82.152374},
+  {name: "Carrie-Anne Moss", latitude: 49.246292, longitude: -123.116226}
+] AS person
+
+MATCH (p:Person {name: person.name})
+SET p.placeOfBirth = point({latitude: person.latitude, longitude: person.longitude})
+----
+
+For each of our actors we've added a `placeOfBirth` property that has the type `2D point in the WGS 84 CRS`.
+
+== Comparing distances
+
+We can use the `distance` function to compare two points.
+For example, the following query finds the distance in meters between the places of birth of Keanu and Laurence:
+
+[source, cypher]
+----
+MATCH (keanu:Person {name: "Keanu Reeves"})
+MATCH (carrie:Person {name: "Laurence Fishburne"})
+RETURN distance(keanu.placeOfBirth, carrie.placeOfBirth)
+----
+
+== Spatial Index
+
+We can create an index on geospatial properties the same way we do on properties of any other type:
+
+[source, cypher]
+----
+CREATE INDEX ON :Person(placeOfBirth)
+----
+
+This index will be used for:
+
+* equality and range queries
+* queries using the `distance` function when we're looking for points that occur inside a bounded box (i.e. that use the `<` operator for comparison)
+
+== Finding people born near Seattle
+
+We can write the following query to find the people born within 200km of Seattle.
+
+[source, cypher]
+----
+WITH point({latitude: 47.608013, longitude: -122.335167}) AS seattle
+MATCH (p:Person)
+WHERE distance(p.placeOfBirth, seattle) < 200000
+RETURN p, distance(p.placeOfBirth, seattle)
+----
+
+If we prefix the query with the `PROFILE` key word we'll see that the first operator is `NodeIndexSeekByRange`, which indicates that the spatial index was used:
+
+[source, cypher]
+----
+PROFILE
+WITH point({latitude: 47.608013, longitude: -122.335167}) AS seattle
+MATCH (p:Person)
+WHERE distance(p.placeOfBirth, seattle) < 200000
+RETURN p, distance(p.placeOfBirth, seattle)
+----
+
+== Finding people born away from Seattle
+
+If we try to find people born far away from Seattle this query will not make use of an index because we're trying to find points that live outside a bounded box.
+
+[source, cypher]
+----
+PROFILE
+WITH point({latitude: 47.608013, longitude: -122.335167}) AS seattle
+MATCH (p:Person)
+WHERE distance(p.placeOfBirth, seattle) > 200000
+RETURN p, distance(p.placeOfBirth, seattle)
+----
+
+== Have fun with the new data types!
+
+We're looking forward to seeing what types of applications you're now able to build so don't forget to send your ideas to devrel@neo4j.com
+
+Have fun!
+
+== Resources
+
+* http://neo4j.com/graphgists[Graph Gist Examples]
+* http://neo4j.com/docs/stable/cypher-refcard/[Cypher Reference Card]
+* http://neo4j.com/docs/developer-manual/current/#cypher-query-lang[Neo4j Developer Manual]
+* http://neo4j.com/developer/resources#_neo4j_cypher_resources[Cypher Resource Collection]
+* http://graphdatabases.com[e-book: Graph Databases (free)]
