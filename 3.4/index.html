@@ -1,0 +1,443 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>3.4 Sandbox</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+   <h4>3.4 Sandbox</h4>
+   
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Welcome to Neo4j 3.4!</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Neo4j 3.4 sees the introduction of geospatial and temporal data types and this sandbox we&#8217;ll get some practice using them.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Temporal data type</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Let&#8217;s start with the temporal data type.
+Neo4j now has support for the following temporal value types and supported components:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="http://localhost:8001/sandbox/3.4//img/datetypes.png" alt="datetypes">
+</div>
+</div>
+<div class="paragraph">
+<p><code>Date</code>, <code>Time</code>, <code>LocalTime</code>, <code>DateTime</code> and <code>LocalDateTime</code> are temporal instant types. A temporal instant value expresses a point in time — an instant — with varying degrees of precision.</p>
+</div>
+<div class="paragraph">
+<p>By contrast, <code>Duration</code> is not a temporal instant type. A Duration represents a temporal amount, capturing the difference in time between two instants, and can be negative.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Hands on with the Temporal data type</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We&#8217;ll start by creating some of the actors from The Matrix along with their date of birth.</p>
+</div>
+<div class="paragraph">
+<p>Run the following query:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MERGE (keanu:Person {name: "Keanu Reeves"}) ON CREATE SET keanu.born = date("1964-09-02")
+MERGE (hugo:Person {name: "Hugo Weaving"}) ON CREATE SET hugo.born = date("1960-04-04")
+MERGE (laurence:Person {name: "Laurence Fishburne"}) ON CREATE SET laurence.born = date("1961-07-30")
+MERGE (carrie:Person {name: "Carrie-Anne Moss"}) ON CREATE SET carrie.born = date("1967-08-21")
+
+MERGE (theMatrix:Movie {title: "The Matrix"})
+
+MERGE (keanu)-[:ACTED_IN]-&gt;(theMatrix)
+MERGE (hugo)-[:ACTED_IN]-&gt;(theMatrix)
+MERGE (laurence)-[:ACTED_IN]-&gt;(theMatrix)
+MERGE (carrie)-[:ACTED_IN]-&gt;(theMatrix)<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For each of the actors we set a <code>born</code> property, which uses the new <code>Date</code> data type.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Calculating age differences (Part 1)</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We can now write a query that uses the <code>duration.between</code> function to find the difference in age between two of our characters:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (keanu:Person {name: "Keanu Reeves"})
+MATCH (carrie:Person {name: "Carrie-Anne Moss"})
+WITH duration.between(keanu.born, carrie.born) AS ageDifference, keanu, carrie
+RETURN keanu.born, carrie.born, ageDifference.years, ageDifference.monthsOfYear, ageDifference.days<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The result from this query tells us that Carrie is just under 3 years younger than Keanu.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Calculating age differences (Part 2)</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>If instead of calculating the age difference in terms of years, months, and days, we just wanted one of those components we can do that as well.
+For example, the following query calculates the age difference in terms of days:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (keanu:Person {name: "Keanu Reeves"})
+MATCH (carrie:Person {name: "Carrie-Anne Moss"})
+WITH duration.inDays(keanu.born, carrie.born) AS ageDifference, keanu, carrie
+RETURN keanu.born, carrie.born, ageDifference.days<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We could also find the difference in months using <code>duration.inMonths</code> or in seconds using <code>duration.inSeconds</code>.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Comparing dates (Part 1)</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We can compare dates against each other.
+For example, the following query will tell us if Keanu Reeves is born earlier than Laurence Fishburne</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (keanu:Person {name: "Keanu Reeves"})
+MATCH (laurence:Person {name: "Laurence Fishburne"})
+RETURN keanu.born, laurence.born, keanu.born &lt; laurence.born AS keanuBornEarlier<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As expected we learn that Keanu was not born earlier than Laurence.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Comparing dates (Part 2)</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>What about if we want to find all the people who are more than 2 years younger than Hugo Weaving?
+We can add to a Date using the <code>duration</code> function.</p>
+</div>
+<div class="paragraph">
+<p>Run the following query:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (hugo:Person {name: "Hugo Weaving"})
+MATCH (p:Person)
+WHERE p.born &gt; (hugo.born + duration({years: 2}))
+RETURN p.name AS name, hugo.born, p.born<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Geospatial data type</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Now let&#8217;s take a look at the geospatial data type.</p>
+</div>
+<div class="paragraph">
+<p>Cypher has built-in support for handling spatial values (points), and the underlying database supports storing these point values as properties on nodes and relationships.
+Four Coordinate Reference Systems (CRS) are supported, each of which falls within one of two types: <code>geographic coordinates</code> modeling points on the earth, or <code>cartesian coordinates</code> modeling points in euclidean space:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Geographic coordinate reference systems - WGS-84: longitude, latitude (x, y) and WGS-84-3D: longitude, latitude, height (x, y, z)</p>
+</li>
+<li>
+<p>Cartesian coordinate reference systems - Cartesian: x, y and Cartesian 3D: x, y, z</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Hands on with the Geospatial data type</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Let&#8217;s update our Matrix graph to store some geospatial points.
+We&#8217;ll add (lat, long) coordinates for the place of birth of each of our actors:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->UNWIND [
+  {name: "Keanu Reeves", latitude: 33.888630, longitude: 35.495480},
+  {name: "Hugo Weaving", latitude: 7.401962, longitude: 3.917313},
+  {name: "Laurence Fishburne", latitude: 33.420696, longitude: -82.152374},
+  {name: "Carrie-Anne Moss", latitude: 49.246292, longitude: -123.116226}
+] AS person
+
+MATCH (p:Person {name: person.name})
+SET p.placeOfBirth = point({latitude: person.latitude, longitude: person.longitude})<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For each of our actors we&#8217;ve added a <code>placeOfBirth</code> property that has the type <code>2D point in the WGS 84 CRS</code>.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Comparing distances</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We can use the <code>distance</code> function to compare two points.
+For example, the following query finds the distance in meters between the places of birth of Keanu and Laurence:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (keanu:Person {name: "Keanu Reeves"})
+MATCH (carrie:Person {name: "Laurence Fishburne"})
+RETURN distance(keanu.placeOfBirth, carrie.placeOfBirth)<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Spatial Index</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We can create an index on geospatial properties the same way we do on properties of any other type:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CREATE INDEX ON :Person(placeOfBirth)<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This index will be used for:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>equality and range queries</p>
+</li>
+<li>
+<p>queries using the <code>distance</code> function when we&#8217;re looking for points that occur inside a bounded box (i.e. that use the <code>&lt;</code> operator for comparison)</p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Finding people born near Seattle</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We can write the following query to find the people born within 200km of Seattle.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->WITH point({latitude: 47.608013, longitude: -122.335167}) AS seattle
+MATCH (p:Person)
+WHERE distance(p.placeOfBirth, seattle) &lt; 200000
+RETURN p, distance(p.placeOfBirth, seattle)<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If we prefix the query with the <code>PROFILE</code> key word we&#8217;ll see that the first operator is <code>NodeIndexSeekByRange</code>, which indicates that the spatial index was used:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->PROFILE
+WITH point({latitude: 47.608013, longitude: -122.335167}) AS seattle
+MATCH (p:Person)
+WHERE distance(p.placeOfBirth, seattle) &lt; 200000
+RETURN p, distance(p.placeOfBirth, seattle)<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Finding people born away from Seattle</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>If we try to find people born far away from Seattle this query will not make use of an index because we&#8217;re trying to find points that live outside a bounded box.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->PROFILE
+WITH point({latitude: 47.608013, longitude: -122.335167}) AS seattle
+MATCH (p:Person)
+WHERE distance(p.placeOfBirth, seattle) &gt; 200000
+RETURN p, distance(p.placeOfBirth, seattle)<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Have fun with the new data types!</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We&#8217;re looking forward to seeing what types of applications you&#8217;re now able to build so don&#8217;t forget to send your ideas to <a href="mailto:devrel@neo4j.com">devrel@neo4j.com</a></p>
+</div>
+<div class="paragraph">
+<p>Have fun!</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Resources</h3>
+    <br/>
+    <div>
+      <div class="ulist">
+<ul>
+<li>
+<p><a href="http://neo4j.com/graphgists">Graph Gist Examples</a></p>
+</li>
+<li>
+<p><a href="http://neo4j.com/docs/stable/cypher-refcard/">Cypher Reference Card</a></p>
+</li>
+<li>
+<p><a href="http://neo4j.com/docs/developer-manual/current/#cypher-query-lang">Neo4j Developer Manual</a></p>
+</li>
+<li>
+<p><a href="http://neo4j.com/developer/resources#_neo4j_cypher_resources">Cypher Resource Collection</a></p>
+</li>
+<li>
+<p><a href="http://graphdatabases.com">e-book: Graph Databases (free)</a></p>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>
