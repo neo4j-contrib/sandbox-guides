@@ -243,6 +243,32 @@ LIMIT 20<!--/code--></pre>
 
 <slide class="row-fluid">
   <div class="col-sm-12">
+    <h3>Which top scorers are playing in 2018?</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Who are the top scoring players participating in this year&#8217;s World Cup?</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (player:Player)--&gt;(stats)-[:SCORED_GOAL]-&gt;(goal),
+      (stats)-[:IN_MATCH]-&gt;()&lt;-[:CONTAINS_MATCH]-(wc:WorldCup)
+WHERE goal.type IN ["goal", "penalty"]
+WITH  player, count(*) AS goals
+ORDER BY goals DESC
+MATCH (player)-[:IN_SQUAD]-&gt;(squad:Squad {year: 2018})
+RETURN player.name, goals
+LIMIT 10<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
     <h3>Multiple World Cups?</h3>
     <br/>
     <div>

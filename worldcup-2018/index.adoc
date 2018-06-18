@@ -112,6 +112,22 @@ LIMIT 20
 
 It'll be interesting to see if any of the players in Russia can close the gap to those at the top.
 
+== Which top scorers are playing in 2018?
+
+Who are the top scoring players participating in this year's World Cup?
+
+[source, cypher]
+----
+MATCH (player:Player)-->(stats)-[:SCORED_GOAL]->(goal),
+      (stats)-[:IN_MATCH]->()<-[:CONTAINS_MATCH]-(wc:WorldCup)
+WHERE goal.type IN ["goal", "penalty"]
+WITH  player, count(*) AS goals
+ORDER BY goals DESC
+MATCH (player)-[:IN_SQUAD]->(squad:Squad {year: 2018})
+RETURN player.name, goals
+LIMIT 10
+----
+
 == Multiple World Cups?
 
 How many players have been named in 3 or more World Cup squads?
