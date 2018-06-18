@@ -1,0 +1,328 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>World Cup Sandbox</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+   <h4>World Cup Sandbox</h4>
+   
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Welcome to the World Cup Sandbox</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>It&#8217;s World Cup 2018 and we&#8217;ve created a special sandbox for you to play around with while you follow the tournament.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Schema</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We&#8217;ve imported all the matches, squads, lineups, and scorers from all the World Cups between 1930 and 2014.
+Let&#8217;s take a look at the schema.</p>
+</div>
+<div class="paragraph">
+<p>Run the following query:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL db.schema()<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Who hosted the World Cup?</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We&#8217;ll start with a basic query to find out which countries have hosted World Cups:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (wc:WorldCup)-[:HOSTED_BY]-&gt;(country)
+RETURN wc.name, wc.year, country.name
+ORDER BY wc.year<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Most World Cups had a single host country, but we can see that in 2002 there were a couple of hosts.
+What if we want to still have a single row per World Cup?</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Who hosted the World Cup?</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>We can use the <code>collect</code> function to return the host countries as an array.
+Run the following query to return one World Cup per row:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (wc:WorldCup)-[:HOSTED_BY]-&gt;(country)
+RETURN wc.name, wc.year, collect(country.name) AS countries
+ORDER BY wc.year<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Has anyone ever hosted the World Cup more than once?</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Has any country ever hosted the World Cup more than once?
+Run the following query to find out:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (host:Country)&lt;-[:HOSTED_BY]-(wc)
+WITH wc, host ORDER BY wc.year
+WITH host, count(*) AS times, collect(wc.year) AS years
+WHERE times &gt; 1
+return host.name, times, years<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Have the hosts ever won the World Cup?</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>It&#8217;s been a long time since the hosts last won the World Cup.
+Can you remember when it last happened?</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (match:Match {round: "Final"})&lt;-[hostPlayed:PLAYED_IN]-(host:Country),
+      (host)&lt;-[:HOSTED_BY]-(worldCup),
+      (worldCup)-[:CONTAINS_MATCH]-&gt;(match),
+      (match)&lt;-[oppositionPlayed:PLAYED_IN]-(opposition)
+WHERE (hostPlayed.score &gt; oppositionPlayed.score) OR (hostPlayed.penalties &gt; oppositionPlayed.score)
+RETURN host.name, worldCup.name, hostPlayed.score + "-" + oppositionPlayed.score AS score<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Who were the finalists in each World Cup?</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>If we want to find the finalists in each World Cup we can write the following query:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (match:Match {round: "Final"})&lt;-[hostPlayed:PLAYED_IN]-(team1:Country),
+      (worldCup)-[:CONTAINS_MATCH]-&gt;(match),
+      (match)&lt;-[oppositionPlayed:PLAYED_IN]-(team2)
+WHERE id(team1) &lt; id(team2)
+RETURN match.date, team1.name, team2.name, worldCup.name,
+       hostPlayed.score + "-" + oppositionPlayed.score +
+       CASE WHEN not hostPlayed.penalties is null
+       THEN " (" + hostPlayed.penalties + "-" + oppositionPlayed.penalties + ")"
+       ELSE "" END
+       AS score
+ORDER BY match.date<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Who&#8217;s the top scorer across all World Cups?</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>One of the most commonly mentioned statistics by football commentators is the top scorer across all World Cups.
+We can run the following query to find the answer:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (player)--&gt;(stats)-[:SCORED_GOAL]-&gt;(goal),
+      (stats)-[:IN_MATCH]-&gt;()&lt;-[:CONTAINS_MATCH]-(wc:WorldCup)
+WHERE goal.type IN ["goal", "penalty"]
+WITH  player.name AS player, count(*) AS goals, collect(DISTINCT wc.year) AS competitions
+UNWIND competitions AS competition
+WITH player, goals, competition ORDER BY player, goals, competition
+RETURN player, goals, collect(competition) AS competitions
+ORDER BY goals DESC
+LIMIT 20<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It&#8217;ll be interesting to see if any of the players in Russia can close the gap to those at the top.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Multiple World Cups?</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>How many players have been named in 3 or more World Cup squads?
+Have a guess before you run the next query:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (wc)&lt;-[:FOR_WORLD_CUP]-(squad)&lt;-[:IN_SQUAD]-(player), (country)-[:NAMED_SQUAD]-&gt;(squad)
+WITH player, collect(wc.year) AS wcs, collect(distinct country.name) AS countries, COUNT(*) AS times
+WHERE times &gt; 3
+
+UNWIND wcs AS wc
+WITH player, countries, wc, times
+ORDER BY times DESC, wc
+
+RETURN player.name, times, collect(wc), countries
+ORDER BY times DESC;<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Goalscoring substitutes</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Some players never get a start but have a big impact when they come off the bench.
+The following query returns goal scoring substitutes:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (country:Country)-[:NAMED_SQUAD]-(squad:Squad)&lt;-[:IN_SQUAD]-(player:Player),
+      (player)-[:SUBSTITUTE]-&gt;(app:Appearance),
+      (app)-[:IN_MATCH]-&gt;(match:Match), (squad)-[:FOR_WORLD_CUP]-&gt;(wc:WorldCup),
+      (wc)-[:CONTAINS_MATCH]-&gt;(match)
+MATCH (app)-[:SCORED_GOAL]-&gt;(goal:Goal)
+RETURN player.name, count(goal) AS goals
+ORDER BY goals DESC
+LIMIT 10<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Top scorer by country</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Do you know who your country&#8217;s top World Cup scorer is?</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (c:Country)-[:NAMED_SQUAD]-&gt;(s:Squad)--(player:Player)--&gt;()-[:SCORED_GOAL]-&gt;(g)
+WITH c, player, count(distinct g) AS goals
+WITH c, collect({player:player.name, count: goals}) AS playersGoals
+
+UNWIND playersGoals as playerGoals
+
+WITH c, playerGoals
+ORDER BY c.name, playerGoals.count DESC
+
+WITH c, COLLECT(playerGoals)[0] AS topScorer
+RETURN c.name, topScorer.player, topScorer.count
+ORDER BY topScorer.count DESC<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>
