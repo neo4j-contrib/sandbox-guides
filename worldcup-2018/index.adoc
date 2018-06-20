@@ -1,0 +1,186 @@
+= World Cup Sandbox
+
+:img: https://guides.neo4j.com/sandbox/3.4/img
+
+== Welcome to the World Cup Sandbox
+
+It's World Cup 2018 and we've created a special sandbox for you to play around with while you follow the tournament.
+
+== Schema
+
+We've imported all the matches, squads, lineups, and scorers from all the World Cups between 1930 and 2014.
+Let's take a look at the schema.
+
+Run the following query:
+
+[source,cypher]
+----
+CALL db.schema()
+----
+
+== Who hosted the World Cup?
+
+We'll start with a basic query to find out which countries have hosted World Cups:
+
+[source, cypher]
+----
+MATCH (wc:WorldCup)-[:HOSTED_BY]->(country)
+RETURN wc.name, wc.year, country.name
+ORDER BY wc.year
+----
+
+Most World Cups had a single host country, but we can see that in 2002 there were a couple of hosts.
+What if we want to still have a single row per World Cup?
+
+== Who hosted the World Cup?
+
+We can use the `collect` function to return the host countries as an array.
+Run the following query to return one World Cup per row:
+
+[source, cypher]
+----
+MATCH (wc:WorldCup)-[:HOSTED_BY]->(country)
+RETURN wc.name, wc.year, collect(country.name) AS countries
+ORDER BY wc.year
+----
+
+== Has anyone ever hosted the World Cup more than once?
+
+Has any country ever hosted the World Cup more than once?
+Run the following query to find out:
+
+[source, cypher]
+----
+MATCH (host:Country)<-[:HOSTED_BY]-(wc)
+WITH wc, host ORDER BY wc.year
+WITH host, count(*) AS times, collect(wc.year) AS years
+WHERE times > 1
+return host.name, times, years
+----
+
+== Have the hosts ever won the World Cup?
+
+It's been a long time since the hosts last won the World Cup.
+Can you remember when it last happened?
+
+[source, cypher]
+----
+MATCH (match:Match {round: "Final"})<-[hostPlayed:PLAYED_IN]-(host:Country),
+      (host)<-[:HOSTED_BY]-(worldCup),
+      (worldCup)-[:CONTAINS_MATCH]->(match),
+      (match)<-[oppositionPlayed:PLAYED_IN]-(opposition)
+WHERE (hostPlayed.score > oppositionPlayed.score) OR (hostPlayed.penalties > oppositionPlayed.score)
+RETURN host.name, worldCup.name, hostPlayed.score + "-" + oppositionPlayed.score AS score
+----
+
+== Who were the finalists in each World Cup?
+
+If we want to find the finalists in each World Cup we can write the following query:
+
+[source, cypher]
+----
+MATCH (match:Match {round: "Final"})<-[hostPlayed:PLAYED_IN]-(team1:Country),
+      (worldCup)-[:CONTAINS_MATCH]->(match),
+      (match)<-[oppositionPlayed:PLAYED_IN]-(team2)
+WHERE id(team1) < id(team2)
+RETURN match.date, team1.name, team2.name, worldCup.name,
+       hostPlayed.score + "-" + oppositionPlayed.score +
+       CASE WHEN not hostPlayed.penalties is null
+       THEN " (" + hostPlayed.penalties + "-" + oppositionPlayed.penalties + ")"
+       ELSE "" END
+       AS score
+ORDER BY match.date
+----
+
+== Who's the top scorer across all World Cups?
+
+One of the most commonly mentioned statistics by football commentators is the top scorer across all World Cups.
+We can run the following query to find the answer:
+
+[source, cypher]
+----
+MATCH (player)-->(stats)-[:SCORED_GOAL]->(goal),
+      (stats)-[:IN_MATCH]->()<-[:CONTAINS_MATCH]-(wc:WorldCup)
+WHERE goal.type IN ["goal", "penalty"]
+WITH  player.name AS player, count(*) AS goals, collect(DISTINCT wc.year) AS competitions
+UNWIND competitions AS competition
+WITH player, goals, competition ORDER BY player, goals, competition
+RETURN player, goals, collect(competition) AS competitions
+ORDER BY goals DESC
+LIMIT 20
+----
+
+It'll be interesting to see if any of the players in Russia can close the gap to those at the top.
+
+== Which top scorers are playing in 2018?
+
+Who are the top scoring players participating in this year's World Cup?
+
+[source, cypher]
+----
+MATCH (player:Player)-->(stats)-[:SCORED_GOAL]->(goal),
+      (stats)-[:IN_MATCH]->()<-[:CONTAINS_MATCH]-(wc:WorldCup)
+WHERE goal.type IN ["goal", "penalty"]
+WITH  player, count(*) AS goals
+ORDER BY goals DESC
+MATCH (player)-[:IN_SQUAD]->(squad:Squad {year: 2018})
+RETURN player.name, goals
+LIMIT 10
+----
+
+== Multiple World Cups?
+
+How many players have been named in 3 or more World Cup squads?
+Have a guess before you run the next query:
+
+[source, cypher]
+----
+MATCH (wc)<-[:FOR_WORLD_CUP]-(squad)<-[:IN_SQUAD]-(player), (country)-[:NAMED_SQUAD]->(squad)
+WITH player, collect(wc.year) AS wcs, collect(distinct country.name) AS countries, COUNT(*) AS times
+WHERE times > 3
+
+UNWIND wcs AS wc
+WITH player, countries, wc, times
+ORDER BY times DESC, wc
+
+RETURN player.name, times, collect(wc), countries
+ORDER BY times DESC;
+----
+
+== Goalscoring substitutes
+
+Some players never get a start but have a big impact when they come off the bench.
+The following query returns goal scoring substitutes:
+
+[source, cypher]
+----
+MATCH (country:Country)-[:NAMED_SQUAD]-(squad:Squad)<-[:IN_SQUAD]-(player:Player),
+      (player)-[:SUBSTITUTE]->(app:Appearance),
+      (app)-[:IN_MATCH]->(match:Match), (squad)-[:FOR_WORLD_CUP]->(wc:WorldCup),
+      (wc)-[:CONTAINS_MATCH]->(match)
+MATCH (app)-[:SCORED_GOAL]->(goal:Goal)
+RETURN player.name, count(goal) AS goals
+ORDER BY goals DESC
+LIMIT 10
+----
+
+
+== Top scorer by country
+
+Do you know who your country's top World Cup scorer is?
+
+[source, cypher]
+----
+match (c:Country)-[:NAMED_SQUAD]->(s:Squad)--(player:Player)-->()-[:SCORED_GOAL]->(g)
+WITH c, player, count(distinct g) AS goals
+WITH c, collect({player:player.name, count: goals}) AS playersGoals
+
+UNWIND playersGoals as playerGoals
+
+WITH c, playerGoals
+ORDER BY c.name, playerGoals.count DESC
+
+WITH c, COLLECT(playerGoals)[0] AS topScorer
+RETURN c.name, topScorer.player, topScorer.count
+ORDER BY topScorer.count DESC
+----
