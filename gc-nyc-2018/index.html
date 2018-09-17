@@ -85,8 +85,8 @@
 </div>
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (p:Person)-[:SPEAKS_IN]-&gt;(s:Session)-[:TAGGED_AS]-&gt;(t)
-RETURN p,s,t<!--/code--></pre>
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (sp:Speaker)-[:SPEAKS_AT]-&gt;(s:Session)-[:HAS_TAG]-&gt;(t)
+RETURN sp,s,t<!--/code--></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -111,11 +111,11 @@ ORDER BY count(*) DESC<!--/code--></pre>
     <br/>
     <div>
       <div class="paragraph">
-<p>Ok - so that looks like a big fat hairball. Not very useful. So let&#8217;s try to zoom in a bit, and run a simple query over our graph: let&#8217;s find a couple of sessions in Track 1:</p>
+<p>Ok - so that looks like a big fat hairball. Not very useful. So let&#8217;s try to zoom in a bit, and run a simple query over our graph: let&#8217;s find a couple of sessions tagged with 'Graph Algorithms and Analytics':</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (t:Time)&lt;--(s:Session)-[:IN_TRACK]-&gt;(tr:Track {name:"Neo4j Deep-Dive"})
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (s:Session)-[:HAS_TAG]-&gt;(t:Tag {name:"Graph Algorithms and Analytics"})
 return t,s,tr<!--/code--></pre>
 </div>
 </div>
@@ -131,22 +131,22 @@ return t,s,tr<!--/code--></pre>
     <br/>
     <div>
       <div class="paragraph">
-<p>Let&#8217;s do another query: How are <a href="http://jimwebber.org/">Dr. Jim Webber</a>, (of Neo fame) and Axel Morgner the founder of <a href="http://structr.org" class="bare">http://structr.org</a> connected ?</p>
+<p>Let&#8217;s do another query: How are <a href="https://twitter.com/mesirii">Michael Hunger</a>, (of Neo fame) and Axel Morgner the founder of <a href="http://structr.org" class="bare">http://structr.org</a> connected ?</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match path = allshortestpaths( (p1:Person)-[*]-(p2:Person) )
-where p1.name contains "Morgner"
-and p2.name contains "Webber"
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match path = allshortestpaths( (sp1:Speaker)-[*]-(sp2:Speaker) )
+where sp1.name contains "Morgner"
+and sp2.name contains "Hunger"
 return path<!--/code--></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Let&#8217;s now look at a link between a person, like Emil Eifrem and an Organisation, like <a href="https://theguardian.com">The Guardian</a>.</p>
+<p>Let&#8217;s now look at a link between a person, like Emil Eifrem and an Organisation, like <a href="https://adobe.com">Adobe</a>.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (c:Company {name:"The Guardian"}), (p:Person {name:"Jim Webber"}),
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (c:Company {name:"Adobe"}), (sp:Speaker {name:"Emil Eifrem"}),
 path = allshortestpaths( (c)-[*]-(p) )
 return path<!--/code--></pre>
 </div>
@@ -167,10 +167,10 @@ return path<!--/code--></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (s:Session)-[r:SPEAKS_IN]-(p:Person)
-with s, collect(p) as person, count(p) as count
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (s:Session)-[r:SPEAKS_AT]-(sp:Speaker)
+with s, collect(sp) as speaker, count(p) as count
 where count &gt; 1
-return s,person<!--/code--></pre>
+return s,speaker<!--/code--></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -178,14 +178,14 @@ return s,person<!--/code--></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (s:Session)-[r:SPEAKS_IN]-(p:Person)
-with p, collect(s) as sessions, count(s) as count
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (s:Session)-[r:SPEAKS_AT]-(sp:Speaker)
+with sp, collect(s) as sessions, count(s) as count
 where count &gt; 1
-return p,sessions<!--/code--></pre>
+return sp.name,sessions<!--/code--></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Which shows us that Jesús Barrasa is THE ONE.</p>
+<p>Which shows us that Michael Hunger is THE ONE.</p>
 </div>
 	</div>
   </div>
