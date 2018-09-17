@@ -116,7 +116,7 @@ ORDER BY count(*) DESC<!--/code--></pre>
 <div class="listingblock">
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (s:Session)-[:HAS_TAG]-&gt;(t:Tag {name:"Graph Algorithms and Analytics"})
-return t,s,tr<!--/code--></pre>
+return s,t<!--/code--></pre>
 </div>
 </div>
 	</div>
@@ -147,7 +147,7 @@ return path<!--/code--></pre>
 <div class="listingblock">
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (c:Company {name:"Adobe"}), (sp:Speaker {name:"Emil Eifrem"}),
-path = allshortestpaths( (c)-[*]-(p) )
+path = allshortestpaths( (c)-[*]-(sp) )
 return path<!--/code--></pre>
 </div>
 </div>
@@ -168,7 +168,7 @@ return path<!--/code--></pre>
 <div class="listingblock">
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (s:Session)-[r:SPEAKS_AT]-(sp:Speaker)
-with s, collect(sp) as speaker, count(p) as count
+with s, collect(sp) as speaker, count(s) as count
 where count &gt; 1
 return s,speaker<!--/code--></pre>
 </div>
@@ -203,7 +203,7 @@ return sp.name,sessions<!--/code--></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t:Tag)&lt;-[:TAGGED_AS]-()
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (t:Tag)&lt;-[:HAS_TAG]-()
 RETURN t.name, count(*)
 ORDER BY count(*) DESC LIMIT 10<!--/code--></pre>
 </div>
@@ -213,8 +213,8 @@ ORDER BY count(*) DESC LIMIT 10<!--/code--></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (reco:Session)-[:TAGGED_AS]-&gt;(t:Tag)&lt;-[:TAGGED_AS]-(s:Session)
-WHERE s.title = "Cypher Performance Improvements"
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (reco:Session)-[:HAS_TAG]-&gt;(t:Tag)&lt;-[:HAS_TAG]-(s:Session)
+WHERE s.name = "Predictive Analysis from Massive Knowledge Graphs on Neo4j"
 WITH reco,count(*) as count,s,collect(t) as tags
 ORDER BY count DESC LIMIT 5
 RETURN reco, s,tags<!--/code--></pre>
