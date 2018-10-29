@@ -12,7 +12,7 @@ The POLE data model focuses on four basic types of entities and the relationship
 
 [subs=attributes]
 ++++
-<img src="{img}/datamodel.png" class="img-responsive">
+<img src="{img}/pole_model_visual.jpeg" class="img-responsive">
 ++++
 
 == POLE Model Use Cases
