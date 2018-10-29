@@ -3,7 +3,6 @@
 :neo4j-version: 3.4.6
 :author: Joe Depeau
 :twitter: @joedepeau
-:imagesdir: http://localhost:8001/images/
 
 == POLE Model Overview
 
@@ -11,7 +10,10 @@ This guide will demonstrate how Neo4j can be used with a POLE data model in the 
 
 The POLE data model focuses on four basic types of entities and the relationships between them: **P**ersons, **O**bjects, **L**ocations, and **E**vents.  
 
-image::pole_model_visual.jpeg[]
+[subs=attributes]
+++++
+<img src="{img}/pole_model_visual.jpeg" class="img-responsive">
+++++
 
 == POLE Model Use Cases
 
