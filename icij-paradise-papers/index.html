@@ -128,11 +128,11 @@ LIMIT 50</code></pre>
       <h4>Graph Patterns</h4>
       <div class="paragraph">
         <p>Neo4j’s query language, Cypher, is centered around <strong>graph patterns</strong> which represents entities with parentheses, for example, 
-      <code>(e:Entity)</code> and connections with arrows, for example <code>-[:INTERMEDIARY_OF]-&gt;</code>.
-        <code>:Entity</code> and <code>:INTERMEDIARY_OF</code> are the types of the entity and the connection, respectively.
+      <code>(e:Entity)</code> and connections with arrows, for example <code>-[:CONNECTED_TO]-&gt;</code>.
+        <code>:Entity</code> and <code>:CONNECTED_TO</code> are the types of the entity and the connection, respectively.
       </div>
       <div class="paragraph">
-        <p>Here is an example pattern: <code>(:Intermediary)-[:INTERMEDIARY_OF]-&gt;(:Entity)</code>.
+        <p>Here is an example pattern: <code>(:Intermediary)-[:CONNECTED_TO]-&gt;(:Entity)</code>.
         These patterns may be found with the <code>MATCH</code> clause.</p>
       </div>
 
@@ -174,7 +174,7 @@ LIMIT 50</code></pre>
       <div class="listingblock">
       <div class="title">Jurisdiction distribution of intermediaries in the ICIJ offshore leaks DB</div>
       <div class="content">
-      <pre mode="cypher"  class="highlight pre-scrollable code runnable standalone-example ng-binding"><code class="cypher language-cypher">MATCH (intermediary:Intermediary)-[:INTERMEDIARY_OF]-&gt;(e:Entity)
+      <pre mode="cypher"  class="highlight pre-scrollable code runnable standalone-example ng-binding"><code class="cypher language-cypher">MATCH (intermediary:Intermediary)-[:CONNECTED_TO]-&gt;(e:Entity)
 WHERE intermediary.name CONTAINS 'Appleby'
 RETURN e.jurisdiction AS country, COUNT(*) AS frequency
 ORDER BY frequency DESC LIMIT 20;</code></pre>
