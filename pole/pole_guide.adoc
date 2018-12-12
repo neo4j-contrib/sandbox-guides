@@ -6,13 +6,31 @@
 
 == POLE Model Overview
 
-This guide will demonstrate how Neo4j can be used with a POLE data model in the context of police and child protection investigations. 
 
-The POLE data model focuses on four basic types of entities and the relationships between them: **P**ersons, **O**bjects, **L**ocations, and **E**vents.  
+++++
+<div class="col-lg-6">
+++++
 
 [subs=attributes]
 ++++
 <img src="{img}/pole_model_visual.jpeg" class="img-responsive">
+++++
+
+++++
+</div>
+++++
+
+++++
+<div class="col-lg-6">
+++++
+
+This guide will demonstrate how Neo4j can be used with a POLE data model in the context of police and child protection investigations. 
+
+The POLE data model focuses on four basic types of entities and the relationships between them: **P**ersons, **O**bjects, **L**ocations, and **E**vents.  
+
+
+++++
+</div>
 ++++
 
 == POLE Model Use Cases
