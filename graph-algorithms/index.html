@@ -79,7 +79,7 @@
     <br/>
     <div>
       <div class="paragraph">
-<p>Andrew built a graph where nodes are characters in the books and relationships represent character interactions.</p>
+<p>Andrew built a graph where nodes are characters in the TV series and relationships represent character interactions.</p>
 </div>
 <div class="paragraph">
 <p>Characters have a relationship for each time their names (or nicknames) <strong>appear within 15 words of one another</strong>.
@@ -549,6 +549,116 @@ LIMIT 10<!--/code--></pre>
 
 <slide class="row-fluid">
   <div class="col-sm-12">
+    <h3>Closeness Centrality</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Closeness centrality is a way of detecting nodes that are able to spread information very efficiently through a graph.
+The closeness centrality of a node measures its average farness (inverse distance) to all other nodes. Nodes with a high closeness score have the shortest distances to all other nodes.</p>
+</div>
+<div class="paragraph">
+<p>We can run this algorithm over the interactions in season 2 of Game of Thrones:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL algo.closeness.stream("Character", "INTERACTS_SEASON2", {
+  direction: "BOTH"
+})
+YIELD nodeId, centrality
+RETURN algo.asNode(nodeId).name, centrality
+ORDER BY centrality DESC
+LIMIT 10<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><em>Daenerys</em> has a score of 1, which means that she&#8217;s interacted directly with all other characters.
+This doesn&#8217;t seem likely, so let&#8217;s try and work out what&#8217;s happened.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Why is Daenerys so well connected?</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>By default, the Closeness Centrality algorithm works out the connectedness of a node to all nodes that it can reach.
+We can run the <a href="https://neo4j.com/docs/graph-algorithms/current/algorithms/connected-components/" target="_blank">connected components algorithm</a> to find sets of nodes that have paths between each other.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL algo.unionFind.stream("Character", "INTERACTS_SEASON2", {
+  direction: "BOTH"
+})
+YIELD nodeId, setId
+WITH setId, collect(algo.asNode(nodeId).name) AS people
+RETURN setId, people, size(people) AS size
+ORDER BY size(people) DESC
+LIMIT 10<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Aha!
+In season 2 Daenerys was away from the majority of other characters, and she did indeed interact with all the people within her connected component.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Closeness Centrality: Wasserman and Faust / Harmonic</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>So the closeness centrality algorithm actually measures the farness of a node to all other nodes in the same connected component.
+If we want to find the farness to all other nodes in the graph, we can use the Wasserman and Faust or Harmonic variants of the algorithm.</p>
+</div>
+<div class="paragraph">
+<p><em>Wasserman and Faust</em></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL algo.closeness.stream("Character", "INTERACTS_SEASON2", {
+  direction: "BOTH", improved: true
+})
+YIELD nodeId, centrality
+RETURN algo.asNode(nodeId).name, centrality
+ORDER BY centrality DESC
+LIMIT 10<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><em>Harmonic</em></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL algo.closeness.harmonic.stream("Character", "INTERACTS_SEASON2", {
+  direction: "BOTH"
+})
+YIELD nodeId, centrality
+RETURN algo.asNode(nodeId).name, centrality
+ORDER BY centrality DESC
+LIMIT 10<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can learn more about these variants of the closeness centrality algorithm in <a href="https://neo4j.com/graph-algorithms-book/" target="_blank">Chapter 6 of the Graph Algorithms Book</a>.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
     <h3>PageRank</h3>
     <br/>
     <div>
@@ -582,7 +692,7 @@ In our context, PageRank centrality nicely captures narrative tension. Indeed, m
 <p>This time lets skip straight to the version of this procedure that stores results straight into the database.</p>
 </div>
 <div class="paragraph">
-<p>Run the following queries to calculate page rank scores for each of the books:</p>
+<p>Run the following queries to calculate page rank scores for seasons 1 and 7:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -641,14 +751,13 @@ LIMIT 20<!--/code--></pre>
 <p>We can detect communities in our data by running an algorithm which traverses the graph structure to find highly connected subgraphs with fewer connections other other subgraphs.</p>
 </div>
 <div class="paragraph">
-<p>Run the following query to calculate the communities that exist based on interactions across all the books.</p>
+<p>Run the following query to calculate the communities that exist based on interactions across all the seasons.</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL algo.labelPropagation(
   'MATCH (c:Character) RETURN id(c) as id',
-  'MATCH (c:Character)-[rel]-&gt;(c2) RETURN id(c) as source, id(c2) as target, SUM(rel.weight) as weight',
-  'OUTGOING',
+  'MATCH (c:Character)-[rel]-(c2) RETURN id(c) as source, id(c2) as target, SUM(rel.weight) as weight',
   {graph:'cypher', partitionProperty: 'community'})<!--/code--></pre>
 </div>
 </div>
@@ -690,13 +799,13 @@ ORDER BY count DESC<!--/code--></pre>
     <div>
       <div class="paragraph">
 <p>It&#8217;d be good to know who are the influential people in each community.
-To do that we&#8217;ll need to calculate a PageRank score for each character across all the books:</p>
+To do that we&#8217;ll need to calculate a PageRank score for each character across all the seasons:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL algo.pageRank(
   'MATCH (c:Character) RETURN id(c) as id',
-  'MATCH (c:Character)-[rel]-&gt;(c2) RETURN id(c) as source,id(c2) as target, SUM(rel.weight) as weight',
+  'MATCH (c:Character)-[rel]-(c2) RETURN id(c) as source,id(c2) as target, SUM(rel.weight) as weight',
   {graph:'cypher', writeProperty: 'pageRank'})<!--/code--></pre>
 </div>
 </div>
@@ -710,7 +819,7 @@ ORDER BY count DESC<!--/code--></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Most people are in a big community containing <em>Sansa</em>, but we also have smaller communities which contain <em>Tyrion</em>, and the Greyjoys who are other important characters.</p>
+<p>Most people are in a big community containing <em>Tyrion</em>, but we also have smaller communities which contain <em>Jon</em> and <em>Daenerys</em> who are another important characters.</p>
 </div>
 	</div>
   </div>
@@ -784,7 +893,7 @@ RETURN value<!--/code--></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Character) WHERE EXISTS(c.community)
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Character) WHERE exists(c.community)
 WITH c.community AS communityId, COUNT(*) AS count
 ORDER BY count DESC
 SKIP 1 LIMIT 1

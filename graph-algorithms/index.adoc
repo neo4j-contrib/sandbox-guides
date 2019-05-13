@@ -13,7 +13,7 @@ Article: https://www.macalester.edu/~abeverid/index.html[Beveridge, Andrew, Shan
 
 == Graph of Character Interactions
 
-Andrew built a graph where nodes are characters in the books and relationships represent character interactions.
+Andrew built a graph where nodes are characters in the TV series and relationships represent character interactions.
 
 Characters have a relationship for each time their names (or nicknames) *appear within 15 words of one another*.
 Each link corresponds to an interaction between the two characters. Note that this interaction could be direct or indirect. Here are some of the types of interactions that our method picks up.
@@ -282,6 +282,81 @@ RETURN c.name, c.season1BetweennessCentrality, c.season7BetweennessCentrality
 LIMIT 10
 ----
 
+== Closeness Centrality
+
+Closeness centrality is a way of detecting nodes that are able to spread information very efficiently through a graph.
+The closeness centrality of a node measures its average farness (inverse distance) to all other nodes. Nodes with a high closeness score have the shortest distances to all other nodes.
+
+We can run this algorithm over the interactions in season 2 of Game of Thrones:
+
+[source, cypher]
+----
+CALL algo.closeness.stream("Character", "INTERACTS_SEASON2", {
+  direction: "BOTH"
+})
+YIELD nodeId, centrality
+RETURN algo.asNode(nodeId).name, centrality
+ORDER BY centrality DESC
+LIMIT 10
+----
+
+_Daenerys_ has a score of 1, which means that she's interacted directly with all other characters.
+This doesn't seem likely, so let's try and work out what's happened.
+
+== Why is Daenerys so well connected?
+
+By default, the Closeness Centrality algorithm works out the connectedness of a node to all nodes that it can reach.
+We can run the https://neo4j.com/docs/graph-algorithms/current/algorithms/connected-components/[connected components algorithm^] to find sets of nodes that have paths between each other.
+
+[source, cypher]
+----
+CALL algo.unionFind.stream("Character", "INTERACTS_SEASON2", {
+  direction: "BOTH"
+})
+YIELD nodeId, setId
+WITH setId, collect(algo.asNode(nodeId).name) AS people
+RETURN setId, people, size(people) AS size
+ORDER BY size(people) DESC
+LIMIT 10
+----
+
+Aha!
+In season 2 Daenerys was away from the majority of other characters, and she did indeed interact with all the people within her connected component.
+
+== Closeness Centrality: Wasserman and Faust / Harmonic
+
+So the closeness centrality algorithm actually measures the farness of a node to all other nodes in the same connected component.
+If we want to find the farness to all other nodes in the graph, we can use the Wasserman and Faust or Harmonic variants of the algorithm.
+
+
+_Wasserman and Faust_
+
+[source, cypher]
+----
+CALL algo.closeness.stream("Character", "INTERACTS_SEASON2", {
+  direction: "BOTH", improved: true
+})
+YIELD nodeId, centrality
+RETURN algo.asNode(nodeId).name, centrality
+ORDER BY centrality DESC
+LIMIT 10
+----
+
+_Harmonic_
+
+[source, cypher]
+----
+CALL algo.closeness.harmonic.stream("Character", "INTERACTS_SEASON2", {
+  direction: "BOTH"
+})
+YIELD nodeId, centrality
+RETURN algo.asNode(nodeId).name, centrality
+ORDER BY centrality DESC
+LIMIT 10
+----
+
+We can learn more about these variants of the closeness centrality algorithm in https://neo4j.com/graph-algorithms-book/[Chapter 6 of the Graph Algorithms Book^].
+
 == PageRank
 
 This is another version of weighted degree centrality with a feedback loop. This time, you only get your “fair share” of your neighbor’s importance.
@@ -297,7 +372,7 @@ image::https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/PageRanks-Examp
 
 This time lets skip straight to the version of this procedure that stores results straight into the database.
 
-Run the following queries to calculate page rank scores for each of the books:
+Run the following queries to calculate page rank scores for seasons 1 and 7:
 
 [source,cypher]
 ----
@@ -333,7 +408,7 @@ _Varys_ is a good example of a character that fits this profile.
 
 We can detect communities in our data by running an algorithm which traverses the graph structure to find highly connected subgraphs with fewer connections other other subgraphs.
 
-Run the following query to calculate the communities that exist based on interactions across all the books.
+Run the following query to calculate the communities that exist based on interactions across all the seasons.
 
 [source,cypher]
 ----
@@ -360,7 +435,7 @@ There seem to be 2 or 3 large clusters of people and then a lot of smaller ones.
 == Querying Communities
 
 It'd be good to know who are the influential people in each community.
-To do that we'll need to calculate a PageRank score for each character across all the books:
+To do that we'll need to calculate a PageRank score for each character across all the seasons:
 
 [source,cypher]
 ----
@@ -422,7 +497,7 @@ We can run the following query to find the most influential character within tha
 
 [source,cypher]
 ----
-MATCH (c:Character) WHERE EXISTS(c.community)
+MATCH (c:Character) WHERE exists(c.community)
 WITH c.community AS communityId, COUNT(*) AS count
 ORDER BY count DESC
 SKIP 1 LIMIT 1
