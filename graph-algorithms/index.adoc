@@ -509,4 +509,8 @@ LIMIT 10
 
 == Learn more
 
+image::https://s3.amazonaws.com/dev.assets.neo4j.com/wp-content/uploads/20190326120839/OReilly-Graph-Algorithms_v2_ol1.jpg[float=right]
+
 You can learn more about Neo4j Graph Algorithms by browsing the https://neo4j.com/docs/graph-algorithms/current/[User Guide^] or by https://www.youtube.com/watch?v=55uB_t0RKTE[watching the online meetup^] presented by Michael Hunger.
+
+You can also get your **free copy** of O'Reilly's  https://neo4j.com/graph-algorithms-book/[Graph Algorithms: Practical Examples in Apache Spark and Neo4j^] book.
