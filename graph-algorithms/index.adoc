@@ -42,41 +42,77 @@ CALL db.schema()
 == Summary statistics
 
 Let's do some simple exploration of the dataset before running some more complex algorithms.
+The following query will compute the minimum, maximum, average, and standard deviation of unique interactions for characters grouped by season:
 
 [source,cypher]
 ----
-MATCH (c:Character)-->()
-WITH c, count(*) AS num
-RETURN min(num) AS min, max(num) AS max, avg(num) AS avg_characters, stdev(num) AS stdev
+MATCH (c:Character)-[r]-()
+WITH r.season as season, c, count(*) AS num
+RETURN season, min(num) AS min, max(num) AS max, avg(num) AS average, stdev(num) AS stdev
+ORDER BY season
 ----
 
-We can calculate these grouped by book as well:
+There's a lot of conversations in season 1, but then it falls off in seasons  2 and 3, before a slight increase after that.
 
-[source,cypher]
+Characters can interact with each other multiple times, which means we can compute these metrics based on the total number of interactions as well:
+
+[source, cypher]
+-----
+MATCH (c:Character)-[r]-()
+WITH r.season as season, c, sum(r.weight) AS num
+RETURN season, min(num) AS min, max(num) AS max, avg(num) AS average, stdev(num) AS stdev
+ORDER BY season
+-----
+
+== Degree Centrality
+
+The summary statistics from the previous section are based on the degree of our nodes.
+The https://neo4j.com/blog/graph-algorithms-neo4j-degree-centrality/[Degree Centrality^] algorithm measures the number of incoming and outgoing relationships from a node, and helps us find the most popular nodes in a graph.
+
+The following query finds the most popular characters in the 1st season, based on the number of character interactions:
+
+[source, cypher]
 ----
-MATCH (c:Character)-[r]->()
-WITH r.book as book, c, count(*) AS num
-RETURN book, min(num) AS min, max(num) AS max, avg(num) AS avg_characters, stdev(num) AS stdev
-ORDER BY book
+CALL algo.degree.stream("Character", "INTERACTS_SEASON1", {
+  direction: "BOTH"
+})
+YIELD nodeId, score
+RETURN algo.asNode(nodeId).name AS character, score
+ORDER BY score DESC
+LIMIT 50
+----
+
+We can also specify `weightProperty` if we want to find the most popular character based on total character interactions:
+
+[source, cypher]
+----
+CALL algo.degree.stream("Character", "INTERACTS_SEASON1", {
+  direction: "BOTH",
+  weightProperty: "weight"
+})
+YIELD nodeId, score
+RETURN algo.asNode(nodeId).name AS character, score
+ORDER BY score DESC
+LIMIT 50
 ----
 
 == Diameter of the network
 
 The diameter (or geodesic) of a network is defined as the longest shortest path in the network.
 
-We can write the following query to find it in our graph for the 2nd book:
+We can write the following query to find it in our graph for the 2nd season:
 
 [source,cypher]
 ----
 // Find maximum diameter of network
 // maximum shortest path between two nodes
 MATCH (a:Character), (b:Character) WHERE id(a) > id(b)
-MATCH p = shortestPath((a)-[:INTERACTS2*]-(b))
+MATCH p = shortestPath((a)-[:INTERACTS_SEASON2*]-(b))
 
 WITH length(p) AS len, p
 ORDER BY len DESC
 LIMIT 5
-RETURN nodes(p) AS path, len
+RETURN [node in nodes(p) | node.name] AS path, len
 ----
 
 This query creates a cartesian product combining all characters so we need to be careful when running this on larger graphs or we'll get an `OutOfMemoryException`.
@@ -85,21 +121,21 @@ This query creates a cartesian product combining all characters so we need to be
 
 A node is said to be pivotal if it lies on all shortest paths between two other nodes in the network. We can find all pivotal nodes in the network.
 
-The following query will find all the pivotal nodes in the network for the first book:
+The following query will find all the pivotal nodes in the network for the first season:
 
 [source,cypher]
 ----
 MATCH (a:Character), (b:Character) WHERE id(a) > id(b)
-MATCH p = allShortestPaths((a)-[:INTERACTS1*]-(b))
+MATCH p = allShortestPaths((a)-[:INTERACTS_SEASON1*]-(b))
 
 WITH collect(p) AS paths, a, b
-UNWIND nodes(head(paths)) as c // first path
+UNWIND nodes(paths[0]) as c // first path
 
 WITH *
 WHERE NOT c IN [a,b]
-AND all(path IN tail(paths) WHERE c IN nodes(path))
+AND all(path IN paths[1..] WHERE c IN nodes(path))
 
-RETURN a.name, b.name, c.name AS PivotalNode, length(head(paths)) AS pathLength, length(paths) AS pathCount
+RETURN a.name, b.name, c.name AS pivotalNode, length(paths[0]) AS pathLength, length(paths) AS pathCount
 SKIP 490
 LIMIT 10
 ----
@@ -118,22 +154,23 @@ The red nodes have a high betweenness centrality and are connectors of clusters.
 
 == Betweenness Centrality
 
-We'll start by calculating the betweenness centrality for the characters who interacted in the first book.
+We'll start by calculating the betweenness centrality for the characters who interacted in the first season.
 We can do this by calling the `algo.betweenness.stream` procedure with the label `Character` and relationship type `INTERACTS1`.
 
 Run the following query to learn who the most influential characters are:
 
 [source,cypher]
 ----
-CALL algo.betweenness.stream("Character", "INTERACTS1", {direction: "BOTH"})
+CALL algo.betweenness.stream("Character", "INTERACTS_SEASON1", {
+  direction: "BOTH"
+})
 YIELD nodeId, centrality
-MATCH (c:Character) WHERE ID(c) = nodeId
-RETURN c.name, centrality
+RETURN algo.asNode(nodeId).name, centrality
 ORDER BY centrality DESC
 LIMIT 10
 ----
 
-If you've read the books or watched the TV series hopefully the results aren't too surprising!
+If you've watched the TV series hopefully the results aren't too surprising!
 
 == Betweenness Centrality vs Biggest Communicators
 
@@ -141,10 +178,10 @@ We can add to our query and see how the betweenness scores compare to the total 
 
 [source,cypher]
 ----
-CALL algo.betweenness.stream("Character", "INTERACTS1", {direction: "BOTH"})
+CALL algo.betweenness.stream("Character", "INTERACTS_SEASON1", {direction: "BOTH"})
 YIELD nodeId, centrality
-MATCH (c:Character) WHERE ID(c) = nodeId
-WITH c, centrality, [(c)-[r:INTERACTS1]-(other) | {character: other.name, weight: r.weight}] AS interactions
+WITH algo.asNode(nodeId) AS c, centrality
+WITH c, centrality, [(c)-[r:INTERACTS_SEASON1]-(other) | {character: other.name, weight: r.weight}] AS interactions
 RETURN c.name, centrality,
        apoc.coll.sum([i in interactions | i.weight]) AS totalInteractions,
        [i in apoc.coll.reverse(apoc.coll.sortMaps(interactions, 'weight'))[..5] | i.character] as charactersInteractedWith
@@ -162,11 +199,11 @@ Although the betweenness centrality algorithm runs very quickly on this dataset 
 Instead of that we can store the result of the calculation as a property on the node and then refer to it in future queries.
 
 Each of the algorithms has a variant that saves its output to the database rather than returning a stream.
-Let's run the betweenness centrality algorithm and store the result as a property named `book1BetweennessCentrality`:
+Let's run the betweenness centrality algorithm and store the result as a property named `season1BetweennessCentrality`:
 
 [source,cypher]
 ----
-CALL algo.betweenness("Character", "INTERACTS1", {direction: "BOTH", writeProperty: "book1BetweennessCentrality"})
+CALL algo.betweenness("Character", "INTERACTS_SEASON1", {direction: "BOTH", writeProperty: "season1BetweennessCentrality"})
 ----
 
 == Querying Betweenness Centrality
@@ -176,41 +213,31 @@ We can write the following query to find the most influential characters:
 [source,cypher]
 ----
 MATCH (c:Character)
-RETURN c.name, c.book1BetweennessCentrality AS centrality
+RETURN c.name, c.season1BetweennessCentrality AS centrality
 ORDER BY centrality DESC
 LIMIT 10
 ----
 
-== Exercise: Betweenness Centrality for books 2-5
+== Exercise: Betweenness Centrality for season 7
 
-Now we want to calculate the betweenness centrality for the other books in the series and store the results in the database.
+Now we want to calculate the betweenness centrality for other seasons and store the results in the database.
 
-* Write queries that call `algo.betweenness` for the `INTERACTS2`, `INTERACTS3`, and `INTERACTS45` relationship types.
+* Write a query that calls `algo.betweenness` for `INTERACTS_SEASON7` relationship types.
 
 After you've done that see if you can write queries to answer the following questions:
 
-* Which character had the biggest increase in influence from book 1 to 5?
+* Which character had the biggest increase in influence from season 1 to 7?
 * Which character had the biggest decrease?
 
 Bonus question:
 
-* Which characters who were in the top 10 influencers in book 1 are also in the top 10 influencers in book 5?
+* Which characters who were in the top 10 influencers in season 1 are also in the top 10 influencers in season 7?
 
-== Answer: Betweenness Centrality for books 2-5
-
-[source,cypher]
-----
-CALL algo.betweenness("Character", "INTERACTS2", {direction: "BOTH", writeProperty: "book2BetweennessCentrality"})
-----
+== Answer: Betweenness Centrality for season 7
 
 [source,cypher]
 ----
-CALL algo.betweenness("Character", "INTERACTS3", {direction: "BOTH", writeProperty: "book3BetweennessCentrality"})
-----
-
-[source,cypher]
-----
-CALL algo.betweenness("Character", "INTERACTS45", {direction: "BOTH", writeProperty: "book45BetweennessCentrality"})
+CALL algo.betweenness("Character", "INTERACTS_SEASON7", {direction: "BOTH", writeProperty: "season7BetweennessCentrality"})
 ----
 
 == Answer: Increase in influence
@@ -218,7 +245,7 @@ CALL algo.betweenness("Character", "INTERACTS45", {direction: "BOTH", writePrope
 [source, cypher]
 ----
 MATCH (c:Character)
-RETURN c.name, c.book1BetweennessCentrality, c.book45BetweennessCentrality, c.book45BetweennessCentrality - c.book1BetweennessCentrality AS difference
+RETURN c.name, c.season1BetweennessCentrality, c.season7BetweennessCentrality, c.season7BetweennessCentrality - c.season1BetweennessCentrality AS difference
 ORDER BY difference DESC
 LIMIT 10
 ----
@@ -228,7 +255,7 @@ LIMIT 10
 [source, cypher]
 ----
 MATCH (c:Character)
-RETURN c.name, c.book1BetweennessCentrality, c.book45BetweennessCentrality, c.book45BetweennessCentrality - c.book1BetweennessCentrality AS difference
+RETURN c.name, c.season1BetweennessCentrality, c.season7BetweennessCentrality, c.season7BetweennessCentrality - c.season1BetweennessCentrality AS difference
 ORDER BY difference
 LIMIT 10
 ----
@@ -240,18 +267,18 @@ LIMIT 10
 MATCH (c:Character)
 
 WITH c
-ORDER BY c.book1BetweennessCentrality DESC
+ORDER BY c.season1BetweennessCentrality DESC
 LIMIT 10
 
 WITH collect(c.name) AS characters
 MATCH (c:Character)
 
-WITH c, c.book45BetweennessCentrality AS book45BetweennessCentrality, characters
-ORDER BY book45BetweennessCentrality DESC
+WITH c, c.season7BetweennessCentrality AS season7BetweennessCentrality, characters
+ORDER BY season7BetweennessCentrality DESC
 LIMIT 10
 
 WITH c WHERE c.name IN characters
-RETURN c.name, c.book1BetweennessCentrality, c.book45BetweennessCentrality
+RETURN c.name, c.season1BetweennessCentrality, c.season7BetweennessCentrality
 LIMIT 10
 ----
 
@@ -274,22 +301,12 @@ Run the following queries to calculate page rank scores for each of the books:
 
 [source,cypher]
 ----
-CALL algo.pageRank("Character", "INTERACTS1", {direction: "BOTH", writeProperty:'book1PageRank'})
+CALL algo.pageRank("Character", "INTERACTS_SEASON1", {direction: "BOTH", writeProperty:'season1PageRank'})
 ----
 
 [source,cypher]
 ----
-CALL algo.pageRank("Character", "INTERACTS2", {direction: "BOTH", writeProperty:'book2PageRank'})
-----
-
-[source,cypher]
-----
-CALL algo.pageRank("Character", "INTERACTS3", {direction: "BOTH", writeProperty:'book3PageRank'})
-----
-
-[source,cypher]
-----
-CALL algo.pageRank("Character", "INTERACTS45", {direction: "BOTH", writeProperty:'book45PageRank'})
+CALL algo.pageRank("Character", "INTERACTS_SEASON7", {direction: "BOTH", writeProperty:'season7PageRank'})
 ----
 
 == Querying PageRank
@@ -299,12 +316,12 @@ We can now write a query to see how influential the characters are across a vari
 [source,cypher]
 ----
 MATCH (c:Character)
-WITH c, [(c)-[r:INTERACTS1]-(other) | {character: other.name, weight: r.weight}] AS interactions
-RETURN c.name, c.book1PageRank, c.book1BetweennessCentrality,
+WITH c, [(c)-[r:INTERACTS_SEASON1]-(other) | {character: other.name, weight: r.weight}] AS interactions
+RETURN c.name, c.season1PageRank, c.season1BetweennessCentrality,
        apoc.coll.sum([i in interactions | i.weight]) AS totalInteractions,
        [i in apoc.coll.reverse(apoc.coll.sortMaps(interactions, 'weight'))[..5] | i.character] as charactersInteractedWith
-ORDER BY c.book1PageRank DESC
-LIMIT 10
+ORDER BY c.season1PageRank DESC
+LIMIT 20
 ----
 
 You'll notice that there are some characters who have a high page rank but a very low betweenness centrality score.
@@ -322,8 +339,7 @@ Run the following query to calculate the communities that exist based on interac
 ----
 CALL algo.labelPropagation(
   'MATCH (c:Character) RETURN id(c) as id',
-  'MATCH (c:Character)-[rel]->(c2) RETURN id(c) as source, id(c2) as target, SUM(rel.weight) as weight',
-  'OUTGOING',
+  'MATCH (c:Character)-[rel]-(c2) RETURN id(c) as source, id(c2) as target, SUM(rel.weight) as weight',
   {graph:'cypher', partitionProperty: 'community'})
 ----
 
@@ -350,7 +366,7 @@ To do that we'll need to calculate a PageRank score for each character across al
 ----
 CALL algo.pageRank(
   'MATCH (c:Character) RETURN id(c) as id',
-  'MATCH (c:Character)-[rel]->(c2) RETURN id(c) as source,id(c2) as target, SUM(rel.weight) as weight',
+  'MATCH (c:Character)-[rel]-(c2) RETURN id(c) as source,id(c2) as target, SUM(rel.weight) as weight',
   {graph:'cypher', writeProperty: 'pageRank'})
 ----
 
@@ -363,7 +379,7 @@ RETURN c.community as cluster, count(*) AS count, collect(c.name)[..10]
 ORDER BY count DESC
 ----
 
-Most people are in a big community containing _Tyrion-Lannister_, but we also have smaller communities which contain _Daenerys-Targaryen_, and the Greyjoys who are other important characters.
+Most people are in a big community containing _Tyrion_, but we also have smaller communities which contain _Jon_ and _Daenerys_ who are another important characters.
 
 == Visualising Communities
 
@@ -371,7 +387,7 @@ We can write the following community to see the interactions between people in o
 
 [source,cypher]
 ----
-MATCH (c:Character) WHERE EXISTS(c.community)
+MATCH (c:Character) WHERE exists(c.community)
 WITH c.community AS community, COUNT(*) AS count
 ORDER BY count DESC
 SKIP 1 LIMIT 1
@@ -418,4 +434,4 @@ LIMIT 10
 
 == Learn more
 
-You can learn more about Neo4j Graph Algorithms by browsing the https://neo4j-contrib.github.io/neo4j-graph-algorithms/[User Guide^] or by https://www.youtube.com/watch?v=55uB_t0RKTE[watching the online meetup^] presented by Michael Hunger.
+You can learn more about Neo4j Graph Algorithms by browsing the https://neo4j.com/docs/graph-algorithms/current/[User Guide^] or by https://www.youtube.com/watch?v=55uB_t0RKTE[watching the online meetup^] presented by Michael Hunger.
