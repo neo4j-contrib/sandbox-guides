@@ -662,8 +662,8 @@ We can also compute this measure using the https://neo4j.com/docs/graph-algorith
 .Find the users with the most similar preferences to Cynthia Freeman, according to cosine similarity function
 [source, cypher]
 ----
-MATCH (p1:User {name: 'Cynthia Freeman'})-[x:RATED]->(movie)
-MATCH (p2:User)-[x2:RATED]->(movie) WHERE p2 <> p1
+MATCH (p1:User {name: 'Cynthia Freeman'})-[x:RATED]->(movie)<-[x2:RATED]-(p2:User)
+WHERE p2 <> p1
 WITH p1, p2, collect(x.rating) AS p1Ratings, collect(x2.rating) AS p2Ratings
 WHERE size(p1Ratings) > 10
 RETURN p1.name AS from,
@@ -732,9 +732,9 @@ We can also compute this measure using the https://neo4j.com/docs/graph-algorith
 ----
 MATCH (p1:User {name: 'Cynthia Freeman'})-[x:RATED]->(movie:Movie)
 WITH p1, algo.similarity.asVector(movie, x.rating) AS p1Vector
-MATCH (p2:User)-[x:RATED]->(movie:Movie) WHERE p2 <> p1
-WITH p1, p2, p1Vector, algo.similarity.asVector(movie, x.rating) AS p2Vector
-WHERE size(apoc.coll.intersection([x in p1Vector | x.category], [x in p2Vector | x.category])) > 10
+MATCH (p2:User)-[x2:RATED]->(movie:Movie) WHERE p2 <> p1
+WITH p1, p2, p1Vector, algo.similarity.asVector(movie, x2.rating) AS p2Vector
+WHERE size(apoc.coll.intersection([v in p1Vector | x.category], [v in p2Vector | v.category])) > 10
 RETURN p1.name AS from,
        p2.name AS to,
        algo.similarity.pearson(p1Vector, p2Vector, {vectorType: "maps"}) AS similarity
@@ -805,10 +805,10 @@ ORDER BY score DESC LIMIT 25
 ----
 MATCH (u1:User {name: 'Cynthia Freeman'})-[x:RATED]->(movie:Movie)
 WITH u1, algo.similarity.asVector(movie, x.rating) AS u1Vector
-MATCH (u2:User)-[x:RATED]->(movie:Movie) WHERE u2 <> u1
+MATCH (u2:User)-[x2:RATED]->(movie:Movie) WHERE u2 <> u1
 
-WITH u1, u2, u1Vector, algo.similarity.asVector(movie, x.rating) AS u2Vector
-WHERE size(apoc.coll.intersection([x in u1Vector | x.category], [x in u2Vector | x.category])) > 10
+WITH u1, u2, u1Vector, algo.similarity.asVector(movie, x2.rating) AS u2Vector
+WHERE size(apoc.coll.intersection([v in u1Vector | v.category], [v in u2Vector | v.category])) > 10
 
 WITH u1, u2,  algo.similarity.pearson(u1Vector, u2Vector, {vectorType: "maps"}) AS similarity
 ORDER BY similarity DESC
