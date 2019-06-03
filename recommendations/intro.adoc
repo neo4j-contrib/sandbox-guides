@@ -213,7 +213,7 @@ By combining these two in the graph, we are able to query across datasets to gen
 
 == Intro To Cypher
 
-In order to work with our labeled property graph, we need a query language for graphs. 
+In order to work with our labeled property graph, we need a query language for graphs.
 
 
 ++++
@@ -259,7 +259,7 @@ Be sure to use the link:https://neo4j.com/docs/cypher-refcard/current/?ref=brows
 ++++
 
 === Dissecting a Cypher Statement
-Let's look at a Cypher query that answers the question "How many reviews does each Matrix movie have?". Don't worry if this seems complex, we'll build up our understanding of Cypher as we move along. 
+Let's look at a Cypher query that answers the question "How many reviews does each Matrix movie have?". Don't worry if this seems complex, we'll build up our understanding of Cypher as we move along.
 
 .How many reviews does each Matrix movie have? Click on the block to put the query in the top-most window on the query editor. Hit the triangular icon:play-circle[] button or press kbd:[Ctrl+Enter] to run it and see the resulting visualization.
 
@@ -404,15 +404,15 @@ MATCH (u:User {name: "Angelica Rodriguez"})-[r:RATED]->(m:Movie),
   (m)-[:IN_GENRE]->(g:Genre)<-[:IN_GENRE]-(rec:Movie)
 WHERE NOT EXISTS( (u)-[:RATED]->(rec) )
 WITH rec, [g.name, COUNT(*)] AS scores
-RETURN rec.title AS recommendation, rec.year AS year, 
-COLLECT(scores) AS scoreComponents, 
-REDUCE (s=0,x in COLLECT(scores) | s+x[1]) AS score 
+RETURN rec.title AS recommendation, rec.year AS year,
+COLLECT(scores) AS scoreComponents,
+REDUCE (s=0,x in COLLECT(scores) | s+x[1]) AS score
 ORDER BY score DESC LIMIT 10
 ----
 
 === Weighted Content Algorithm
 
-Of course there are many more traits in addition to just genre that we can consider to compute similarity, such  
+Of course there are many more traits in addition to just genre that we can consider to compute similarity, such
 actors and directors. Let's use a weighted sum to score the recommendations based on the number of actors, genres and directors they have in common to boost the score:
 
 .Compute a weighted sum based on the number and types of overlapping traits
@@ -454,7 +454,7 @@ So far we've used the number of common traits as a way to score the relevance of
 
 The Jaccard index is a number between 0 and 1 that indicates how similar two sets are. The Jaccard index of two identical sets is 1. If two sets do not have a common element, then the Jaccard index is 0. The Jaccard is calculated by dividing the size of the intersection of two sets by the union of the two sets.
 
-We can calculate the Jaccard index for sets of movie genres to determine how similar two movies are. 
+We can calculate the Jaccard index for sets of movie genres to determine how similar two movies are.
 
 ++++
 </div>
@@ -483,7 +483,7 @@ WITH m,other,intersection,s1+filter(x IN s2 WHERE NOT x IN s1) AS union, s1, s2
 RETURN m.title, other.title, s1,s2,((1.0*intersection)/SIZE(union)) AS jaccard ORDER BY jaccard DESC LIMIT 100
 ----
 
-We can apply this same apparoach to all "traits" of the movie (genre, actors, directors, etc.):
+We can apply this same approach to all "traits" of the movie (genre, actors, directors, etc.):
 
 [source,cypher,subs=attributes]
 ----
@@ -586,7 +586,7 @@ RETURN rec.title, rec.year, rec.plot
 LIMIT 25
 ----
 
-Of course this is just a simple appraoch, there are many problems with this query, such as not normalizing based on popularity or not taking ratings into consideration. In the next section, we will see how we can improve this approach using the **kNN method**. 
+Of course this is just a simple appraoch, there are many problems with this query, such as not normalizing based on popularity or not taking ratings into consideration. In the next section, we will see how we can improve this approach using the **kNN method**.
 
 === Only Consider Genres Liked by the User
 
@@ -610,7 +610,7 @@ WHERE NOT EXISTS((u)-[:RATED]->(rec))
 RETURN rec.title AS recommendation, rec.year AS year, COLLECT(DISTINCT g.name) AS genres, SUM(score) AS sscore
 ORDER BY sscore DESC LIMIT 10
 ----
- 
+
 
 == Collaborative Filtering – Similarity Metrics
 
@@ -623,14 +623,14 @@ We use similarity metrics to quantify how similar two users or two items are. We
 
 Jaccard similarity was useful for comparing movies and is essentially comparing two sets (groups of genres, actors, directors, etc.). However, with movie ratings each relationship has a *weight* that we can consider as well.
 
-=== Cosine Similarity 
+=== Cosine Similarity
 
 [subs=attributes]
 ++++
 <img src="{img}/cosine.png" class="img-responsive">
 ++++
 
-The cosine similarty of two users will tell us how similar two users' preferences for movies are. Users with a high cosine similarity will have similar preferences.
+The cosine similarity of two users will tell us how similar two users' preferences for movies are. Users with a high cosine similarity will have similar preferences.
 
 See this link:https://neo4j.com/graphgist/a7c915c8-a3d6-43b9-8127-1836fecc6e2f[GraphGist] for another example of using cosine similarity for recommendations.
 ++++
@@ -652,8 +652,24 @@ WITH COUNT(m) AS numbermovies, SUM(x.rating * y.rating) AS xyDotProduct,
 SQRT(REDUCE(xDot = 0.0, a IN COLLECT(x.rating) | xDot + a^2)) AS xLength,
 SQRT(REDUCE(yDot = 0.0, b IN COLLECT(y.rating) | yDot + b^2)) AS yLength,
 p1, p2 WHERE numbermovies > 10
-RETURN p1.name, p2.name, xyDotProduct / (xLength * yLength) AS sim 
-ORDER BY sim DESC LIMIT 100;
+RETURN p1.name, p2.name, xyDotProduct / (xLength * yLength) AS sim
+ORDER BY sim DESC
+LIMIT 100;
+----
+
+We can also compute this measure using the https://neo4j.com/docs/graph-algorithms/current/algorithms/similarity-cosine[Cosine Similarity algorithm^] in the Neo4j Graph Algorithms Library.
+
+.Find the users with the most similar preferences to Cynthia Freeman, according to cosine similarity function
+[source, cypher]
+----
+MATCH (p1:User {name: 'Cynthia Freeman'})-[x:RATED]->(movie)<-[x2:RATED]-(p2:User)
+WHERE p2 <> p1
+WITH p1, p2, collect(x.rating) AS p1Ratings, collect(x2.rating) AS p2Ratings
+WHERE size(p1Ratings) > 10
+RETURN p1.name AS from,
+       p2.name AS to,
+       algo.similarity.cosine(p1Ratings, p2Ratings) AS similarity
+ORDER BY similarity DESC
 ----
 
 ++++
@@ -693,7 +709,7 @@ Pearson similarity, or Pearson correlation, is another similarity metric we can 
 MATCH (u1:User {name:"Cynthia Freeman"})-[r:RATED]->(m:Movie)
 WITH u1, avg(r.rating) AS u1_mean
 
-MATCH (u1)-[r1:RATED]->(m:Movie)<-[r2:RATED]-(u2) 
+MATCH (u1)-[r1:RATED]->(m:Movie)<-[r2:RATED]-(u2)
 WITH u1, u1_mean, u2, COLLECT({r1: r1, r2: r2}) AS ratings WHERE size(ratings) > 10
 
 MATCH (u2)-[r:RATED]->(m:Movie)
@@ -702,16 +718,34 @@ WITH u1, u1_mean, u2, avg(r.rating) AS u2_mean, ratings
 UNWIND ratings AS r
 
 WITH sum( (r.r1.rating-u1_mean) * (r.r2.rating-u2_mean) ) AS nom,
-     sqrt( sum( (r.r1.rating - u1_mean)^2) * sum( (r.r2.rating - u2_mean) ^2)) AS denom, 
+     sqrt( sum( (r.r1.rating - u1_mean)^2) * sum( (r.r2.rating - u2_mean) ^2)) AS denom,
      u1, u2 WHERE denom <> 0
 
-RETURN u1.name, u2.name, nom/denom AS pearson 
+RETURN u1.name, u2.name, nom/denom AS pearson
 ORDER BY pearson DESC LIMIT 100
+----
+
+We can also compute this measure using the https://neo4j.com/docs/graph-algorithms/current/algorithms/similarity-pearson[Pearson Similarity algorithm^] in the Neo4j Graph Algorithms Library.
+
+.Find users most similar to Cynthia Freeman, according to the Pearson similarity function
+[source, cypher]
+----
+MATCH (p1:User {name: 'Cynthia Freeman'})-[x:RATED]->(movie:Movie)
+WITH p1, algo.similarity.asVector(movie, x.rating) AS p1Vector
+MATCH (p2:User)-[x2:RATED]->(movie:Movie) WHERE p2 <> p1
+WITH p1, p2, p1Vector, algo.similarity.asVector(movie, x2.rating) AS p2Vector
+WHERE size(apoc.coll.intersection([v in p1Vector | x.category], [v in p2Vector | v.category])) > 10
+RETURN p1.name AS from,
+       p2.name AS to,
+       algo.similarity.pearson(p1Vector, p2Vector, {vectorType: "maps"}) AS similarity
+ORDER BY similarity DESC
+LIMIT 100
 ----
 
 ++++
 </div>
 ++++
+
 
 == Collaborative Filtering – Neighborhood-Based Recommendations
 
@@ -744,7 +778,7 @@ Essentially:
 MATCH (u1:User {name:"Cynthia Freeman"})-[r:RATED]->(m:Movie)
 WITH u1, avg(r.rating) AS u1_mean
 
-MATCH (u1)-[r1:RATED]->(m:Movie)<-[r2:RATED]-(u2) 
+MATCH (u1)-[r1:RATED]->(m:Movie)<-[r2:RATED]-(u2)
 WITH u1, u1_mean, u2, COLLECT({r1: r1, r2: r2}) AS ratings WHERE size(ratings) > 10
 
 MATCH (u2)-[r:RATED]->(m:Movie)
@@ -753,15 +787,35 @@ WITH u1, u1_mean, u2, avg(r.rating) AS u2_mean, ratings
 UNWIND ratings AS r
 
 WITH sum( (r.r1.rating-u1_mean) * (r.r2.rating-u2_mean) ) AS nom,
-     sqrt( sum( (r.r1.rating - u1_mean)^2) * sum( (r.r2.rating - u2_mean) ^2)) AS denom, 
+     sqrt( sum( (r.r1.rating - u1_mean)^2) * sum( (r.r2.rating - u2_mean) ^2)) AS denom,
      u1, u2 WHERE denom <> 0
 
-WITH u1, u2, nom/denom AS pearson 
+WITH u1, u2, nom/denom AS pearson
 ORDER BY pearson DESC LIMIT 10
 
 MATCH (u2)-[r:RATED]->(m:Movie) WHERE NOT EXISTS( (u1)-[:RATED]->(m) )
 
 RETURN m.title, SUM( pearson * r.rating) AS score
+ORDER BY score DESC LIMIT 25
+----
+
+
+.kNN movie recommendation using Pearson similarity function
+[source, cypher]
+----
+MATCH (u1:User {name: 'Cynthia Freeman'})-[x:RATED]->(movie:Movie)
+WITH u1, algo.similarity.asVector(movie, x.rating) AS u1Vector
+MATCH (u2:User)-[x2:RATED]->(movie:Movie) WHERE u2 <> u1
+
+WITH u1, u2, u1Vector, algo.similarity.asVector(movie, x2.rating) AS u2Vector
+WHERE size(apoc.coll.intersection([v in u1Vector | v.category], [v in u2Vector | v.category])) > 10
+
+WITH u1, u2,  algo.similarity.pearson(u1Vector, u2Vector, {vectorType: "maps"}) AS similarity
+ORDER BY similarity DESC
+LIMIT 10
+
+MATCH (u2)-[r:RATED]->(m:Movie) WHERE NOT EXISTS( (u1)-[:RATED]->(m) )
+RETURN m.title, SUM( similarity * r.rating) AS score
 ORDER BY score DESC LIMIT 25
 ----
 
@@ -797,7 +851,7 @@ ORDER BY score DESC LIMIT 25
 // WIP
 //MATCH (u1:User {name: "Misty Williams"}),
 //      (u2:User {name: "Cynthia Freeman"})
-//      
+//
 //WITH [u1,u2] AS users
 //
 //UNWIND users AS u
@@ -806,7 +860,7 @@ ORDER BY score DESC LIMIT 25
 //
 //MATCH (rec:Movie)-[:IN_GENRE]->(g)
 //WHERE NOT EXISTS( (u)-[:RATED]->(rec))
-//WITH rec.title AS movie, collect(g.name) AS gs, collect(a) AS as, avg(a) AS score 
+//WITH rec.title AS movie, collect(g.name) AS gs, collect(a) AS as, avg(a) AS score
 //RETURN movie, gs, as, score+SIZE(gs) AS score
 //ORDER BY score DESC LIMIT 50
 //----

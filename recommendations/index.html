@@ -91,7 +91,6 @@
 <img src="http://guides.neo4j.com/sandbox/recommendations/img/title1.png" class="img-responsive">
 </div>
 <div class="col-lg-4 ng-scope">
-<img src="images/click-next.png" style="position:relative;right:-23px;top:-56px;" class="pull-right">
 <img src="http://guides.neo4j.com/sandbox/recommendations/img/openmoviegraph.png" class="img-responsive">
 <div class="sidebarblock">
 <div class="content">
@@ -227,7 +226,7 @@
 <p>Relationships are defined within square brackets <code>[]</code>. Optionally we can specify type and direction:</p>
 </div>
 <div class="paragraph">
-<p><code>(:Movie)<strong>&lt;-[:RATED]-</strong>(:User)</code></p>
+<p><code>(:Movie)<strong>+&#8592;[:RATED]-+</strong>(:User)</code></p>
 </div>
 <div class="paragraph">
 <p><strong>Aliases</strong></p>
@@ -236,7 +235,7 @@
 <p>Graph elements can be bound to aliases that can be referred to later in the query:</p>
 </div>
 <div class="paragraph">
-<p><code>(<strong>m</strong>:Movie)&lt;-[<strong>r</strong>:RATED]-(<strong>u</strong>:User)</code></p>
+<p><code>(<strong>m</strong>:Movie)+&#8592;+[<strong>r</strong>:RATED]-(<strong>u</strong>:User)</code></p>
 </div>
 
 
@@ -310,7 +309,7 @@ LIMIT 5;<!--/code--></pre>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">limit</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>LIMIT 5;</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Only return first four records</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Only return first five records</p></td>
 </tr>
 </tbody>
 </table>
@@ -474,7 +473,7 @@ RETURN rec.title AS recommendation, (5*gs)+(3*as)+(4*ds) AS score ORDER BY score
 </div>
 <div class="col-lg-9 ng-scope">
 <div class="listingblock">
-<div class="title">What movies are most similar to The Matrix based on Jaccard similarity of genres?</div>
+<div class="title">What movies are most similar to Inception based on Jaccard similarity of genres?</div>
 <div class="content">
 <pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (m:Movie {title: "Inception"})-[:IN_GENRE]-&gt;(g:Genre)&lt;-[:IN_GENRE]-(other:Movie)
 WITH m, other, COUNT(g) AS intersection, COLLECT(g.name) AS i
@@ -491,7 +490,7 @@ RETURN m.title, other.title, s1,s2,((1.0*intersection)/SIZE(union)) AS jaccard O
 </div>
 </div>
 <div class="paragraph">
-<p>We can apply this same apparoach to all "traits" of the movie (genre, actors, directors, etc.):</p>
+<p>We can apply this same approach to all "traits" of the movie (genre, actors, directors, etc.):</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -652,7 +651,7 @@ ORDER BY sscore DESC LIMIT 10<!--/code--></pre>
    <h4>Cosine Similarity</h4>
    <img src="http://guides.neo4j.com/sandbox/recommendations/img/cosine.png" class="img-responsive">
 <div class="paragraph">
-<p>The cosine similarty of two users will tell us how similar two users' preferences for movies are. Users with a high cosine similarity will have similar preferences.</p>
+<p>The cosine similarity of two users will tell us how similar two users' preferences for movies are. Users with a high cosine similarity will have similar preferences.</p>
 </div>
 <div class="paragraph">
 <p>See this <a href="https://neo4j.com/graphgist/a7c915c8-a3d6-43b9-8127-1836fecc6e2f">GraphGist</a> for another example of using cosine similarity for recommendations.</p>
@@ -669,7 +668,24 @@ SQRT(REDUCE(xDot = 0.0, a IN COLLECT(x.rating) | xDot + a^2)) AS xLength,
 SQRT(REDUCE(yDot = 0.0, b IN COLLECT(y.rating) | yDot + b^2)) AS yLength,
 p1, p2 WHERE numbermovies > 10
 RETURN p1.name, p2.name, xyDotProduct / (xLength * yLength) AS sim
-ORDER BY sim DESC LIMIT 100;<!--/code--></pre>
+ORDER BY sim DESC
+LIMIT 100;<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can also compute this measure using the <a href="https://neo4j.com/docs/graph-algorithms/current/algorithms/similarity-cosine" target="_blank">Cosine Similarity algorithm</a> in the Neo4j Graph Algorithms Library.</p>
+</div>
+<div class="listingblock">
+<div class="title">Find the users with the most similar preferences to Cynthia Freeman, according to cosine similarity function</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (p1:User {name: 'Cynthia Freeman'})-[x:RATED]-&gt;(movie)&lt;-[x2:RATED]-(p2:User)
+WHERE p2 &lt;&gt; p1
+WITH p1, p2, collect(x.rating) AS p1Ratings, collect(x2.rating) AS p2Ratings
+WHERE size(p1Ratings) &gt; 10
+RETURN p1.name AS from,
+       p2.name AS to,
+       algo.similarity.cosine(p1Ratings, p2Ratings) AS similarity
+ORDER BY similarity DESC<!--/code--></pre>
 </div>
 </div>
 </div>
@@ -715,6 +731,24 @@ WITH sum( (r.r1.rating-u1_mean) * (r.r2.rating-u2_mean) ) AS nom,
 
 RETURN u1.name, u2.name, nom/denom AS pearson
 ORDER BY pearson DESC LIMIT 100<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can also compute this measure using the <a href="https://neo4j.com/docs/graph-algorithms/current/algorithms/similarity-pearson" target="_blank">Pearson Similarity algorithm</a> in the Neo4j Graph Algorithms Library.</p>
+</div>
+<div class="listingblock">
+<div class="title">Find users most similar to Cynthia Freeman, according to the Pearson similarity function</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (p1:User {name: 'Cynthia Freeman'})-[x:RATED]-&gt;(movie:Movie)
+WITH p1, algo.similarity.asVector(movie, x.rating) AS p1Vector
+MATCH (p2:User)-[x2:RATED]-&gt;(movie:Movie) WHERE p2 &lt;&gt; p1
+WITH p1, p2, p1Vector, algo.similarity.asVector(movie, x2.rating) AS p2Vector
+WHERE size(apoc.coll.intersection([v in p1Vector | x.category], [v in p2Vector | v.category])) &gt; 10
+RETURN p1.name AS from,
+       p2.name AS to,
+       algo.similarity.pearson(p1Vector, p2Vector, {vectorType: "maps"}) AS similarity
+ORDER BY similarity DESC
+LIMIT 100<!--/code--></pre>
 </div>
 </div>
 </div>
@@ -769,6 +803,25 @@ ORDER BY pearson DESC LIMIT 10
 MATCH (u2)-[r:RATED]->(m:Movie) WHERE NOT EXISTS( (u1)-[:RATED]->(m) )
 
 RETURN m.title, SUM( pearson * r.rating) AS score
+ORDER BY score DESC LIMIT 25<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">kNN movie recommendation using Pearson similarity function</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (u1:User {name: 'Cynthia Freeman'})-[x:RATED]-&gt;(movie:Movie)
+WITH u1, algo.similarity.asVector(movie, x.rating) AS u1Vector
+MATCH (u2:User)-[x2:RATED]-&gt;(movie:Movie) WHERE u2 &lt;&gt; u1
+
+WITH u1, u2, u1Vector, algo.similarity.asVector(movie, x2.rating) AS u2Vector
+WHERE size(apoc.coll.intersection([v in u1Vector | v.category], [v in u2Vector | v.category])) &gt; 10
+
+WITH u1, u2,  algo.similarity.pearson(u1Vector, u2Vector, {vectorType: "maps"}) AS similarity
+ORDER BY similarity DESC
+LIMIT 10
+
+MATCH (u2)-[r:RATED]-&gt;(m:Movie) WHERE NOT EXISTS( (u1)-[:RATED]-&gt;(m) )
+RETURN m.title, SUM( similarity * r.rating) AS score
 ORDER BY score DESC LIMIT 25<!--/code--></pre>
 </div>
 </div>
