@@ -15,7 +15,7 @@ Article: https://www.macalester.edu/~abeverid/index.html[Beveridge, Andrew, Shan
 
 Andrew built a graph where nodes are characters in the TV series and relationships represent character interactions.
 
-Characters have a relationship for each time their names (or nicknames) *appear within 15 words of one another*.
+Characters have a relationship for each time their names (or nicknames) *appear within 15 words of one another* in the scripts.
 Each link corresponds to an interaction between the two characters. Note that this interaction could be direct or indirect. Here are some of the types of interactions that our method picks up.
 
 * Two characters appearing together in the same location
@@ -47,8 +47,8 @@ The following query will compute the minimum, maximum, average, and standard dev
 [source,cypher]
 ----
 MATCH (c:Character)-[r]-()
-WITH r.season as season, c, count(*) AS num
-RETURN season, min(num) AS min, max(num) AS max, avg(num) AS average, stdev(num) AS stdev
+WITH r.season as season, c, count(*) AS degree
+RETURN season, min(degree) AS min, max(degree) AS max, avg(degree) AS average, stdev(degree) AS stdev
 ORDER BY season
 ----
 
@@ -59,8 +59,8 @@ Characters can interact with each other multiple times, which means we can compu
 [source, cypher]
 -----
 MATCH (c:Character)-[r]-()
-WITH r.season as season, c, sum(r.weight) AS num
-RETURN season, min(num) AS min, max(num) AS max, avg(num) AS average, stdev(num) AS stdev
+WITH r.season as season, c, sum(r.weight) AS degree
+RETURN season, min(degree) AS min, max(degree) AS max, avg(degree) AS average, stdev(degree) AS stdev
 ORDER BY season
 -----
 
@@ -107,12 +107,11 @@ We can write the following query to find it in our graph for the 2nd season:
 // Find maximum diameter of network
 // maximum shortest path between two nodes
 MATCH (a:Character), (b:Character) WHERE id(a) > id(b)
-MATCH p = shortestPath((a)-[:INTERACTS_SEASON2*]-(b))
+MATCH path = shortestPath((a)-[:INTERACTS_SEASON2*]-(b))
 
-WITH length(p) AS len, p
+RETURN path, length(path) AS len
 ORDER BY len DESC
 LIMIT 5
-RETURN [node in nodes(p) | node.name] AS path, len
 ----
 
 This query creates a cartesian product combining all characters so we need to be careful when running this on larger graphs or we'll get an `OutOfMemoryException`.
@@ -184,7 +183,7 @@ WITH algo.asNode(nodeId) AS c, centrality
 WITH c, centrality, [(c)-[r:INTERACTS_SEASON1]-(other) | {character: other.name, weight: r.weight}] AS interactions
 RETURN c.name, centrality,
        apoc.coll.sum([i in interactions | i.weight]) AS totalInteractions,
-       [i in apoc.coll.reverse(apoc.coll.sortMaps(interactions, 'weight'))[..5] | i.character] as charactersInteractedWith
+       [i in apoc.coll.sortMaps(interactions, 'weight')[..5] | i.character] as charactersInteractedWith
 ORDER BY centrality DESC
 LIMIT 10
 ----
