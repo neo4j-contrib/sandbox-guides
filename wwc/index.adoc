@@ -1,0 +1,183 @@
+= Women's World Cup Sandbox
+
+:img: https://guides.neo4j.com/sandbox/3.4/img
+
+== Welcome to the World Cup Sandbox
+
+It's Women's World Cup 2019 and we've created a special sandbox for you to play around with while you follow the tournament.
+
+== Schema
+
+We've imported all the matches, squads, lineups, and scorers from all the World Cups between 1991 and 2019.
+Let's take a look at the schema.
+
+Run the following query:
+
+[source,cypher]
+----
+CALL db.schema()
+----
+
+== Who's playing in World Cup 2019?
+
+We'll start with a basic query to find out which teams are playing in World Cup 2019:
+
+[source, cypher]
+----
+MATCH path = (t:Tournament {year: 2019})<-[:PARTICIPATED_IN]-(team)
+RETURN path
+----
+
+We can see a lot of familiar names there, but how many teams are actually participating?
+
+== How many teams are playing in World Cup 2019?
+
+We can write the following query to find the number of teams that have competed in each of the World Cups:
+
+[source, cypher]
+----
+MATCH (t:Tournament)<-[:PARTICIPATED_IN]-(team)
+RETURN t.name, t.year, count(*)
+ORDER BY t.year
+----
+
+Since 2015, 24 teams have participated, which is double the number of teams that participated in the first World Cup in 1991.
+
+== First time participants
+
+Do we have any first time participants?
+We can find out by executing the following query:
+
+[source, cypher]
+----
+MATCH (t:Tournament {year: 2019})<-[:PARTICIPATED_IN]-(team)
+WITH team, [(team)-[:PARTICIPATED_IN]->(other) WHERE other.year < 2019 | other] AS otherTournaments
+WHERE size(otherTournaments) = 0
+RETURN team.name
+----
+
+Just the 4 first time participants.
+
+== How many World Cups have the other teams participated in?
+
+And what about everybody else?
+The following query shows us how many other tournaments that each team has participated in:
+
+[source, cypher]
+----
+MATCH (t:Tournament {year: 2019})<-[:PARTICIPATED_IN]-(team)
+WITH team, [(team)-[:PARTICIPATED_IN]->(other) WHERE other.year < 2019 | other] AS otherTournaments
+RETURN team.name, size(otherTournaments) AS tournaments
+ORDER BY tournaments DESC
+----
+
+== Who won the previous World Cups?
+
+If we want to find the winners of the previous World Cups, we can run the following query:
+
+[source, cypher]
+----
+MATCH (t1:Team)-[p1:PLAYED_IN]-(m:Match)<-[p2:PLAYED_IN]-(t2:Team),
+      (m)-[:IN_TOURNAMENT]->(tourn)
+WHERE id(t1) < id(t2) AND m.stage = "Final"
+RETURN tourn.name AS name, tourn.year AS year,
+       t1.name AS team1, t2.name AS team2,
+       CASE WHEN p1.score = p2.score
+            THEN p1.score + "-" + p2.score + " (" +
+                 p1.penaltyScore + "-" + p2.penaltyScore + ")"
+            ELSE p1.score + "-" + p2.score
+       END AS result,
+       (CASE WHEN p1.score > p2.score THEN t1
+             WHEN p2.score > p1.score THEN t2
+             ELSE
+              CASE WHEN p1.penaltyScore > p2.penaltyScore THEN t1
+                   ELSE t2 END END).name AS winner
+ORDER BY tourn.year
+----
+
+USA have won it 3 times, Germany twice, while Norway and Japan have a single win each.
+Will we get a new winner this time around?
+
+== Who's the top scorer across all World Cups?
+
+One of the most commonly mentioned statistics by football commentators is the top scorer across all World Cups.
+We can run the following query to find the answer:
+
+[source, cypher]
+----
+MATCH (p:Person)-[:SCORED_GOAL]->(match)-[:IN_TOURNAMENT]->(tourn),
+      (p)-[:REPRESENTS]->(team)
+RETURN p.name, team.name AS team, count(*) AS goals,
+       apoc.coll.sort(collect(DISTINCT tourn.year)) AS years
+ORDER BY goals DESC
+LIMIT 10
+----
+
+It'll be interesting to see if any of the players in France can close the gap to those at the top.
+Having said that, some of these players scored in the 2015 World Cup, so perhaps they're also playing this year and will extend their lead.
+
+== Which top scorers are playing in 2019?
+
+Who are the top scoring players participating in this year's World Cup?
+
+[source, cypher]
+----
+MATCH (p:Person)-[:SCORED_GOAL]->(match)-[:IN_TOURNAMENT]->(tourn),
+      (p)-[:REPRESENTS]->(team)
+WITH p, team, count(*) AS goals,
+     apoc.coll.sort(collect(DISTINCT tourn.year)) AS years
+WHERE (p)-[:IN_SQUAD]->()-[:FOR]->(:Tournament {year: 2019})
+RETURN p.name, team.name AS team, goals
+ORDER BY goals DESC
+LIMIT 10
+----
+
+Marta is playing in her 5th World Cup, but has anyone else been named in more World Cup Squads?
+
+== Multiple World Cups?
+
+How many players have been named in 5 or more World Cup squads?
+Have a guess before you run the next query:
+
+[source, cypher]
+----
+MATCH (player:Person)-[:IN_SQUAD]->(s)<-[:NAMED]-(team), (s)-[:FOR]->(tourn)
+WITH player, team, count(*) AS squads, apoc.coll.sort(collect(tourn.year)) AS years
+WHERE size(years) >= 5
+RETURN player.name AS player, team.name AS team, squads, years
+ORDER BY squads DESC
+----
+
+Formiga is playing in her 7th World Cup!
+
+
+== Goalscoring substitutes
+
+Some players never get a start but have a big impact when they come off the bench.
+The following query returns goal scoring substitutes:
+
+[source, cypher]
+----
+MATCH (p:Person)-[:SCORED_GOAL]->(match)<-[:PLAYED_IN {type: "Subbed On"}]-(p)
+WITH p, count(*) AS goals
+MATCH (p)-[:REPRESENTS]-(team)
+RETURN p.name, team.name, goals
+ORDER BY goals DESC
+LIMIT 10
+----
+
+
+== Top scorer by country
+
+Do you know who your country's top World Cup scorer is?
+
+[source, cypher]
+----
+MATCH (p:Person)-[:SCORED_GOAL]->(match)-[:IN_TOURNAMENT]->(tourn),
+      (p)-[:REPRESENTS]->(team)
+WITH team, p, count(*) AS goals
+ORDER BY team, goals DESC
+WITH team, collect({player: p, goals: goals}) AS topScorers
+RETURN team.name AS team, topScorers[0].player.name AS player, topScorers[0].goals AS goals
+ORDER BY team
+----
