@@ -3,14 +3,14 @@ jobs:
    build:
      working_directory: ~/sandbox-guides
      docker:
-      - image: circleci/ruby:2.4.1-node
+      - image: circleci/ruby:2.4.1-stretch-node
      steps:
        - checkout
        - run: git submodule sync && git submodule update --init
        - run: pwd
        - run: ls
-       - run: sudo bundle install
        - run: sudo apt-get -y -qq update
        - run: sudo apt-get -y -qq install python-pip python-dev awscli
+       - run: sudo bundle install
        - run: find . -name 'render.sh' -print0 | xargs -0 -I{} -n1 -P4 /bin/bash -c 'cd "$(dirname {})"; bash "$(basename {})" render-only' || true
        - run: aws s3 cp . s3://guides.neo4j.com/sandbox  --acl public-read --recursive --exclude "*" --include "*.html" --include "*.png" --include "*.jpg" --include "*.gif" --include "*.csv"
