@@ -899,7 +899,7 @@ Extend these queries:
 
 * **Temporal component**: Preferences change over time, use the rating timestamp to consider how more recent ratings might be used to find more relevant recommendations.
 * **Keyword extraction**: Enhance the traits available using the plot description. How would you model extracted keywords for movies?
-* **Image recognition using posters**: There are several libraries and APIs that offer image recognition and tagging. Since we have movie poster images for each movie, how could we use these to enhance our recomendations?
+* **Image recognition using posters**: There are several libraries and APIs that offer image recognition and tagging. Since we have movie poster images for each movie, how could we use these to enhance our recommendations?
 
 ++++
 </div>
