@@ -1,0 +1,1208 @@
+= Graph Algorithms
+:icons: font
+
+== Neo4j Graph Data Science
+
+The Neo4j Graph Data Science (GDS) library contains a set of graph algorithms, exposed through Cypher procedures.
+Graph algorithms provide insights into the graph structure and elements, for example, by computing centrality and similarity scores, and detecting communities.
+The GDS library is divided into three tiers of maturity: product, beta and alpha.
+
+This guide follows the ordinary workflow for running the product tier algorithms: PageRank, Label Propagation, Weakly Connected Components, Louvain, and Node Similarity.
+
+* Estimate memory usage for your graph and the algorithm you want to run.
+* Create a graph and manage created graphs.
+* Configure the algorithm to suit your needs and run it in one of the supported modes: stream, write, and stats.
+
+For more details, see link:https://neo4j.com/docs/graph-algorithms/current/[the documentation^].
+
+
+== The example dataset
+
+image::https://upload.wikimedia.org/wikipedia/en/2/24/AStormOfSwords.jpg[float="right",width=150]
+
+Before you can run any of the algorithms, you need to import your data in Neo4j. +
+The example dataset used to demonstrate the GDS library is based on the Game of Thrones fantasy saga.
+You may recognize it from the blogs, events, and sandbox.
+However, both data and queries are different enough from previous installments that it merits your attention.
+{nbsp} +
+{nbsp} +
+{nbsp} +
+
+=== Attribution
+
+The dataset is partly based on the following works:
+
+_https://networkofthrones.wordpress.com/[Network of Thrones, A Song of Math and Westeros^], research by Dr. Andrew Beveridge._ +
+_https://www.macalester.edu/~abeverid/index.html[A. Beveridge and J. Shan, "Network of Thrones," Math Horizons Magazine , Vol. 23, No. 4 (2016), pp. 18-22^]_ +
+_https://www.kaggle.com/mylesoneill/game-of-thrones[Game of Thrones, Explore deaths and battles from this fantasy world], by Myles O'Neill, https://www.kaggle.com/[https://www.kaggle.com/^]_ +
+_https://github.com/tomasonjo/neo4j-game-of-thrones[Game of Thrones^], by Tomaz Bratanic, GitHub repository._
+
+
+== Graph of character interactions.. and more
+
+The graph contains `:Person` nodes, representing the characters, and `:INTERACTS` relationships, representing the characters' interactions.
+An interaction occurs each time two characters' names (or nicknames) *appear within 15 words of one another* in the book text.
+For more information about the data extraction process, see _https://networkofthrones.wordpress.com/from-book-to-network/[Network of Thrones, A Song of Math and Westeros^], research by Dr. Andrew Beveridge._
+
+The `(:Person)-[:INTERACTS]->(:Person)` graph is enriched with data on houses, battles, commanders, kings, knights, regions, locations, and deaths.
+
+Now, let's import the data.
+
+== Data visualization
+
+Let's briefly explore the dataset before running some algorithms.
+
+Run the following query to visualize the schema of your graph:
+
+[source,cypher]
+----
+CALL db.schema.visualization()
+----
+
+The `:Dead`, `:King`, and `:Knight` labels all appear on `:Person` nodes.
+You may find it useful to remove them from the visualization to make it easier to inspect.
+
+
+== Summary statistics
+
+Calculate some simple statistics to see how data is distributed.
+For example, find the minimum, maximum, average, and standard deviation of the number of interactions per character:
+
+[source,cypher]
+----
+MATCH (c:Person)-[:INTERACTS]->()
+WITH c, count(*) AS num
+RETURN min(num) AS min, max(num) AS max, avg(num) AS avg_interactions, stdev(num) AS stdev
+----
+
+Calculate the same grouped by book:
+
+[source,cypher]
+----
+MATCH (c:Person)-[r:INTERACTS]->()
+WITH r.book as book, c, count(*) AS num
+RETURN book, min(num) AS min, max(num) AS max, avg(num) AS avg_interactions, stdev(num) AS stdev
+ORDER BY book
+----
+
+== Estimate memory usage: why?
+
+Now that you have data and know something about its shape, you need to estimate the memory usage of your graph and algorithm(s), and to configure your Neo4j Server with a much larger heap size than for a transactional deployment.
+Why?
+
+Because, the graph algorithms run on an in-memory, heap-allocated projection of the Neo4j graph, which resides outside the main database.
+This means that before you execute an algorithm, you must create (explicitly or implicitly) a projection of your graph in memory.
+
+However, creating graphs and running algorithms on them can have a significant memory footprint.
+
+Therefore, a good habit is always to estimate the amount of RAM you need and configure a large heap size before running a heavy memory workload.
+
+In the following three chapters, you will be able to exercise memory estimation and explore its results.
+
+== Memory estimation: graphs
+
+The GDS library offers a set of procedures that can help you estimate the memory needed to create a graph and run algorithms.
+
+To estimate the required memory for a subset of your graph, for example, the `Person` nodes and `INTERACTS` relationships, call the following procedure.
+
+[source, cypher]
+----
+CALL gds.graph.create.estimate('Person', 'INTERACTS') YIELD nodeCount, relationshipCount, requiredMemory
+----
+
+The result shows that the example graph is small.
+So, you can create your projected graph and name it, for example, `got-interactions`.
+
+[source, cypher]
+----
+CALL gds.graph.create('got-interactions', 'Person', 'INTERACTS')
+----
+
+== Estimate memory usage: algorithms
+
+To estimate the memory needed to execute an algorithm on your `got-interactions` graph, for example, Page Rank, call the following procedure.
+
+[source, cypher]
+----
+CALL gds.pageRank.stream.estimate('got-interactions') YIELD requiredMemory
+----
+
+This estimation considers only the algorithm execution, as the graph is already in-memory.
+
+
+== Estimate memory usage: details
+
+If you want to look at the full details of the memory estimation, remove the `YIELD` clause.
+The procedure returns a tree view and a map view of all the "components" with their memory estimates.
+
+[source, cypher]
+----
+CALL gds.pageRank.stream.estimate('got-interactions')
+----
+
+As you see, the more detailed views contain estimates on the individual compute steps and the result data structures.
+
+You can also estimate the memory usage for graph creation and algorithm execution at the same time by using the so-called _implicit graph creation_.
+This way, the configuration for the graph creation is inlined within the algorithm procedure call.
+
+[source, cypher]
+----
+CALL gds.pageRank.stream.estimate({nodeProjection: 'Person', relationshipProjection: 'INTERACTS'})
+----
+
+The result shows an increased memory estimate, explained by the memory consumed by the graph creation.
+
+Now, you can filter the result to the top level components: graph and algorithm.
+
+[source, cypher]
+----
+CALL gds.pageRank.stream.estimate({
+  nodeProjection: 'Person',
+  relationshipProjection: 'INTERACTS'
+}) YIELD mapView
+UNWIND [ x IN mapView.components | [x.name, x.memoryUsage] ] AS component
+RETURN component[0] AS name, component[1] AS size
+----
+
+For more details, see _link:https://neo4j.com/docs/graph-algorithms/current/projected-graph-model/memory-requirements/[the Memory requirements chapter in the Graph Algorithms User Guide^]_.
+
+
+== Memory estimation: cleanup
+
+If you do not want to use the projected graph anymore, a good practice is to release it from the memory.
+
+[source, cypher]
+----
+CALL gds.graph.drop('got-interactions');
+----
+
+== Graph creation
+
+The first stage of execution in GDS is always graph creation, but what does this mean?
+
+To enable fast caching of the graph topology, containing only the relevant nodes, relationships, and weights, the GDS library operates on in-memory graphs that are created as projections of the Neo4j stored graph.
+
+These projections may change the nature of the graph elements by any of the following:
+
+* Subgraphing
+* Renaming relationship types or node labels
+* Merging several relationship types or node labels
+* Altering relationship direction
+* Aggregating parallel relationships and their properties
+* Deriving relationships from larger patterns
+
+There are two ways of creating graphs – _explicit_ and _implicit_.
+
+
+== Graph catalog
+
+The typical workflow is to create the projected graph _explicitly_ by giving it a name and storing it in the _graph catalog_.
+This allows you to operate on the graph multiple times.
+
+In the _Memory estimation_ chapters, you calculated the memory needed for creating a small graph of interactions, called `got-interactions`.
+If you have removed it from the memory, you can create it again.
+Because each `INTERACTS` relationship is symmetric, you can even ignore its direction by creating your graph with an `UNDIRECTED` orientation.
+
+[source, cypher]
+----
+CALL gds.graph.create('got-interactions', 'Person', {
+  INTERACTS: {
+    orientation: 'UNDIRECTED'
+  }
+})
+----
+
+
+== Graph catalog: standard creation and Cypher projection
+
+The GDS library supports two approaches for loading projected graphs - *standard creation* (`gds.graph.create()`) and *Cypher projection* (`gds.graph.create.cypher()`).
+
+In the *standard creation* approach, which you used to create your graph, you specify node labels and relationship types and project them onto the in-memory graph as labels and relationship types with new names.
+You can further specify properties for each node label and relationship type.
+For some use cases, this approach might be sufficient.
+However, it is not possible to take only some nodes with a given label or only some relationships of a given type.
+One way to work around it is by adding additional labels that define the desired subset of nodes that you want to project.
+
+In the *Cypher projection* approach, you use Cypher queries to project nodes and relationships onto the in-memory graph.
+Instead of specifying labels and relationship types, you define node-statements and relationship-statements.
+In this way, you can leverage the expressivity of the Cypher language and describe your graph in a more sophisticated way.
+
+It is important to note that the standard creation is orders of magnitude faster than the Cypher projection.
+When designing a use case with Cypher projection at a production scale, make sure to measure the performance in advance.
+
+Now, let’s try the Cypher projection and load the same graph with a new name, for example, `got-interactions-cypher`.
+
+== Graph catalog: Cypher projection
+
+You run two queries: one for the nodes and one for the relationships.
+You can also remove the parallel relationships between the pairs of nodes by adding an `aggregation` key for the property `weight` in the `relationshipProperties` specification.
+The `relationshipProperties` configuration maps a returned property to property names used internally.
+
+[source, cypher]
+----
+CALL gds.graph.create.cypher(
+  'got-interactions-cypher',
+  'MATCH (n:Person) RETURN id(n) AS id',
+  'MATCH (s:Person)-[i:INTERACTS]->(t:Person) RETURN id(s) AS source, id(t) AS target, i.weight AS weight',
+  {
+    relationshipProperties: {
+      weight: {
+        property: 'weight',
+        aggregation: 'SINGLE'
+    }
+  }
+})
+----
+
+The first query returns the node IDs; the second one returns the source and target IDs of the relationships; and the `aggregation` key modifies the property values according to the specified aggregation.
+Here, you can use any pair of Cypher queries as long as they return the expected columns and field types. +
+To keep all relationships, use `aggregation: 'NONE'`.
+To retain one of the relationships (arbitrary selected), use `aggregation: 'SKIP'`.
+More details about the deduplication strategies, you can find _link:https://neo4j.com/docs/graph-algorithms/current/projected-graph-model/cypher-projection/#cypher-projection-relationship-deduplication[here^]_.
+
+== Graph catalog: Cypher projection of virtual relationships
+
+Another interesting feature of the Cypher graph projection is that it allows you to represent complex patterns by computing relationships that do not exist in the Neo4j stored graph.
+This is especially useful when the algorithm you want to run supports only mono-partite graphs. +
+For example, you can use the following query to create a graph with `Person` nodes connected with an (untyped) relationship if they belong to the same house.
+The projected relationship does not exist in the stored graph.
+
+[source, cypher]
+----
+CALL gds.graph.create.cypher(
+  'same-house-graph',
+  'MATCH (n:Person) RETURN id(n) AS id',
+  'MATCH (p1:Person)-[:BELONGS_TO]-(:House)-[:BELONGS_TO]-(p2:Person) RETURN id(p1) AS source, id(p2) AS target'
+)
+----
+
+== Graph catalog: listing
+
+After you create your projected graph, you can try several useful queries to manage it.
+
+You can list all information about it by using following procedure:
+
+[source, cypher]
+----
+CALL gds.graph.list('got-interactions-cypher')
+----
+
+You can list the graphs you have loaded so far by using following procedure:
+
+[source, cypher]
+----
+CALL gds.graph.list()
+----
+
+== Graph catalog: existence
+
+You can check if a graph exists by using the following procedure:
+
+[source, cypher]
+----
+CALL gds.graph.exists('got-interactions')
+----
+
+== Graph catalog: removal
+
+You can free up memory space by dropping some of the created graphs from the catalog:
+
+[source, cypher]
+----
+CALL gds.graph.drop('got-interactions-cypher');
+----
+
+*TIP:* It is a good practice to remove the unused graphs, yours and of the previous users, from the memory.
+
+*NOTE:* Multiple users running algorithms at the same time is not supported.
+
+Now you are ready to run some actual algorithms.
+
+==  Getting started with algorithms
+
+With Neo4j, you can run algorithms on explicitly and implicitly created graphs. +
+In this tutorial, we will show you how to get the most out of the following algorithms:
+
+* Page Rank
+* Label Propagation
+* Weakly Connected Components (WCC)
+* Louvain
+* Node Similarity
+
+
+== Algorithm syntax: explicit graphs
+
+Running algorithms on explicitly created graphs allows you to operate on a graph multiple times.
+To do this, refer to the graph by its name,  as it is stored in the graph catalog.
+
+[source]
+----
+CALL gds.<algo-name>.<mode>(
+  graphName: String,
+  configuration: Map
+)
+----
+
+* `<algo-name>` is the algorithm name.
+* `<mode>` is the algorithm execution mode.
+The supported modes are:
+** `write`: writes results to the Neo4j database and returns a summary of the results.
+** `stats`: same as `write` but does not write to the Neo4j database.
+** `stream`: streams results back to the user.
+* The `graphName` parameter value is the name of the graph from the graph catalog.
+* The `configuration` parameter value is the algorithm-specific configuration.
+
+== Algorithm syntax: implicit graphs
+
+The implicit variant does not access the graph catalog.
+If you want to run an algorithm on such a graph, you configure the graph creation within the algorithm configuration map.
+
+[source]
+----
+CALL gds.<algo-name>.<mode>(
+  configuration: Map
+)
+----
+
+After the algorithm execution finishes, the graph is released from the memory.
+
+
+== Page Rank
+
+image::https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/PageRanks-Example.svg/758px-PageRanks-Example.svg.png[float="right", width="300"]
+
+Page Rank is an algorithm that measures the transitive influence and connectivity of nodes to find the most *influential* nodes in a graph. +
+It computes an influence value for each node, called a _score_.
+As a result, the score of a node is a certain weighted average of the scores of its direct neighbors.
+
+*How Page Rank works*
+
+PageRank is an _iterative_ algorithm.
+In each iteration, every node propagates its score evenly divided to its neighbours. +
+The algorithm runs for a configurable maximum number of iterations (default is 20), or until the node scores converge.
+That is, when the maximum change in node score between two sequential iterations is smaller than the configured `tolerance` value.
+For more information about tolerance, see _link:https://neo4j.com/docs/graph-data-science/preview/algorithms/page-rank/#algorithms-pagerank-syntax[the documentation^]_.
+
+In the following chapters, you will see how Page Rank identifies the most important nodes.
+
+== Page Rank: stream mode
+
+Let's find out who is influential in the graph by running Page Rank.
+
+First, you run a basic Page Rank call in `stream` mode.
+
+[source, cypher]
+----
+CALL gds.pageRank.stream('got-interactions') YIELD nodeId, score
+RETURN gds.util.asNode(nodeId).name AS name, score
+ORDER BY score DESC LIMIT 10
+----
+
+Then, you compare the Page Rank of each `Person` node with the number of interactions for that node.
+
+[source,cypher]
+----
+CALL gds.pageRank.stream('got-interactions') YIELD nodeId, score AS pageRank
+WITH gds.util.asNode(nodeId) AS n, pageRank
+MATCH (n)-[i:INTERACTS]-()
+RETURN n.name AS name, pageRank, count(i) AS interactions
+ORDER BY pageRank DESC LIMIT 10
+----
+
+The result shows that not always the most talkative characters have the highest rank.
+
+== Page Rank: write mode
+
+Now that you have the results from your Page Rank query, you write them back to Neo4j and use them for further queries. +
+You specify the name of the property to which the algorithm will write using the `writeProperty` key in the config map passed to the procedure.
+
+Note that the writing is done in Neo4j, not in the graph `got-interactions`.
+
+[source, cypher]
+----
+CALL gds.pageRank.write('got-interactions', {writeProperty: 'pageRank'})
+----
+
+== Page Rank: rank per book
+
+Along with the generic `INTERACTS` relationships, you also have `INTERACTS_1`, `INTERACTS_2`, etc., for the different books.
+Let's load a graph for the interactions in book 1 and compute and write the Page Rank scores.
+
+[source, cypher]
+----
+CALL gds.graph.create(
+  'got-interactions-1',
+  'Person',
+  {
+    INTERACTS_1: {
+      orientation: 'UNDIRECTED'
+    }
+  }
+);
+----
+
+[source, cypher]
+----
+CALL gds.pageRank.write(
+  'got-interactions-1',
+  {
+    writeProperty: 'pageRank-1'
+  }
+)
+----
+
+It is generally a good idea to explicitly create the graph before executing an algorithm.
+However, if you do not think that you will operate on this graph in the future, you can load it implicitly as part of the algorithm execution.
+
+[source, cypher]
+----
+CALL gds.pageRank.write({
+  nodeProjection: 'Person',
+  relationshipProjection: {
+    INTERACTS_1: {
+      orientation: 'UNDIRECTED'
+    }
+  },
+  writeProperty: 'pageRank-1'
+})
+----
+
+== Page Rank: exercise
+
+Let's see what you have learned so far.
+
+Try to calculate the Page Rank of the other books in the series and store the results in the database.
+
+* Write queries that call `algo.pageRank` for the `INTERACTS_2`, `INTERACTS_3`, `INTERACTS_4`, and `INTERACTS_5` relationship types.
+  You can load a graph for each relationship type explicitly, or use the shorthand.
+
+Then, try to write queries to answer the following questions:
+
+* Which character has the biggest increase in influence from book 1 to 5?
+* Which character has the biggest decrease?
+
+*Bonus task*
+
+* Use a Cypher projection to create a graph of ``House``s that fought in the same ``Battle``s and run Page Rank.
+* Does the result change if you weight Page Rank with the number of shared ``Battle``s?
+
+You can find the solution on the next slide.
+
+
+== Page Rank: exercise answer
+
+[source, cypher]
+----
+CALL gds.graph.create.cypher(
+  'house-battles',
+  'MATCH (h:House) RETURN id(h) AS id',
+  'MATCH (h1:House)-->(b:Battle)<--(h2:House) RETURN id(h1) AS source, id(h2) AS target, count(b) AS weight',
+  {
+    relationshipProperties: 'weight'
+  }
+)
+----
+
+[source, cypher]
+----
+CALL gds.pageRank.stream(
+  'house-battles',
+  {
+    relationshipWeightProperty: 'weight'
+  }
+)
+YIELD nodeId, score
+RETURN gds.util.asNode(nodeId).name AS name, score
+ORDER BY score DESC
+----
+
+
+== Label Propagation
+
+image::https://s3.amazonaws.com/dev.assets.neo4j.com/wp-content/uploads/20190226091707/label-propagation-graph-algorithm-1.png[float="right",width=300]
+
+Label Propagation (LPA) is a fast algorithm for finding communities in a graph.
+It propagates labels throughout the graph and forms communities of nodes based on their influence.
+
+**How Label Propagation works**
+
+LPA is an _iterative_ algorithm.
+First, it assigns a unique community label to each node. +
+In each iteration, the algorithm changes this label to the most common one among its neighbors.
+Densely connected nodes quickly broadcast their labels across the graph. +
+At the end of the propagation, only a few labels remain. +
+Nodes that have the same community label at convergence are considered from the same community.
+The algorithm runs for a configurable maximum number of iterations, or until it converges.
+
+For more details, see _https://neo4j.com/docs/graph-data-science/1.0-preview/algorithms/label-propagation/[the documentation^]_.
+
+
+== Label Propagation: example
+
+Let's run Label Propagation to find the five largest communities of people interacting with each other. +
+For flexibility, in this example, you can create the graph directly in the algorithm call. +
+The weight property on the relationship represents the number of interactions between two people.
+In LPA, the weight is used to determine the influence of neighboring nodes when voting on community assignment.
+
+[source, cypher]
+----
+CALL gds.graph.create(
+  'got-interactions-weighted',
+  'Person',
+  {
+    INTERACTS: {
+      orientation: 'UNDIRECTED',
+      properties: 'weight'
+    }
+  }
+)
+----
+
+Let's now run LPA with just one iteration:
+
+[source, cypher]
+----
+CALL gds.labelPropagation.stream(
+  'got-interactions-weighted',
+  {
+    relationshipWeightProperty: 'weight',
+    maxIterations: 1
+  }
+) YIELD nodeId, communityId
+RETURN communityId, count(nodeId) AS size
+ORDER BY size DESC
+LIMIT 5
+----
+
+You can see that the nodes are assigned to initial communities - 2166	nodes to 1476 communities. +
+However, the algorithm needs multiple iterations to achieve a stable result.
+So, you run the same procedure with two iterations and see how the results change.
+
+[source, cypher]
+----
+CALL gds.labelPropagation.stream(
+  'got-interactions-weighted',
+  {
+    relationshipWeightProperty: 'weight',
+    maxIterations: 2
+  }
+) YIELD nodeId, communityId
+RETURN communityId, count(nodeId) AS size
+ORDER BY size DESC
+LIMIT 5
+----
+
+Usually, label propagation requires more than a few iterations to converge on a stable result.
+The number of the required iterations depends on the graph structure -- you should experiment.
+
+
+== Label Propagation: seeding
+
+Label Propagation can be seeded with an initial community label from a pre-existing node property.
+This allows you to compute communities incrementally. +
+Let's write the results after the first iteration back to the source graph, under the write property name `community`.
+
+[source, cypher]
+----
+CALL gds.labelPropagation.write(
+  'got-interactions-weighted',
+  {
+    relationshipWeightProperty: 'weight',
+    maxIterations: 1,
+    writeProperty: 'community'
+  }
+)
+----
+
+You can now use the `community` property as a seed property for the second iteration.
+The results should be the same as the previous run with two iterations. +
+Seeding is particularly useful when the source graph grows and you want to compute communities incrementally, without starting again from scratch.
+Since 'got-interactions-weighted' does not contain the 'community' property, you must create a new graph that does.
+
+[source, cypher]
+----
+CALL gds.graph.create(
+  'got-interactions-seeded',
+  {
+    Person: {
+      properties: 'community'
+    }
+  },
+  {
+    INTERACTS: {
+      orientation: 'UNDIRECTED',
+      properties: 'weight'
+    }
+  }
+)
+----
+
+And then, you can use the `seed` configuration key to specify the property from which you want to seed community IDs.
+
+[source, cypher]
+----
+CALL gds.labelPropagation.stream(
+  'got-interactions-seeded',
+  {
+    relationshipWeightProperty: 'weight',
+    maxIterations: 1,
+    seedProperty: 'community'
+  }
+) YIELD nodeId, communityId
+RETURN communityId, count(nodeId) AS size
+ORDER BY size DESC
+LIMIT 5
+----
+
+
+== Label Propagation: exercise
+
+Now that you understand the basics of LPA, let's experiment a little.
+
+* How many iterations does it take for LPA to converge on a stable number of communities? How many communities do you end up with?
+
+* What happens when you run LPA for 1,000 maxIterations? (_hint: try using YIELD ranIterations_)
+
+* What happens if you run LPA without weights? Do you find the same communities?
+
+* *Bonus task*: What if you use house affiliations as seeds for communities? How would you use Cypher to create the initial seeds? Run the algorithm with the new seeds. Do you find a different set of communities?
+
+
+== Label Propagation: cleanup
+
+Now that you are done with Label Propagation, you can remove the graphs from the catalog.
+
+[source, cypher]
+----
+CALL gds.graph.drop('got-interactions-weighted');
+CALL gds.graph.drop('got-interactions-seeded');
+----
+
+
+== Weakly Connected Components
+
+image::https://s3.amazonaws.com/dev.assets.neo4j.com/wp-content/uploads/20190222092528/union-find-graph-algorithm-visualization-3.png[float="right", width="350"]
+
+The Weakly Connected Components algorithm (previously known as Union Find) finds sets of connected nodes in an _undirected_ graph, where each node is reachable from any other node in the same set.
+It is called _weakly_ because it relies on the relationship between two nodes regardless of its direction, wherefore the graph is treated as _undirected_. +
+This algorithm is useful for identifying disjoint subgraphs, when pre-processing graphs, or for disambiguation purposes.
+
+Let's start with a simple example that shows how to run the algorithm and stream the results.
+
+== Weakly Connected Components: example
+
+You can re-use the `got-interactions` graph and run the algorithm to compute components.
+
+[source, cypher]
+----
+CALL gds.wcc.stream('got-interactions')
+YIELD nodeId, componentId
+RETURN componentId as component, count(nodeId) AS size
+ORDER BY size DESC
+----
+
+The result is one large component containing 795 characters and many isolated characters.
+
+== Weakly Connected Components: connected components
+
+Let's use a Cypher projection to build a new graph named `got-culture-interactions-cypher`.
+It will contain people that belong to the same culture.
+
+[source, cypher]
+----
+CALL gds.graph.create.cypher(
+  'got-culture-interactions-cypher',
+  'MATCH (n:Person) RETURN id(n) AS id',
+  'MATCH (p1:Person)-[:MEMBER_OF_CULTURE]->(c:Culture)<-[:MEMBER_OF_CULTURE]-(p2:Person) RETURN id(p1) AS source, id(p2) AS target'
+)
+----
+
+Now, run the algorithm to compute components.
+
+[source, cypher]
+----
+CALL gds.wcc.stream('got-culture-interactions-cypher')
+YIELD nodeId, componentId
+RETURN componentId as component, count(nodeId) AS size ORDER BY size DESC
+----
+
+The result is components with different sizes.
+
+Reviewing the results, which cultures are represented by the five largest components?
+
+Can you modify the query to write the components back to the database?
+Add the property `wcc_partition` to your `:Person` nodes.
+
+
+== Weakly Connected Components: thresholds
+
+You can also use some additional configuration options:
+
+* `threshold` for connectivity (used along with `relationshipWeightProperty`)
+* `seedProperty`
+
+**Threshold**
+
+If the `threshold` option is specified, the `relationshipWeightProperty` option must also be present.
+In this case, relationships whose weight is below the given threshold will not be used in the computation.
+
+You will consider a graph with relationships weighted by the number of times a pair of individuals have interacted.
+
+**Note:** You are casting the weight property from the graph as a float because that is what the algorithm expects as an input.
+
+[source, cypher]
+----
+CALL gds.graph.create('got-wcc-weighted-interactions',
+  'Person',
+  {
+    INTERACTS: {
+      orientation: 'NATURAL',
+      properties: {
+        weight: {
+          property: 'weight',
+          defaultValue: 0.0,
+          aggregation: 'SINGLE'
+        }
+      }
+    }
+  }
+)
+----
+
+[source, cypher]
+----
+CALL gds.wcc.stream(
+  'got-wcc-weighted-interactions',
+  {
+    relationshipWeightProperty:'weight',
+    threshold:5.0
+  }
+)
+YIELD nodeId, componentId
+RETURN count(distinct componentId) as components
+----
+
+How does the number of identified communities change when you change the threshold?
+What happens to their size?
+What value produces the most communities?
+
+
+== Weakly Connected Components: seeding
+
+Now you can use the `wcc_partition` property to seed the algorithm with an initial community label.
+This allows you to compute communities incrementally.
+
+If you have not managed to create the property `wcc_partition`, execute the following query.
+
+[source, cypher]
+----
+CALL gds.wcc.write(
+  'got-culture-interactions-cypher',
+  {
+    writeProperty: 'wcc_partition'
+  }
+)
+----
+
+Then, you can create a projected graph, called `got-wcc-interactions-seeded` and add the property to your `Person` nodes:
+
+[source, cypher]
+----
+CALL gds.graph.create(
+  'got-wcc-interactions-seeded',
+  {
+    Person: {
+      properties: 'wcc_partition'
+    }
+  },
+  {
+    INTERACTS: {
+      orientation: 'UNDIRECTED',
+      properties: 'weight'
+    }
+  }
+)
+----
+
+**Seeding**
+
+For the Weakly Connected Components algorithm, this functionality is most useful when you want to add data to an existing graph.
+
+[source, cypher]
+----
+MATCH (p:Person)
+WITH p.wcc_partition AS community, collect(p) AS members
+WITH community, size(members) AS size, members[0] AS someGuy
+    ORDER BY size DESC
+    LIMIT 6
+WITH collect(someGuy) AS someGuys
+WITH someGuys, someGuys[0] AS first
+MERGE (mats:Person {name: 'Mats'})
+MERGE (mats)-[:INTERACTS]->(first)
+WITH someGuys, someGuys[1] AS second
+MERGE (martin:Person {name: 'Martin'})
+MERGE (martin)-[:INTERACTS]->(second)
+WITH someGuys, someGuys[2] AS third
+MERGE (jonatan:Person {name: 'Jonatan'})
+MERGE (jonatan)-[:INTERACTS]->(third)
+WITH someGuys, someGuys[3] AS fourth
+MERGE (max:Person {name: 'Max'})
+MERGE (max)-[:INTERACTS]->(fourth)
+WITH someGuys, someGuys[4] AS fifth
+MERGE (soren:Person {name: 'Soren'})
+MERGE (soren)-[:INTERACTS]->(fifth)
+WITH someGuys, someGuys[5] AS sixth
+MERGE (paul:Person {name: 'Paul'})
+MERGE (paul)-[:INTERACTS]->(fourth)
+----
+
+Now let's use the previously labeled `wcc_partition` as a seed, and assign communities to your new nodes:
+
+[source, cypher]
+----
+CALL gds.wcc.stream(
+  'got-wcc-interactions-seeded',
+  {
+    seedProperty: 'wcc_partition'
+  }
+)
+YIELD nodeId, componentId
+RETURN componentId, count(nodeId) AS size
+ORDER BY size DESC
+----
+
+The number of communities is the same as before, but you have also added the properties to the new nodes.
+On a small graph this is trivial, but on a large graph this saves a lot of computational time.
+
+
+== Weakly Connected Components: exercise
+
+* Can you use a Cypher projection to create a graph that contains at least five communities with more than two members?
+
+* Can you use a Cypher projection with thresholding (you can use Cypher to add a new weight property if you want) to break the graph into multiple properties?
+Does increasing your threshold create _more_ or _fewer_ partitions?
+
+* Using the previous exercise, write the partitions to the graph, and then use them as seeds for Union Find on the full graph, using `Person` and `INTERACTS`.
+How many communities do you find?
+What happened?
+
+
+== Weakly Connected Components: cleanup
+
+To remove the nodes that have been created during the seeding exercise, run the following query:
+
+[source, cypher]
+----
+MATCH (p:Person) WHERE p.name IN ['Mats', 'Martin', 'Jonatan', 'Max', 'Soren', 'Paul'] DETACH DELETE p
+----
+
+To clean up the in-memory graphs created during the exercises, you can run the following queries.
+
+[source, cypher]
+----
+CALL gds.graph.drop('got-culture-interactions-cypher');
+CALL gds.graph.drop('got-wcc-weighted-interactions');
+CALL gds.graph.drop('got-wcc-interactions-seeded');
+----
+
+
+== Louvain
+
+The Louvain algorithm, like Label Propagation and Weakly Connected Components, is a community detection algorithm, designed to identify clusters in the graph. It differs from Label Propagation and Weakly Connected Components in how it finds communities:
+It uses so called modularity, i.e. how densely connected communities are versus a random graph, to define the community structure. It's also
+a _hierarchical clustering_ algorithm, so it can return communities at different scales, which can be useful for understanding how communities can combine at different levels.
+
+The algorithm consists of the repeated application of two steps. The first step is a "greedy" assignment of nodes to communities,
+favoring local optimizations of modularity. The second step is the definition of a new coarse-grained network, based on the
+communities found in the first step.
+During this step nodes of the same community are merged into a single node, inheriting all connected relationships.
+These two steps are repeated until no further modularity-increasing reassignments of communities are possible. Because ties are broken
+arbitrarily, you can get different results between different runs of the Louvain algorithm.
+
+The main drawback to Louvain is that it is significantly slower that Label Propagation and Weakly Connected Components, and the results can be hard to interpret.
+The algorithm is sensitive to the weighting scheme used on relationships. A good sign you need to tweak your schema or weighting is when you notice your results
+include only a _single_ giant community, or every node is in it's own community of one.
+
+
+== Louvain: examples
+
+We will compute the Louvain community structure of our pre-loaded graph.
+
+[source, cypher]
+----
+CALL gds.louvain.stream('got-interactions')
+YIELD nodeId, communityId
+RETURN gds.util.asNode(nodeId).name AS person, communityId
+ORDER BY communityId DESC
+----
+
+The above query returns the name of the `Person` and the `community ID` they belongs to.
+If we want to investigate how many communities there are, and how many members there are in each community we can change the RETURN statement:
+
+[source, cypher]
+----
+CALL gds.louvain.stream('got-interactions')
+YIELD nodeId, communityId
+RETURN communityId, COUNT(DISTINCT nodeId) AS members
+ORDER BY members DESC
+----
+
+We can see that there are 1382 communities - 11 with more than one member.
+
+
+== Louvain: weighting
+
+The Louvain algorithm can also run on weighted graphs, taking the given relationship weights into concern when calculating the modularity.
+
+Before we continue we need a graph that was created with the `weight` relationship property.
+
+[source, cypher]
+----
+CALL gds.graph.create(
+  'got-weighted-interactions',
+  'Person',
+  {
+    INTERACTS: {
+      orientation: 'UNDIRECTED',
+      aggregation: 'NONE',
+      properties: {
+      	weight: {
+          property: 'weight',
+          aggregation: 'NONE',
+          defaultValue: 0.0
+        }
+      }
+    }
+  }
+)
+----
+
+If a relationship doesn't have a `weight` property the number specified in `defaultValue` will be used as a fallback.
+
+We can then use the 'weight' property on the INTERACTS relationship and see what happens:
+
+[source,cypher]
+----
+CALL gds.louvain.stream(
+  'got-weighted-interactions',
+  {
+    relationshipWeightProperty: 'weight'
+  }
+)
+YIELD nodeId, communityId
+RETURN communityId, COUNT(DISTINCT nodeId) AS members
+ORDER BY members DESC
+----
+
+This gives us 1384 communities, 13 with more than one member.
+
+
+== Louvain: intermediate communities
+
+One of the cool things about Louvain is that it is hierarchical clustering algorithm.
+It identifies communities at multiple levels in the graph: first smaller communities, that then combine to form larger ones.
+
+To retrieve the intermediate communities, you can simple set `includeIntermediateCommunities: true`:
+
+[source,cypher]
+----
+CALL gds.louvain.stream(
+  'got-interactions',
+  {
+    includeIntermediateCommunities: true
+  }
+)
+YIELD nodeId, communityId, communityIds
+RETURN communityId, COUNT(DISTINCT nodeId) AS members, communityIds as intermediateCommunities
+----
+
+We can extract membership in different levels of communities and see how the composition changes:
+
+[source,cypher]
+----
+CALL gds.louvain.stream(
+  'got-interactions',
+  {
+    includeIntermediateCommunities: true
+  }
+)
+YIELD nodeId, communityIds
+RETURN count(distinct communityIds[0]), count(distinct communityIds[1])
+----
+
+`includeIntermediateCommunities: false` is the default value, in this case the `communityIds` field of the result is `null`
+
+Can you identify nodes that belong to different communities in the first level of hierarchy, but combine to the same community in the next level?
+
+
+== Louvain: cleanup
+
+To clean up the in-memory graph created during the Louvain exercise you can run the following query
+
+[source,cypher]
+----
+CALL gds.graph.drop('got-weighted-interactions');
+----
+
+
+== Node Similarity
+
+The Node Similarity algorithm is used to compute similarity scores for pairs of nodes in a graph.
+The similarity between two nodes is based on the respective sets of neighbors.
+
+To obtain a similarity measure between two sets, we use _Jaccard Similarity_.
+More precisely the similarity between two nodes A and B is given by J = [#nodes neighboring A and B] / [#nodes neighboring A or B (or both)].
+That is, the nodes are similar if most nodes that are neighbors to either node are in fact neighbors to both.
+
+Typically, Node Similarity is used on a bipartite graph, for example containing People that have a `LIKES` relationship to Items.
+Node Similarity can then be used to find the pairs of People that are the most similar in the sense that they mostly like the same items.
+
+For more information see https://neo4j.com/docs/graph-algorithms/current/algorithms/node-similarity/.
+
+
+== Node Similarity: example graph
+
+We will explore Node Similarity on a graph consisting of GOT characters and various entities that they relate to.
+The task will be to find characters that are similar when comparing the books they appear or die in, as well as the houses and cultures they belong to.
+This is a bipartite graph between `Person` on one side and `Book`, `House` and `Culture` on the other side.
+
+We create the graph like so:
+
+[source, cypher]
+----
+CALL gds.graph.create('got-character-related-entities', ['Person', 'Book', 'House', 'Culture'], '*')
+----
+
+This graph creation uses projection with multiple node labels.
+We load all types of relationships with `*`.
+
+
+== Node Similarity: simple run
+
+We will now run Node Similarity with default settings and extract the top 10 most similar pairs of characters.
+The algorithm will compute similarities only for `Person` nodes as these are the only nodes with outgoing edges.
+To get more interesting results, we consider only characters with at least 20 related entities.
+The property `degreeCutoff` accomplishes precisely that.
+
+[source, cypher]
+----
+CALL gds.nodeSimilarity.stream(
+  'got-character-related-entities',
+  {
+    degreeCutoff: 20
+  }
+)
+YIELD node1, node2, similarity
+RETURN gds.util.asNode(node1).name as character1, gds.util.asNode(node2).name as character2, similarity
+ORDER BY similarity DESC
+LIMIT 10
+----
+
+
+== Node Similarity: similarity cutoff
+
+In most real-world graphs, the number of pairs of nodes to compare is huge and most pairs are not similar, it is useful to be able to limit the output.
+There are several ways to deal with this.
+We will begin by setting a threshold for a minimum similarity we are interested in by specifying the `similarityCutoff` property.
+
+[source, cypher]
+----
+CALL gds.nodeSimilarity.stream(
+  'got-character-related-entities',
+  {
+    degreeCutoff: 20,
+    similarityCutoff: 0.45
+  }
+)
+YIELD node1, node2, similarity
+RETURN gds.util.asNode(node1).name as character1, gds.util.asNode(node2).name as character2, similarity
+ORDER BY similarity DESC
+----
+
+Note that we no longer need to use the LIMIT clause thanks to the similarity threshold.
+
+By default the similarity cutoff is a very small number, effectively filtering out pairs that have zero similarity.
+
+
+== Node Similarity: topN
+
+We can also limit the number of similarities returned by using the `topN` config option.
+
+[source, cypher]
+----
+CALL gds.nodeSimilarity.stream(
+  'got-character-related-entities',
+  {
+    degreeCutoff: 20,
+    topN: 10
+  }
+)
+YIELD node1, node2, similarity
+RETURN gds.util.asNode(node1).name as character1, gds.util.asNode(node2).name as character2, similarity
+ORDER BY similarity DESC
+----
+
+This algorithm specific way of limiting is more memory efficient than constructing the entire stream and using the LIMIT clause afterwards.
+
+
+== Node Similarity: topK
+
+Another way to limit the results is the `topK` config option.
+This makes the algorithm output the `K` most similar characters for each character.
+Let's set this value to 1, since then we expect Loras Tyrell to have only one similar neighbor instead of two.
+
+[source, cypher]
+----
+CALL gds.nodeSimilarity.stream(
+  'got-character-related-entities',
+  {
+    degreeCutoff: 20,
+    topN: 10,
+    topK: 1
+  }
+)
+YIELD node1, node2, similarity
+RETURN gds.util.asNode(node1).name as character1, gds.util.asNode(node2).name as character2, similarity
+ORDER BY similarity DESC
+----
+
+Did you notice anything surprising?
+Loras Tyrell still appeared twice as character2!
+The algorithm will only return the most similar character to Loras when considering his neighbors.
+The explanation is that when considering other characters, it is possible that multiple ones have Loras as their most similar neighbor.
+
+
+== Node Similarity: bottomN and bottomK
+
+Similarily to `topN` and `topK`, the `bottomN` and `bottomK` config options limit the results but return the least similar pairs.
+We will not include an example, but the interested reader is encouraged to try it out!
+
+
+== Node Similarity: writing
+
+We end this chapter with an example that shows how to write similarity scores back to Neo4j.
+The output of the algorithm can be written as weighted relationships.
+The weight property is set to the computed similarity of the nodes that the relationship concerns.
+The name of the property written to is specified by the config option `writeProperty`.
+
+[source, cypher]
+----
+CALL gds.nodeSimilarity.write(
+  'got-character-related-entities',
+  {
+    degreeCutoff: 20,
+    topN: 10,
+    topK: 1,
+    writeRelationshipType: 'SIMILARITY',
+    writeProperty: 'character_similarity'
+  }
+)
+----
+
+//TODO: in fact 5 relationships are written. check why!
+We can see that this wrote 10 relationships which is due to the topN value.
+
+
+== The end
+
+Thank you for learning Graph Algorithms!
