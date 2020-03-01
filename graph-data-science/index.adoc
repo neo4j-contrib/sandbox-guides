@@ -675,6 +675,10 @@ Now that you are done with Label Propagation, you can remove the graphs from the
 [source, cypher]
 ----
 CALL gds.graph.drop('got-interactions-weighted');
+----
+
+[source,cypher]
+----
 CALL gds.graph.drop('got-interactions-seeded');
 ----
 
@@ -901,7 +905,15 @@ To clean up the in-memory graphs created during the exercises, you can run the f
 [source, cypher]
 ----
 CALL gds.graph.drop('got-culture-interactions-cypher');
+----
+
+[source, cypher]
+----
 CALL gds.graph.drop('got-wcc-weighted-interactions');
+----
+
+[source, cypher]
+----
 CALL gds.graph.drop('got-wcc-interactions-seeded');
 ----
 
