@@ -20,7 +20,6 @@ For more details, see link:https://neo4j.com/docs/graph-algorithms/current/[the 
 
 image::https://upload.wikimedia.org/wikipedia/en/2/24/AStormOfSwords.jpg[float="right",width=150]
 
-Before you can run any of the algorithms, you need to import your data in Neo4j. +
 The example dataset used to demonstrate the GDS library is based on the Game of Thrones fantasy saga.
 You may recognize it from the blogs, events, and sandbox.
 However, both data and queries are different enough from previous installments that it merits your attention.
@@ -45,8 +44,6 @@ An interaction occurs each time two characters' names (or nicknames) *appear wit
 For more information about the data extraction process, see _https://networkofthrones.wordpress.com/from-book-to-network/[Network of Thrones, A Song of Math and Westeros^], research by Dr. Andrew Beveridge._
 
 The `(:Person)-[:INTERACTS]->(:Person)` graph is enriched with data on houses, battles, commanders, kings, knights, regions, locations, and deaths.
-
-Now, let's import the data.
 
 == Data visualization
 
