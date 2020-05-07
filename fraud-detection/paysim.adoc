@@ -1,0 +1,390 @@
+= Neo4j GDSL Paysim Sandbox Guide
+
+:neo4j-version: 3.5.17 Enterprise Edition
+:author: Joe Depeau
+:twitter: @joedepeau
+
+== Fraud Data Science Sandbox - Overview
+=== Introduction and Data Model Review
+
+This guide will demonstrate how Neo4j, along with the Graph Data Science Library and the Neo4j Bloom data visualisation and exploration tool, can be used as part of fraud investigations. 
+
+Our fraud data model focuses on a few basic types of entities and the relationships between them: 
+
+* `:Client` is a central data type, and in our demo data mainly represent retail customers with accounts at a fictitious bank.
+
+* `:Clients` can have one or more pieces of identifying information associated with their account.  To represent this a `:Client` node can have HAS_SSN relationships to `:SSN` (Social Security Number) nodes, HAS_PHONE relationships to `:Phone` nodes, and HAS_EMAIL relationships to `:Email` nodes.  
+
+* `:Transaction` nodes represent movements of money between `:Clients`. The direction of a monetary transaction is indicated by a `:PERFORMED` relationship connecting a `:Client` node to the `:Transaction` they initiated, and a `:TO` relationships connecting a `:Transaction` node to the `:Client` node which received the funds.
+
+
+image::{img}/paysim_model_metagraph.png[]
+
+
+
+
+== Fraud Data Science Sandbox - Overview
+=== Introduction and Data Model Review (cont.)
+
+There are also some node labels and relationships that won't be used in this guide, but could be interesting for you to explore on your own: 
+
+* `:Bank` nodes : there are 3 `:Bank` nodes in our database which are involved in a number of transactions.  In this guide we will focus mainly on transactions between non-Merchant `:Clients`, but you can explore the `:Bank` nodes and their transactions on your own.
+
+* `:Merchant` nodes : some nodes have a `:Merchant` label, which indicates they are a commercial banking customer that `:Clients` may do business with.  There are 347 `:Merchant` nodes in our database which are related to a number of `:Transactions`.  You may also want explore this part of the graph on your own.
+
+* `:NEXT`, `:FIRST_TX`, and `:LAST_TX` relationships : these relationships help form a linked list of `:Transactions` for a `:Client`.  The `:Client's` first `:Transaction` is connected to that `:Client` by a `:FIRST_TX` relationship.  Then, each `:Transaction` is connected to the next `:Transaction` that `:Client` performed by a `:NEXT` relationship.  The `:Client's` final `:Transaction` is also connected to that client by a `:LAST_TX` relationship.  This series of Transactions could also be analysed to find patterns which might indicate Fraudulent behaviour.  This guide will not cover this kind of analysis, but you can explore these relationships on your own.
+
+image::{img}/paysim_model_metagraph.png[]
+
+
+== Fraud Data Science Sandbox - Overview
+=== Understanding the data
+
+Let's start by taking a look at how much data we'll be working with, and how many of each node and relationship type we have in the database.  Run the following Cypher query to view the node labels in the database with their totals (which excludes information about Neo4j Bloom-related nodes) :
+
+[source,cypher]
+----
+MATCH (n)
+WHERE NOT n:`_Bloom_Perspective_`
+RETURN labels(n) as labels, count(n) order by labels
+----
+
+You should see that there are 2,433 `:Client` nodes in the database.  There are approximately 2,200 each of `:Email` nodes, `:Phone` nodes, and `:SSN` (Social Security Number) nodes.  By far the node type with the most records in our database are `:Transaction` nodes, with over 323,000.
+
+In total, there are nearly 333,000 nodes in our data set.
+
+
+== Fraud Data Science Sandbox - Overview
+=== Understanding the data (cont.)
+
+Next, let's run the following Cypher query to view the relationship types in the database with their totals :
+[source,cypher]
+----
+MATCH (n)-[rel]->(x)
+RETURN type(rel) as label, count(rel) order by label
+----
+
+You should see that there are 2,332 each of the `:FIRST_TX` and `:LAST_TX` relationship types.  Since this doesn't equal the number of `:Client` nodes in our database, we can tell there are 101 `:Clients` who have not `:PERFORMED` any `:Transactions`
+
+There are 2,433 each of the `:HAS_EMAIL`, `:HAS_PHONE`, and `:HAS_SSN` relationship types.  Because there are more of these relationships than there are `:Email`, `:Phone`, and `:SSN` nodes we can tell that there are some of these nodes which are related to more than one `:Client`.
+
+By far the largest numbers of relationship types are for our `:NEXT`, `:PERFORMED`, and `:TO` relationships - which are all related to `:Transactions`.  This also makes sense, as there are so many `:Transaction` nodes in our database.
+
+In total, there are about 980,000 relationships in our data set.
+
+
+
+
+
+
+== Data Preparation
+=== Adding `:Flagged` labels : step 1 of 3
+
+In our data there are some `:Transaction` nodes which have been marked as being fraudulent, as indicated by a `true` value for the node's `fraud` property.  You can see how many `:Transaction` nodes are marked as fraudulent by running the following Cypher query :
+
+[source,cypher]
+----
+MATCH (t:Transaction {fraud: true}) return count(t)
+----
+
+These `:Transactions` may have been flagged by a report or complaint from the customer, by a fraud analyst, or by an alert raised by another fraud detection system for example.  Let's update our database to apply a `:Flagged` label to any `:Client` node that has `:PERFORMED` a `:Transaction` where the `fraud` property is set to `true`.
+
+[source,cypher]
+----
+MATCH (c:Client)-[:PERFORMED]->(t:Transaction {fraud: true})
+set c:Flagged
+----
+
+Later we'll be using the `:Flagged` label as we analyse the results of our Graph Data Science Library algorithm outputs.  We'll also add the `:Flagged` label to more nodes in the following steps.
+
+== Data Preparation
+=== Adding `:Flagged` labels : step 2 of 3
+
+In our data there are `:SSN` (Social Security Number) nodes.  Social Security Numbers are personal identifiers used in the United States, and are meant to be unique to an individual.  There shouldn't be any instances where more than one individual is linked to the same `:SSN` node - if there are, this could indicate the fraudulent use of a stolen identity or a synthetic identity.  While this is the type of thing that would ideally be flagged up-front during the account creation process, that may be difficult or impossible across multiple backend systems or lines of business.
+
+Let's add the `:Flagged` label to any nodes which share a Social Security Number in our data set.
+
+[source,cypher]
+----
+MATCH path = (c1:Client)-[:HAS_SSN]->(ssn)<-[:HAS_SSN]-(c2:Client)
+set c1:Flagged, c2:Flagged
+----
+
+== Data Preparation
+=== Adding `:Flagged` labels : step 3 of 3
+
+In the United States each person is also only supposed to have one Social Security Number.  There may be edge cases where a person can legitimately have more than one `:SSN`, but for the purposes of our investigation it's suspicious if a `:Client` node is linked to more than one `:SSN` node.
+
+Let's add the `:Flagged` label to any nodes which have more than one Social Security Number in our data set.
+
+[source,cypher]
+----
+MATCH path = (x)<-[:HAS_SSN]-(c:Client)-[:HAS_SSN]->(y)
+set c:Flagged
+----
+
+
+
+
+
+== Graph Algorithms
+=== Introduction
+
+Now, we will start to run some algorithms from the Neo4j Graph Data Science Library.  
+
+If you are new to the Graph Data Science Library, you may want to link:https://neo4j.com/docs/graph-data-science/1.2-preview/[review the documentation^] or complete the GDSL Sandbox tutorial first, as this guide assumes you have at least a basic knowledge of the GDSL.
+
+
+
+
+
+== Graph Algorithms
+=== Preparing our data for _Node Similarity_ and _Weakly Connected Components_
+
+First, we will run two algorithms - _Node Similarity_ and _Weakly Connected Components_ - on a subgraph containing `:Client` nodes and their relationships to `:Phone`, `:Email`, and `:SSN` nodes.  Run the following command to load this subgraph into memory :
+
+[source,cypher]
+----
+CALL gds.graph.create.cypher(
+    'clientIDGraph',
+    'MATCH (n) WHERE n:Client OR n:SSN or n:Email or n:Phone RETURN id(n) AS id',
+    'MATCH (p:Client)-[:HAS_SSN|HAS_PHONE|HAS_EMAIL]->(i) RETURN id(p) AS source, id(i) AS target'
+)
+----
+
+
+== Graph Algorithms
+=== Running _Node Similarity_ on our `clientIDGraph`
+Now that we have a graph loaded into memory, representing `:Client` nodes their relationships to pieces of identifying information, we can use it to run _Node Similarity_.  This will help us find `:Clients` in our graph who are similar to each other based on shared pieces of identity.  This could be useful in finding `:Client` nodes who have not been flagged in our database but have similar identifying information to `:Client` nodes who have had the `:Flagged` label applied.
+
+First we can preview the output of the algorithm, to get an idea for what the results might look like.
+
+[source,cypher]
+----
+CALL gds.nodeSimilarity.stream('clientIDGraph')
+YIELD node1, node2, similarity
+RETURN gds.util.asNode(node1).name AS Person1, gds.util.asNode(node2).name AS Person2, similarity
+ORDER BY similarity DESCENDING, Person1, Person2 limit 10
+)
+----
+
+< NEED TO PUT SOME INFORMATION HERE ABOUT THE OUTPUT OF THE STREAMED PREVIEW ON THE NEW DATA SET>
+
+We can write the results back to the graph using this Cypher query :
+
+[source,cypher]
+----
+CALL gds.nodeSimilarity.write('clientIDGraph', {
+    writeRelationshipType: 'SIMILAR_TO',
+    writeProperty: 'score'
+})
+YIELD nodesCompared, relationshipsWritten
+----
+
+< NEED TO PUT SOME INFORMATION HERE ABOUT THE OUTPUT OF THE WRITE CALL ON THE NEW DATA SET>
+
+This query has created a `:SIMILAR_TO` relationship between each pair of `:Client` nodes who were found to be similar.  On each `:SIMILAR_TO` relationship is a `score` property which indicates how strong the similarity is - with 0.0 being no similarity at all, and 1.0 being complete similarity.
+
+
+== Graph Algorithms
+=== Running _Weakly Connected Components_ on our `clientIDGraph`
+
+We can also use our in-memory `clientIDGraph` to run _Weakly Connected Components_.  This will help us find communities of `:Clients` in our graph who are linked with each other by shared pieces of identity.  These communities will be 'islands' of related nodes in our data - not connected to any other communities by relationships to identifying information.  This can be useful in our investigations by helping us identify communities of `:Clients` containing `:Flagged` accounts.  These communities might require additional investigation, and could highlight other accounts which may need to be `:Flagged`.
+
+Again, we can start by previewing the output of the algorithm :
+
+[source,cypher]
+----
+CALL gds.wcc.stream('clientIDGraph')
+YIELD nodeId, componentId
+RETURN componentId as communityID, count(nodeId) as members
+ORDER BY members desc
+----
+
+< NEED TO PUT SOME INFORMATION HERE ABOUT THE OUTPUT OF THE STREAMED PREVIEW ON THE NEW DATA SET>
+
+We can write the results back to the graph using this Cypher query :
+
+[source,cypher]
+----
+CALL gds.wcc.write('clientIDGraph', {
+    writeProperty: 'component_id'
+})
+YIELD nodePropertiesWritten, componentCount
+----
+
+< NEED TO PUT SOME INFORMATION HERE ABOUT THE OUTPUT OF THE WRITE CALL ON THE NEW DATA SET>
+
+
+< PUT SOME VALIDATION QUERIES TO LOOK AT SOME OF THE OUTPUTS?  LIKE FINDING UNFLAGGED CLIENTS SIMILAR TO FLAGGED ONES, OR LOOKING AT THE LARGEST COMMUNITY AND THEIR SHARED BITS OF ID? THIS IS ALSO COVERED IN THE BLOOM PERSPECTIVE.>
+
+
+== Graph Algorithms
+=== Tidying up after finishing with our `clientIDGraph`
+
+We are now finished working with our in-memory `clientIDGraph`, so it's best practice to remove it from memory.
+
+[source,cypher]
+----
+CALL gds.graph.drop('clientIDGraph') YIELD graphName
+----
+
+
+
+
+
+== Graph Algorithms
+=== Preparing our data for _Louvain_, _PageRank_, and _Node Similarity_
+
+Next, we will run three algorithms - _Louvain_, _PageRank_, and _Node Similarity_ - on a subgraph containing `:Client` nodes and their relationships to each other via `:Transactions`.  In our graph `:Client` nodes are not directly related to each other in this way - instead, there are intermediate `:Transaction` nodes.  Therefore, when we create our in-memory graph we will collapse these `:Transaction` links into direct relationships for our algorithms to use.
+
+Run the following command to load this subgraph into memory :
+
+[source,cypher]
+----
+CALL gds.graph.create.cypher(
+    'client-transactions',
+    'MATCH (c:Client) RETURN id(c) as id, toInteger(c.id) as client_id',
+    'MATCH (c1:Client)-[:PERFORMED]->(t:Transaction)-[:TO]->(c2:Client) return id(c1) as source, id(c2) as target, sum(toInteger(t.amount)) as volume, count(t) as frequency, "TRANSACTED_WITH" as type'
+)
+----
+
+== Graph Algorithms
+=== Running _PageRank_ on our `client-transactions` graph
+
+Now that we have a graph loaded into memory, representing `:Client` nodes their relationships to each other by `:Transactions`, we can use it to run _PageRank_.  This will help us find `:Clients` in our graph who could be considered _important_ or _influential_ because they sit at the end of flows of money through the graph.  This could be useful in prioritising an investigation into  `:Flagged` nodes, by looking at those with the highest PageRank score first.
+
+We will use the `volume` property on our in-memory `:TRANSACTED_WITH` relationships as a weight input for our algorithm.  This represents how much money has moved from one `:Client` to another.
+
+First we can preview the output of the algorithm, to get an idea for what the results might look like.
+
+[source,cypher]
+----
+CALL gds.pageRank.stream('client-transactions', {
+  maxIterations: 20,
+  dampingFactor: 0.85,
+  relationshipWeightProperty: 'volume'
+})
+YIELD nodeId, score
+RETURN gds.util.asNode(nodeId).name AS name, score
+ORDER BY score DESC, name ASC limit 10
+----
+
+< NEED TO PUT SOME INFORMATION HERE ABOUT THE OUTPUT OF THE STREAMED PREVIEW ON THE NEW DATA SET>
+
+We can write the results back to the graph using this Cypher query :
+
+[source,cypher]
+----
+CALL gds.pageRank.write('client-transactions', {
+  maxIterations: 20,
+  dampingFactor: 0.85,
+  writeProperty: 'pagerank',
+  relationshipWeightProperty: 'volume'
+})
+YIELD nodePropertiesWritten AS writtenProperties, ranIterations
+RETURN *
+----
+
+< NEED TO PUT SOME INFORMATION HERE ABOUT THE OUTPUT OF THE WRITE CALL ON THE NEW DATA SET>
+
+
+== Graph Algorithms
+=== Running _Louvain_ on our `client-transactions` graph
+
+We can also use our in-memory `client-transactions` to run _Louvain_.  This will help us find communities of `:Clients` in our graph who transact with each other.    This can again be useful in our investigations by helping us identify communities of `:Clients` which may transact heavily with `:Flagged` accounts, or contain many `:Flagged` accounts.  These communities might require additional investigation, and could highlight other accounts which may need to be `:Flagged`.
+
+Like we did when running PageRank, we will use the `volume` property on our in-memory `:TRANSACTED_WITH` relationships as a weight input for our algorithm.  This represents how much money has moved from one `:Client` to another.
+
+Again, we can start by previewing the output of the algorithm :
+
+[source,cypher]
+----
+CALL gds.louvain.stream(
+    'client-transactions',
+    {relationshipWeightProperty: 'volume'}
+)
+YIELD nodeId, communityId
+RETURN communitID, count(nodeId) as members
+ORDER by members desc
+----
+
+< NEED TO PUT SOME INFORMATION HERE ABOUT THE OUTPUT OF THE STREAMED PREVIEW ON THE NEW DATA SET>
+
+We can write the results back to the graph using this Cypher query :
+
+[source,cypher]
+----
+CALL gds.louvain.write(
+    'client-transactions',
+    {writeProperty : 'louvain_community',
+    relationshipWeightProperty: 'volume',
+    includeIntermediateCommunities: false}
+)
+YIELD nodePropertiesWritten, communityCount, modularity
+RETURN nodePropertiesWritten, communityCount, modularity
+----
+
+< NEED TO PUT SOME INFORMATION HERE ABOUT THE OUTPUT OF THE WRITE CALL ON THE NEW DATA SET>
+
+
+== Graph Algorithms
+=== Running _Node Similarity_ on our `client-transactions` graph
+
+We can also use our in-memory `client-transactions` to run _Node Similarity_ again.  This time, we will be looking for `:Clients` in our graph who have similar `:Transaction` patterns to each other.  In other words, they transact with the same other accounts.  This can again be useful in finding `:Client` nodes who have not been flagged in our database but have shown similar `:Transaction` patterns to `:Client` nodes who have had the `:Flagged` label applied.
+
+Again, we can start by previewing the output of the algorithm :
+
+[source,cypher]
+----
+CALL gds.nodeSimilarity.stream('client-transactions')
+YIELD node1, node2, similarity
+RETURN gds.util.asNode(node1).name AS Person1, gds.util.asNode(node2).name AS Person2, similarity
+ORDER BY similarity DESCENDING, Person1, Person2 limit 10
+----
+
+< NEED TO PUT SOME INFORMATION HERE ABOUT THE OUTPUT OF THE STREAMED PREVIEW ON THE NEW DATA SET>
+
+We can write the results back to the graph using this Cypher query :
+
+[source,cypher]
+----
+CALL gds.nodeSimilarity.write('client-transactions', {
+    writeRelationshipType: 'SIMILAR_TRANS',
+    writeProperty: 'score'
+})
+YIELD nodesCompared, relationshipsWritten
+----
+
+< NEED TO PUT SOME INFORMATION HERE ABOUT THE OUTPUT OF THE WRITE CALL ON THE NEW DATA SET>
+
+
+This query has created a `:SIMILAR_TRANS` relationship between each pair of `:Client` nodes who were found to be similar.  On each `:SIMILAR_TRANS` relationship is a `score` property which indicates how strong the similarity is - with 0.0 being no similarity at all, and 1.0 being complete similarity.
+
+
+< PUT SOME VALIDATION QUERIES TO LOOK AT SOME OF THE OUTPUTS?  LIKE LOOKING AT THE LARGEST COMMUNITY AND WHAT FLAGGED ACCOUNTS ARE INCLUDED?  OR WHETHER ANY UNFLAGEGD ACCOUNTS HAVE SIMILAR TRANSACTION PATTERNS TO FLAGGED ACCOUNTS?  WHAT FLAGGED ACCOUNTS HAVE THE HIGHEST PAGERANK SCORE? THIS IS ALSO COVERED IN THE BLOOM PERSPECTIVE.>
+
+
+== Graph Algorithms
+=== Tidying up after finishing with our `client-transactions` graph
+
+We are now finished working with our in-memory `client-transactions` graph, so it's best practice to remove it from memory.
+
+[source,cypher]
+----
+CALL gds.graph.drop('client-transactions') YIELD graphName
+----
+
+
+
+
+
+== Graph Visualisation
+=== Using Bloom
+If you are new to using Neo4j Bloom, you may want to link:https://neo4j.com/docs/bloom-user-guide/1.3/[read the documentation^] first.
+
+On your sandbox launch page, you should see an option to launch Neo4j Bloom to explore and visualise our data.  When you launch Bloom, it will come pre-loaded with a Perspective designed to support visualisation of our specific data set.
+
+Explore the pre-written search queries, and see how they can be used to explore our communities and the similarity relationships between nodes.  Also explore the style rules associated with `:Client` nodes and the `:SIMILAR_TO` and `:SIMILAR_TRANS` relationships, to see how we can highlight things like high PageRank scores and high Similarity scores.
+
+
