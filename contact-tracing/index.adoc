@@ -1,0 +1,345 @@
+= A Neo4j Browser Guide to explore a Contact Tracing database
+
+== Background
+
+image::{img}/tracing.jpg[width=400,float=right]
+
+This Sandbox is based on a series of blog posts about Contact Tracing With Neo4j written by https://twitter.com/rvanbruggen^[Rik Van Bruggen]. For more detail please refer to:
+
+* https://blog.bruggen.com/2020/04/covid-19-contact-tracing-blogpost-part.html[Part 1^]: How to create a synthetic dataset and import that into Neo4j
+* https://blog.bruggen.com/2020/04/covid-19-contact-tracing-blogpost-part_21.html[Part 2^]: How to start running some interesting queries on the dataset. Understand some of the interesting data points in there and questions that one might ask
+* https://blog.bruggen.com/2020/04/covid-19-contact-tracing-blogpost-part_61.html[Part 3^]: How to use Graph Data Science on this dataset, and understand some of the predictive metrics like PageRank, Betweenness Centrality and use community detection to direct policies.
+* https://blog.bruggen.com/2020/04/covid-19-contact-tracing-blogpost-part_0.html[Part 4^]: A number of loose ends touched on during exploration of the dataset - but surely not exhaustive.
+
+In this guide we show you the statements in an orderly sequence. First we start with basic Cypher queries to answer questions about finding sick people, where they've traveled and who they may have infected. We then see how to use the Neo4j Graph Data Science library to use graph algorithms to find superspreaders and communities within the graph that can inform policy decisions. Finally we use Neo4j Bloom to visualize the graph, including the results of algorithms.
+
+Let's get started.
+
+== Querying Data
+
+=== Who has a sick person potentially infected
+
+[source, cypher]
+----
+match (p:Person {healthstatus:"Sick"})
+with p
+limit 1
+match (p)--(v1:Visit)--(pl:Place)--(v2:Visit)--(p2:Person {healthstatus:"Healthy"})
+return p.name as Spreader, v1.starttime as SpreaderStarttime, v2.endtime as SpreaderEndtime, pl.name as PlaceVisited, p2.name as Target, v2.starttime as TargetStarttime, v2.endtime as TargetEndttime;
+----
+
+Who has a sick person potentially infected - VISUAL
+
+[source, cypher]
+----
+match (p:Person {healthstatus:"Sick"})
+with p
+limit 1
+match path = (p)-->(v1:Visit)-->(pl:Place)<--(v2:Visit)<--(p2:Person {healthstatus:"Healthy"})
+return path;
+----
+
+=== Simplifying the query by using the VISITS relationship
+
+[source, cypher]
+----
+match (p:Person {healthstatus:"Sick"})
+with p
+limit 1
+match path = (p)-[:VISITS]->(pl:Place)<-[:VISITS]-(p2:Person {healthstatus:"Healthy"})
+return path;
+----
+
+=== Who has a sick person infected - with time overlap
+
+The latest of start times must occur before (or at the same time) as the earliest of the end times for the ranges to overlap.
+
+[source, cypher]
+----
+match (p:Person {healthstatus:"Sick"})-->(v1:Visit)-->(pl:Place)
+with p,v1,pl
+limit 10
+match path = (p)-->(v1)-->(pl)<--(v2:Visit)<--(p2:Person {healthstatus:"Healthy"})
+WITH path, apoc.coll.max([v1.starttime.epochMillis, v2.starttime.epochMillis]) as maxStart,
+     apoc.coll.min([v1.endtime.epochMillis, v2.endtime.epochMillis]) as minEnd
+where maxStart <= minEnd
+return path;
+----
+
+Who has a sick person infected - with time overlap AND SIMPLIFIED with the VISITS relationship. The latest of start times must occur before (or at the same time) as the earliest of the end times for the ranges to overlap.
+
+[source, cypher]
+----
+match (p:Person {healthstatus:"Sick"})-[v1:VISITS]->(pl:Place)
+with p,v1,pl
+limit 10
+match path = (p)-[v1]->(pl)<-[v2:VISITS]-(p2:Person {healthstatus:"Healthy"})
+WITH path, apoc.coll.max([v1.starttime.epochMillis, v2.starttime.epochMillis]) as maxStart,
+     apoc.coll.min([v1.endtime.epochMillis, v2.endtime.epochMillis]) as minEnd
+where maxStart <= minEnd
+return path;
+----
+
+Who has a sick person infected - with time overlap +/- 2hrs. The latest of start times must occur before (or at the same time) as the earliest of the end times for the ranges to overlap.
+
+[source, cypher]
+----
+match (p:Person {healthstatus:"Sick"})-->(s1:Stay)-->(pl:Place)
+with p,s1,pl
+limit 10
+match path = (p)-->(s1)-->(pl)<--(s2:Stay)<--(p2:Person {healthstatus:"Healthy"})
+WITH path, apoc.coll.max([s1.starttime.epochMillis, s2.starttime.epochMillis]) as maxStart,
+     apoc.coll.min([s1.endtime.epochMillis, s2.endtime.epochMillis]) as minEnd
+where maxStart-720000 <= minEnd+720000
+return path;
+----
+
+=== Find sick person that has visited places since being infected
+
+[source, cypher]
+----
+match (p:Person {healthstatus:"Sick"})-[visited]->(pl:Place)
+where p.confirmedtime < visited.starttime
+return p, visited, pl
+limit 10;
+----
+
+=== Find connections between sick people
+
+[source, cypher]
+----
+match (p1:Person {healthstatus:"Sick"}),(p2:Person {healthstatus:"Sick"})
+where id(p1)<id(p2)
+with p1, p2
+match path = allshortestpaths ((p1)-[*]-(p2))
+return path
+limit 10; 
+----
+
+=== How many sick and healthy people
+
+[source, cypher]
+----
+match (p:Person)
+return distinct p.healthstatus, count(*);
+----
+
+=== Which healthy person has the highest risk - based on amount over overlaptime with sick people
+
+[source, cypher]
+----
+match (hp:Person {healthstatus:"Healthy"})-[v1:VISITS]->(pl:Place)<-[v2:VISITS]-(sp:Person {healthstatus:"Sick"})
+with hp, apoc.coll.max([v1.starttime.epochMillis, v2.starttime.epochMillis]) as maxStart,
+     apoc.coll.min([v1.endtime.epochMillis, v2.endtime.epochMillis]) as minEnd
+where maxStart <= minEnd
+return hp.name, hp.healthstatus, sum(minEnd-maxStart) as overlaptime
+order by overlaptime desc;
+----
+
+Which healthy person has the highest risk - based on amount over overlaptime with sick people - VISUAL
+
+[source, cypher]
+----
+match (hp:Person {healthstatus:"Healthy"})-[v1:VISITS]->(pl:Place)<-[v2:VISITS]-(sp:Person {healthstatus:"Sick"})
+with hp, apoc.coll.max([v1.starttime.epochMillis, v2.starttime.epochMillis]) as maxStart,
+     apoc.coll.min([v1.endtime.epochMillis, v2.endtime.epochMillis]) as minEnd
+where maxStart <= minEnd
+with hp, sum(minEnd-maxStart) as overlaptime
+order by overlaptime desc
+limit 10
+match (hp)-[v]-(pl:Place)
+return hp,v,pl;
+----
+
+=== Places with most sick visits
+
+[source, cypher]
+----
+match (p:Person {healthstatus:"Sick"})-[v:VISITS]->(pl:Place)
+with distinct pl.name as placename, count(v) as nrofsickvisits, apoc.node.degree.in(pl,'VISITS') as totalnrofvisits
+order by nrofsickvisits desc
+limit 10
+return placename, nrofsickvisits, totalnrofvisits, round(toFloat(nrofsickvisits)/toFloat(totalnrofvisits)*10000)/100 as percentageofsickvisits;
+----
+
+Places with most sick visits - VISUAL
+
+[source, cypher]
+----
+match (p:Person {healthstatus:"Sick"})-[v:VISITS]->(pl:Place)
+with distinct pl.name as placename, count(v) as nrofsickvisits, pl
+order by nrofsickvisits desc
+limit 10
+match (pl)<-[v]-(p:Person)
+return pl,p,v;
+----
+
+== Graph Data Science on the Contact Tracing Graph
+
+=== REQUIREMENT: create the MEETS relationship based on OVERLAPTIME
+
+This is a relationship between two PERSON nodes that we will need for our graph data science exercises.
+[source, cypher]
+----
+match (p1:Person)-[v1:VISITS]->(pl:Place)<-[v2:VISITS]-(p2:Person)
+where id(p1)<id(p2)
+with p1, p2, apoc.coll.max([v1.starttime.epochMillis, v2.starttime.epochMillis]) as maxStart,
+    apoc.coll.min([v1.endtime.epochMillis, v2.endtime.epochMillis]) as minEnd
+where maxStart <= minEnd
+with p1, p2, sum(minEnd-maxStart) as meetTime
+create (p1)-[:MEETS {meettime: duration({seconds: meetTime/1000})}]->(p2);
+----
+
+
+=== Graph Algo nr 1: calculating pagerank of Persons
+
+[source, cypher]
+----
+:param limit => (10);
+:param config => ({
+nodeProjection: 'Person',
+relationshipProjection: {
+relType: {
+    type: 'MEETS',
+    orientation: 'NATURAL',
+    properties: {}
+}
+},
+relationshipWeightProperty: null,
+dampingFactor: 0.85,
+maxIterations: 20,
+writeProperty: 'pagerank'
+});
+CALL gds.pageRank.write($config);
+----
+
+Look at the Person pagerank table results:
+
+[source, cypher]
+----
+MATCH (node)
+WHERE not(node[$config.writeProperty] is null)
+RETURN node.name as name, node[$config.writeProperty] AS pagerank, node.betweenness as betweenness
+ORDER BY pagerank DESC
+LIMIT 10;
+----
+
+Look at the Person pagerank graph results VISUALLY:
+
+[source, cypher]
+----
+MATCH (node)
+WHERE not(node[$config.writeProperty] is null)
+with node, node[$config.writeProperty] AS score
+ORDER BY score DESC
+LIMIT 10
+match (node)-[r]-(conn)
+return node, r, conn
+----
+
+
+=== Graph Algo nr 2: calculating BETWEENNESS of Person nodes
+
+[source, cypher]
+----
+:param limit => (20);
+:param config => ({
+nodeProjection: 'Person',
+relationshipProjection: {
+relType: {
+    type: 'MEETS',
+    orientation: 'NATURAL',
+    properties: {}
+}
+},
+writeProperty: 'betweenness'
+});
+CALL gds.alpha.betweenness.write($config);
+----
+
+Look at the Person betweenness results table:
+
+[source, cypher]
+----
+MATCH (node)
+WHERE not(node[$config.writeProperty] is null)
+RETURN node.name as name, node.pagerank as pagerank, node[$config.writeProperty] AS betweenness
+ORDER BY betweenness DESC
+LIMIT 10;
+----
+
+Look at the Person betweenness results VISUALLY:
+
+[source, cypher]
+----
+MATCH (node)
+WHERE not(node[$config.writeProperty] is null)
+with node, node[$config.writeProperty] AS score
+ORDER BY score DESC
+LIMIT 10
+match (node)-[r]-(conn)
+return node, r, conn;
+----
+
+
+=== Graph Algo nr 3: LOUVAIN Community detection
+
+Preparation for relationship weight property: needs integer, is currently set up as a duration!
+
+[source, cypher]
+----
+MATCH p=()-[r:MEETS]->() 
+set r.meettimeinseconds=r.meettime.seconds;
+----
+
+Now we can calculate communities using Louvain:
+
+[source, cypher]
+----
+:param limit => ( 50);
+:param config => ({
+nodeProjection: 'Person',
+relationshipProjection: {
+relType: {
+    type: 'MEETS',
+    orientation: 'NATURAL',
+    properties: {
+    meettimeinseconds: {
+        property: 'meettimeinseconds',
+        defaultValue: 1
+    }
+    }
+}
+},
+relationshipWeightProperty: 'meettimeinseconds',
+includeIntermediateCommunities: false,
+seedProperty: '',
+writeProperty: 'louvain'
+});
+CALL gds.louvain.write($config);
+----
+
+What are the different communities?
+
+[source, cypher]
+----
+match (p:Person)
+return distinct p.louvain, count(p)
+order by count(p) desc;
+----
+
+Explore community 489:
+
+[source, cypher]
+----
+match (p1:Person {louvain: 489})-[v:VISITS]->(pl:Place), (p1)-[m:MEETS]->(p2:Person)
+return p1, p2, pl, v, m;
+----
+
+== Resources
+
+Resources to learn more:
+
+* http://blog.bruggen.com[Rik's blog^]
+* https://twitter.com/rvanbruggen[Rik on Twitter^]
+* http://graphistania.com[The Graphistania podcast^]
