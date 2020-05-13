@@ -1,6 +1,6 @@
 = A Neo4j Browser Guide to explore a Contact Tracing database
 
-== Contract Tracking - Background
+== Contact Tracing - Background
 
 image::{img}/tracing.jpg[width=400,float=right]
 
