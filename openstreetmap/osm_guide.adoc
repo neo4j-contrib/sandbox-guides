@@ -1,0 +1,18 @@
+= OpenStreetMap Neo4j Sandbox
+
+== Summer of Nodes Week 4 - Exploring the area
+
+image::https://avatars3.githubusercontent.com/u/68063774?s=400&u=47fddd3695292590535dbbe195828b933fe32209&v=4[width=200,float=right]
+
+Welcome to the last of the Summer of Nodes 2020 challenges! This sandbox will contain all of the data you need. 
+
+Here are some helpful links:
+
+* https://r.neo4j.com/son-week4[Week four blog post^]
+* https://community.neo4j.com[Community forum^]
+* https://r.neo4j.com/son-week4ans[Answer form^]
+* https://neo4j.com/docs/cypher-refcard/3.5/[Cypher ref card^]
+* https://neo4j.com/developer/cypher/[Cypher developer guide^]
+* https://neo4j.com/docs/cypher-manual/3.5/[Cypher documentation^]
+* https://neo4j.com/docs/labs/apoc/3.5/introduction/[APOC documentation^]
+* https://neo4j.com/docs/graph-data-science/1.0/[Graph Data Science documentation^]
