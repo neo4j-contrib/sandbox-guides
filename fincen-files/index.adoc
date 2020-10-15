@@ -1,0 +1,153 @@
+= FinCEN Files
+:img: https://guides.neo4j.com/img/
+
+== FinCEN Files
+
+++++
+<iframe style="margin-left: 5em; float:right;" width="560" height="315" src="https://www.youtube.com/embed/KX3EK9rf2No" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+++++
+
+The International Consortium of Investigative Journalists (ICIJ) has recently published a https://www.icij.org/investigations/fincen-files/about-the-fincen-files-investigation/[new investigation, the FinCEN Files^], which exposed a vast network of industrial-scale money laundering running through Western banks and generally ignored by U.S. regulators – and they used Neo4j to help crack the case wide open.
+
+The results draw from more than 2100 suspicious activity reports (SARs) between 1997 to 2017, which accounted for transactions of more than $2 trillion USD in dirty money. 
+These reports were filed by banks and financial firms with the U.S. Department of Treasury’s Financial Crimes Enforcement Network (FinCEN) but were largely ignored or overlooked.
+
+== Visual Exploration
+
+image::{img}/bloom-fincen.png[width=400, float=right]
+
+If you don't have so much experience with databases, we recommend you to use the "Neo4j Bloom" App in the Sandbox UI (make sure to copy the password to log in).
+
+There you can explore this data visually by entering search phrases like
+
+* `Entity Deutsche Bank Filing`
+* `Filing Benefits Entity Russia`
+* `Entity transferred Entity`
+
+And then expand / explore the resulting data visually or inspect the selected data in the bottom left card view.
+
+== Data and Data Model
+
+image::{img}/fincen-datamodel.png[width=400, float=right]
+
+The ICIJ made a subset of the data available, you can download CSV files with the SAR information from their website.
+
+We have imported the Filings, and the money flow between the participating entities and their respective countries into Neo4j.
+
+The resulting data model is straightforward but still allows interesting investigations.
+
+== Exploring the Data
+
+You can run these queries by clicking on the code-block and then the triangular run button top-right.
+
+.Top Filings and the involved banks
+[source,cypher]
+----
+MATCH (f:Filing)
+WITH f ORDER BY f.amount DESC LIMIT 10
+MATCH (f)-[rel]-(e:Entity)
+RETURN *
+----
+
+.Entities with highest Transaction Volume
+[source,cypher]
+----
+MATCH (e:Entity)--(f:Filing)
+WITH e, round(sum(f.amount)) as total
+WITH e, total ORDER BY total DESC LIMIT 10
+OPTIONAL MATCH (e)-[:COUNTRY]-(c:Country)
+RETURN e.name, c.name, total
+----
+
+== Money Flow
+
+Looking at the `ORIGINATOR` and `BENEFITS` relationships, one can aggregate the transaction amounts flowing to the beneficiaries.
+
+[source,cypher]
+----
+MATCH (from:Entity)<-[:ORIGINATOR]-(f:Filing)-[:BENEFITS]->(to:Entity)
+WITH from, to, round(sum(f.amount)) as sum
+ORDER BY sum DESC LIMIT 10
+RETURN from.name, to.name, sum
+----
+
+We can use the same concept and construct a projected graph of Entity to Entity money transfers to run some graph algorithms on.
+
+[source,cypher]
+----
+MATCH (from:Entity)<-[:ORIGINATOR]-(f:Filing)-[:BENEFITS]->(to:Entity)
+WITH from, to, round(sum(f.amount)) as sum
+MERGE (from)-[t:TRANSFERRED]->(to) SET t.amount = sum
+----
+
+== Graph Data Science - Clustering
+
+Now we can run a https://neo4j.com/docs/graph-data-science/current/algorithms/louvain/?ref=sandbox[clustering algorithm like Louvain^].
+
+[source,cypher]
+----
+CALL gds.louvain.write({
+  nodeProjection: 'Entity',
+  relationshipProjection: {
+    relType: {type: 'TRANSFERRED', orientation: 'NATURAL',
+      properties: { amount: { property: 'amount', defaultValue: 1 }}
+    }
+  },
+  relationshipWeightProperty: 'amount',
+  includeIntermediateCommunities: false,
+  writeProperty: 'cluster'
+});
+----
+
+And display the results. I.e. what are the largest clusters found.
+
+[source,cypher]
+----
+MATCH (e:Entity)
+RETURN e.cluster as cluster, count(*) as size, collect(e.name)[0..5] as names
+ORDER BY size DESC LIMIT 10;
+----
+
+== Graph Data Science - MoneyTransfer - PageRank
+
+And find the main recipients of the transitively transferred money using the PageRank algorithm.
+
+[source,cypher]
+----
+CALL gds.pageRank.write({
+  nodeProjection: 'Entity',
+  relationshipProjection: {
+    relType: {type: 'TRANSFERRED', orientation: 'NATURAL',
+      properties: { amount: { property: 'amount', defaultValue: 1 }}
+    }
+  },
+  relationshipWeightProperty: 'amount',
+  writeProperty: 'pagerank'
+});
+----
+
+And again visualize the results, e.g. who is the biggest beneficiary in our largest cluster.
+
+[source,cypher]
+----
+MATCH (e:Entity)
+WITH e.cluster as cluster, count(*) as size, collect(e) as entities
+ORDER BY size DESC LIMIT 1
+UNWIND entities as e
+MATCH ()-[trans:TRANSFERRED]->(e)
+RETURN e.name, e.pagerank, sum(trans.amount) as total
+ORDER BY e.pagerank DESC LIMIT 10;
+----
+
+
+== Resources
+
+Of course there is much more to do with this data, so feel free to play around more, or mailto:devrel@neo4j.com[reach out to us^].
+
+* https://neo4j.com/blog/fincen-files[FinCEN files blog post]
+* https://www.icij.org/investigations/fincen-files/about-the-fincen-files-investigation/[ICIJ FinCEN files investigation]
+* https://github.com/jexp/fincen[FinCEN files GitHub repository]
+
+* https://neo4j.com/developer/cypher/?ref=sandbox[Cypher Developer Guide]
+* https://neo4j.com/graph-databases-for-dummies/?ref=sandbox[e-book: Graph Databases for Dummies (free)]
+

@@ -1,0 +1,313 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.slide { min-height: 50em !important; }
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck > h3, .deck > h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+pre.code.runnable { max-height: 10em;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController"  style="min-height:1000px;">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>FinCEN Files</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+   <h4 style="margin-top: 1em;margin-bottom: 1em;">FinCEN Files</h4>
+   
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3 style="margin-bottom: 0.3em;">FinCEN Files</h3>
+    <br/>
+    <div>
+      <iframe style="margin-left: 5em; float:right;" width="560" height="315" src="https://www.youtube.com/embed/KX3EK9rf2No" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<div class="paragraph">
+<p>The International Consortium of Investigative Journalists (ICIJ) has recently published a <a href="https://www.icij.org/investigations/fincen-files/about-the-fincen-files-investigation/" target="_blank">new investigation, the FinCEN Files</a>, which exposed a vast network of industrial-scale money laundering running through Western banks and generally ignored by U.S. regulators – and they used Neo4j to help crack the case wide open.</p>
+</div>
+<div class="paragraph">
+<p>The results draw from more than 2100 suspicious activity reports (SARs) between 1997 to 2017, which accounted for transactions of more than $2 trillion USD in dirty money.
+These reports were filed by banks and financial firms with the U.S. Department of Treasury’s Financial Crimes Enforcement Network (FinCEN) but were largely ignored or overlooked.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3 style="margin-bottom: 0.3em;">Visual Exploration</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: right;">
+<div class="content">
+<img src="https://guides.neo4j.com/img/bloom-fincen.png" alt="bloom fincen" width="400">
+</div>
+</div>
+<div class="paragraph">
+<p>If you don&#8217;t have so much experience with databases, we recommed you to use the "Neo4j Bloom" App in the Sandbox UI (make sure to copy the password to log in).</p>
+</div>
+<div class="paragraph">
+<p>There you can explore this data visually by entering search phrases like</p>
+</div>
+<div class="ulist" style="margin-bottom:.4em;">
+<ul>
+<li>
+<code>Entity Deutsche Bank Filing</code>
+</li>
+<li>
+<code>Filing Benefits Entity Russia</code>
+</li>
+<li>
+<code>Entity transferred Entity</code>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>And then expand / explore the resulting data visually or inspect the selected data in the bottom left card view.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3 style="margin-bottom: 0.3em;">Data and Data Model</h3>
+    <br/>
+    <div>
+      <div class="imageblock" style="float: right;">
+<div class="content">
+<img src="https://guides.neo4j.com/img/fincen-datamodel.png" alt="fincen datamodel" width="400">
+</div>
+</div>
+<div class="paragraph">
+<p>The ICIJ made a subset of the data available, you can download CSV files with the SAR information from their website.</p>
+</div>
+<div class="paragraph">
+<p>We have imported the Filings, and the money flow between the participating entities and their respective countries into Neo4j.</p>
+</div>
+<div class="paragraph">
+<p>The resulting data model is straightforward but still allows interesting investigations.</p>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3 style="margin-bottom: 0.3em;">Exploring the Data</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>You can run these queries by clicking on the code-block and then the triangular run button top-right.</p>
+</div>
+<div class="listingblock">
+<div class="title">Top Filings and the involved banks</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (f:Filing)
+WITH f ORDER BY f.amount DESC LIMIT 10
+MATCH (f)-[rel]-(e:Entity)
+RETURN *<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Entities with highest Transaction Volume</div>
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (e:Entity)--(f:Filing)
+WITH e, round(sum(f.amount)) as total
+WITH e, total ORDER BY total DESC LIMIT 10
+OPTIONAL MATCH (e)-[:COUNTRY]-(c:Country)
+RETURN e.name, c.name, total<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3 style="margin-bottom: 0.3em;">Money Flow</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Looking at the <code>ORIGINATOR</code> and <code>BENEFITS</code> relationships, one can aggregate the transaction amounts flowing to the beneficiaries.
+.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (from:Entity)&lt;-[:ORIGINATOR]-(f:Filing)-[:BENEFITS]-&gt;(to:Entity)
+WITH from, to, round(sum(f.amount)) as sum
+ORDER BY sum DESC LIMIT 10
+RETURN from.name, to.name, sum<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can use the same concept and construct a projected graph of Entity to Entity money transfers to run some graph algorithms on.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (from:Entity)&lt;-[:ORIGINATOR]-(f:Filing)-[:BENEFITS]-&gt;(to:Entity)
+WITH from, to, round(sum(f.amount)) as sum
+MERGE (from)-[t:TRANSFERRED]-&gt;(to) SET t.amount = sum<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3 style="margin-bottom: 0.3em;">Graph Data Science - Clustering</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Now we can run a <a href="https://neo4j.com/docs/graph-data-science/current/algorithms/louvain/?ref=sandbox" target="_blank">clustering algorithm like Louvain</a>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL gds.louvain.write({
+  nodeProjection: 'Entity',
+  relationshipProjection: {
+    relType: {type: 'TRANSFERRED', orientation: 'NATURAL',
+      properties: { amount: { property: 'amount', defaultValue: 1 }}
+    }
+  },
+  relationshipWeightProperty: 'amount',
+  includeIntermediateCommunities: false,
+  writeProperty: 'cluster'
+});<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And display the results. I.e. what are the largest clusters found.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (e:Entity)
+RETURN e.cluster as cluster, count(*) as size, collect(e.name)[0..5] as names
+ORDER BY size DESC LIMIT 10;<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3 style="margin-bottom: 0.3em;">Graph Data Science - MoneyTransfer - PageRank</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>And find the main recipients of the transitively transferred money using the PageRank algorithm.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL gds.pageRank.write({
+  nodeProjection: 'Entity',
+  relationshipProjection: {
+    relType: {type: 'TRANSFERRED', orientation: 'NATURAL',
+      properties: { amount: { property: 'amount', defaultValue: 1 }}
+    }
+  },
+  relationshipWeightProperty: 'amount',
+  writeProperty: 'pagerank'
+});<!--/code--></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And again visualize the results, e.g. who is the biggest beneficiary in our largest cluster.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (e:Entity)
+WITH e.cluster as cluster, count(*) as size, collect(e) as entities
+ORDER BY size DESC LIMIT 1
+UNWIND entities as e
+MATCH ()-[trans:TRANSFERRED]-&gt;(e)
+RETURN e.name, e.pagerank, sum(trans.amount) as total
+ORDER BY e.pagerank DESC LIMIT 10;<!--/code--></pre>
+</div>
+</div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3 style="margin-bottom: 0.3em;">Resources</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Of course there is much more to do with this data, so feel free to play around more, or <a href="mailto:devrel@neo4j.com" target="_blank">reach out to us</a>..</p>
+</div>
+<div class="ulist" style="margin-bottom:.4em;">
+<ul>
+<li>
+<a href="https://neo4j.com/blog/fincen-files">FinCEN files blog post</a>
+</li>
+<li>
+<a href="https://www.icij.org/investigations/fincen-files/about-the-fincen-files-investigation/">ICIJ FinCEN files investigation</a>
+</li>
+<li>
+<a href="https://github.com/jexp/fincen">FinCEN files GitHub repository</a>
+</li>
+<li>
+<a href="https://neo4j.com/developer/cypher/?ref=sandbox">Cypher Developer Guide</a>
+</li>
+<li>
+<a href="https://neo4j.com/graph-databases-for-dummies/?ref=sandbox">e-book: Graph Databases for Dummies (free)</a>
+</li>
+</ul>
+</div>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>
