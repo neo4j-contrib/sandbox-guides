@@ -1021,8 +1021,8 @@ CALL gds.louvain.stream(
     includeIntermediateCommunities: true
   }
 )
-YIELD nodeId, communityId, communityIds
-RETURN communityId, COUNT(DISTINCT nodeId) AS members, communityIds as intermediateCommunities
+YIELD nodeId, communityId, intermediateCommunityIds
+RETURN communityId, COUNT(DISTINCT nodeId) AS members, intermediateCommunityIds
 ----
 
 We can extract membership in different levels of communities and see how the composition changes:
