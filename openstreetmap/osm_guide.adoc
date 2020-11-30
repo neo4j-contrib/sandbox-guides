@@ -1,18 +1,152 @@
-= OpenStreetMap Neo4j Sandbox
+= Exploring the area
 
-== Summer of Nodes Week 4 - Exploring the area
+This guide is based on the https://medium.com/neo4j/summer-of-nodes-final-week-exploring-the-area-ac4b24735612[Summer of Nodes challenge: Walkabout^]
 
-image::https://avatars3.githubusercontent.com/u/68063774?s=400&u=47fddd3695292590535dbbe195828b933fe32209&v=4[width=200,float=right]
+In this sandbox, we'll be using points of interest in New York's Central Park, to explore the Neo4j https://neo4j.com/docs/cypher-manual/current/functions/spatial/[spatial functions and types^]. 
 
-Welcome to the last of the Summer of Nodes 2020 challenges! This sandbox will contain all of the data you need. 
+Want to do your own thing with spatial data? Please do! The following plugins are also available on this sandbox:
 
-Here are some helpful links:
+* https://neo4j.com/labs/apoc/[APOC Library documentation^]
+* https://neo4j.com/docs/graph-data-science/current/[Graph Data Science Library documentation^]
 
-* https://r.neo4j.com/son-week4[Week four blog post^]
-* https://community.neo4j.com[Community forum^]
-* https://r.neo4j.com/son-week4ans[Answer form^]
-* https://neo4j.com/docs/cypher-refcard/3.5/[Cypher ref card^]
-* https://neo4j.com/developer/cypher/[Cypher developer guide^]
-* https://neo4j.com/docs/cypher-manual/3.5/[Cypher documentation^]
-* https://neo4j.com/docs/labs/apoc/3.5/introduction/[APOC documentation^]
-* https://neo4j.com/docs/graph-data-science/1.0/[Graph Data Science documentation^]
+== The data
+
+.by Jorge Gardner
+[caption='https://unsplash.com/photos/WRygjt-uCpw[Central Park, New York^] ']
+image::https://images.unsplash.com/photo-1480722897755-8bdf83637a34?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1867&q=80[width=300, float=left]
+
+Central Park in New York is one of the most popular tourist attractions in the city. Last year, Central Park saw 42 million visitors alone. In this sandbox we are going to be using this amazing location to do some exploration, with graphs!
+
+We have imported some routes and tagged Points of Interest for Central Park, based on OpenStreetMap, and we will be asking you to take on the role of the virtual tourist. We will be using the sandbox exclusively for the challenge this week.
+
+For those of you who are interested, the data was extracted with https://github.com/neo4j-contrib/osm[this plugin^], and there was some Cypher data wrangling applied after import. As a result, we don’t have all the sights, but we do have a pretty good sample to work with.
+
+== The model
+If you look at `db.schema.visualization()` you will see many labels and relationship types. Many of these labels we are not going to use in this sandbox example. There are only two node label types we’re going to be using:
+
+* `OSMNode` — Think of this as a junction node — it hooks together routes from specific points
+* `PointOfInterest:OSMNode` — In addition to the above, this also has our points of interest, e.g. types of statues, restaurants, tennis courts, etc. and their names
+
+And we’ll only be using the `ROUTE` relationship type. Here’s a simplified data model that you’ll need for this sandbox:
+
+image::https://miro.medium.com/max/1050/1*lZbN0ggnQ4VvpH9SaUyASg.png[width=600]
+
+== Introduction to spatial
+
+Cypher has built-in support for handling https://neo4j.com/docs/cypher-manual/current/syntax/spatial/[spatial values (points)^], and the underlying database supports storing these point values as properties on nodes and relationships in either 2 or 3 dimensions. These include:
+
+* Geographic coordinate reference systems
+* Cartesian coordinate reference systems
+
+Cypher also supports the following https://neo4j.com/docs/cypher-manual/current/functions/spatial/[spatial functions^]:
+
+* `distance()` between points
+* Returning points in WGS 84 and Cartesian
+
+You can find out more in the linked documentation above. Now, time for a walkabout!
+
+== Looking for a clock
+
+.by Murray Campbell
+[caption='https://unsplash.com/photos/B_TdfGFuGwA[Behind a clock^] ']
+image::https://images.unsplash.com/photo-1439754389055-9f0855aa82c2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1867&q=80[float=right, width=250]
+
+You'll start your walking adventure at a clock (type:’clock’). What’s its name?
+
+[source,cypher,subs=attributes]
+----
+MATCH (p:PointOfInterest {type:'clock'})
+RETURN p.name
+----
+
+From this position, what other Point of Interest is within 100m from a straight line?
+
+[source,cypher,subs=attributes]
+----
+MATCH (p1:PointOfInterest {type:'clock'}), (p2:PointOfInterest)
+WHERE p1<>p2 AND distance(p1.location,p2.location) < 100
+RETURN p2.name
+----
+
+== Distances
+
+.By https://unsplash.com/photos/T5Ye7puWZxo[Tyler Quiring^]
+[caption='']
+image::https://images.unsplash.com/photo-1433888376991-1297486ba3f5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1950&q=80[width=300, float=right]
+
+How far apart are the zoo school and the clock as a straight line (as the crow flies)? 
+[source,cypher,subs=attributes]
+----
+MATCH (p1:PointOfInterest {type:'clock'}), (p2:PointOfInterest {name:'Zoo School'})
+RETURN distance(p1.location,p2.location)
+----
+
+How far is the actual (walking) distance?
+
+[source,cypher,subs=attributes]
+----
+MATCH path=shortestpath((p1:PointOfInterest {type:'clock'})-[:ROUTE*]-(p2:PointOfInterest {name:'Zoo School'}))
+WITH relationships(path) AS rels
+UNWIND rels AS rel
+RETURN sum(rel.distance)
+----
+
+== Time for a coffee and cycle!
+
+.by Partha Narasimhan
+[caption='https://unsplash.com/photos/8e9hQXS9VQA[Coffee Shop^] ']
+image::https://images.unsplash.com/photo-1599329537570-4c18b92fb28e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1234&q=80[float=left,width=200]
+
+You’re thinking of going for a cycle ride, but first a coffee! Locate which cafe `type:'cafe'` is closest to a bicycle rental place `type:'bicycle rental'`. What’s the name of the cafe? 
+
+[source,cypher,subs=attributes]
+----
+MATCH path = shortestPath((p1:PointOfInterest {type:'cafe'})-[:ROUTE*]-(p2:PointOfInterest {type:'bicycle rental'}))
+WITH p1, p2, relationships(path) AS rels //extract all the relationships in the path as an array
+UNWIND rels AS rel //unwind the array of relationships
+RETURN p1.name, p2.name, sum(rel.distance) AS dist ORDER BY dist
+----
+
+Let's compare the outputs of shortestPath() against weighted shortest path with the Dijkstra APOC function:
+
+[source,cypher,subs=attributes]
+----
+MATCH path = (p1:PointOfInterest {type:'cafe'}),(p2:PointOfInterest {type:'bicycle rental'})
+CALL apoc.algo.dijkstra(p1, p2, 'ROUTE', 'distance') YIELD weight AS dist
+RETURN p1.name, p2.name, dist ORDER BY dist
+----
+
+Confused? Let's explore!
+
+== Shortest path versus weighted shortest path
+
+The https://neo4j.com/docs/cypher-manual/current/clauses/match/#query-shortest-path[`shortestPath()`^] Cypher function will return the first shortest path by number of relationship hops it finds between two specified points. 
+
+The https://neo4j.com/labs/apoc/4.0/overview/apoc.algo/apoc.algo.dijkstra/[`apoc.algo.dijkstra()`^] APOC function will return the shortest weighted path, based on a specified property on relationships between two specified points, irrespective of the number of hops between them.
+
+The previous two queries provide a great example that the shortest path by traversing the minimum number of nodes does not mean it's the shortest distance by actual ground covered!
+
+== Vizualising the results: Neomaps
+
+NeoMaps is an excellent graph app, created by community member Estelle Scifo. This fantastic app allows you to plot spatial data onto an OpenStreetMap view. The following image shows all of our `PointsOfInterest` plotted as points:
+
+image::https://miro.medium.com/max/1050/1*XpBtUckStpozzH5ZH3wX-w.png[width=300, float=right]
+
+To find out how to get going, you can read about it in Estelle's blog post https://medium.com/neo4j/introducing-neomap-a-neo4j-desktop-application-for-spatial-data-3e14aad59db2[here^].
+
+To install NeoMap, you just need to paste the following into the graph apps tab in Neo4j Desktop: `https://registry.npmjs.org/neomap`. You can then use it on your sandbox by adding a 'remote database', with the sandbox details.
+
+image::https://miro.medium.com/max/557/1*hvs9CFw5tCH9JkcDsLuu1Q.png[width=300, float=left]
+
+Estelle also gives you an example of https://medium.com/neo4j/visualizing-shortest-paths-with-neomap-0-4-0-and-the-neo4j-graph-data-science-plugin-18db92f680de[how to get up and running^] with your own locations if you want to check out your local area too! It’s also useful for seeing how to work with shortest path.
+
+
+== Find out more
+
+We hope you enjoyed this short exploration of the Neo4j spatial functions and types. The following links may be useful if you want to find out more, or experiment with the Graph Data Science or APOC libraries on this data set:
+
+* https://neo4j.com/docs/cypher-manual/current/functions/spatial/[Spatial documentation^]
+* https://neo4j.com/docs/graph-data-science/current/[Graph Data Science documentation^]
+* https://neo4j.com/labs/apoc/[APOC documentation^]
+
+Perhaps you'd like to have a look at the other Summer of Nodes challenges? Check them out https://medium.com/neo4j/so-long-summer-of-nodes-2020-832f259baac6[here^].
