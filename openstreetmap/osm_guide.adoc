@@ -136,7 +136,7 @@ To find out how to get going, you can read about it in Estelle's blog post https
 
 To install NeoMap, you just need to paste the following into the graph apps tab in Neo4j Desktop: `https://registry.npmjs.org/neomap`. You can then use it on your sandbox by adding a 'remote database', with the sandbox details.
 
-image::https://miro.medium.com/max/557/1*hvs9CFw5tCH9JkcDsLuu1Q.png[width=300, float=left]
+image::https://miro.medium.com/max/557/1*hvs9CFw5tCH9JkcDsLuu1Q.png[width=300, float=right]
 
 Estelle also gives you an example of https://medium.com/neo4j/visualizing-shortest-paths-with-neomap-0-4-0-and-the-neo4j-graph-data-science-plugin-18db92f680de[how to get up and running^] with your own locations if you want to check out your local area too! It’s also useful for seeing how to work with shortest path.
 
