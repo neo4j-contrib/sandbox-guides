@@ -99,7 +99,7 @@
         <pre mode="cypher"  class="highlight pre-scrollable code runnable standalone-example ng-binding"><code class="cypher language-cypher">MATCH (a:Officer),(b:Officer)
 WHERE a.name CONTAINS 'Ross, Jr' 
   AND b.name CONTAINS 'Grant'
-MATCH p=allShortestPaths((a)-[:OFFICER_OF|:INTERMEDIARY_OF|:REGISTERED_ADDRESS*..10]-(b))
+MATCH p=allShortestPaths((a)-[:OFFICER_OF|INTERMEDIARY_OF|REGISTERED_ADDRESS*..10]-(b))
 RETURN p
 LIMIT 50</code></pre>
 
